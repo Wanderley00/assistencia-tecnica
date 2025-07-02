@@ -30,6 +30,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Configuração para Render
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+# ADICIONE ESTA LINHA TAMBÉM POR GARANTIA OU SE QUISER FIXO
+ALLOWED_HOSTS.append('assistencia-tecnica-django.onrender.com')
+# Se você quiser permitir todos os subdomínios .onrender.com (menos seguro para produção, mas útil para testes)
+# ALLOWED_HOSTS.append('.onrender.com')
+
 
 # Application definition
 INSTALLED_APPS = [
