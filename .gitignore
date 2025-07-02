@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.Python
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg
+.installed.cfg
+*.memo
+
+# OS
+.DS_Store
+.Trashes
+Thumbs.db
+
+# Django-specific
+*.log
+*.pot
+*.sqlite3 # Seu arquivo db.sqlite3!
+local_settings.py # Se você tiver um arquivo para configurações locais/sensíveis
+.env # Se você usa variáveis de ambiente
+media/ # Pasta de uploads de usuário, se não for gerida por um serviço de armazenamento externo
+staticfiles/ # Pasta de arquivos estáticos coletados, se não for gerida por um CDN
+
+# Virtualenv
+venv/
+env/
+/myenv/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.komodoproject
+
+# Render specific (optional, but good for Render.com build cache)
+.render/

@@ -1,0 +1,69 @@
+/* servico_campo/static/servico_campo/css/style.css */
+
+:root {
+    /* Cores da sua marca */
+    --bs-primary: #0056b3; /* Um azul mais escuro, exemplo para P3 Smart Solutions */
+    --bs-secondary: #6c757d;
+    --bs-success: #28a745;
+    --bs-info: #17a2b8;
+    --bs-warning: #ffc107;
+    --bs-danger: #dc3545;
+    --bs-light: #f8f9fa;
+    --bs-dark: #343a40;
+
+    /* Tipografia */
+    --bs-body-font-family: "Roboto", sans-serif; /* Exemplo de fonte do Google Fonts */
+    --bs-heading-font-family: "Montserrat", sans-serif; /* Outra fonte para títulos */
+}
+
+/* Sobrescrever variáveis do Bootstrap (se estiver usando Sass) */
+/* Para CSS puro, você define as classes diretamente */
+
+/* Estilos gerais */
+body {
+    background-color: #f0f2f5; /* Um cinza claro para o fundo */
+    font-family: var(--bs-body-font-family);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--bs-heading-font-family);
+    color: var(--bs-dark);
+}
+
+/* Ajustes na barra de navegação */
+.navbar-dark.bg-dark {
+    background-color: var(--bs-primary) !important; /* Usar sua cor primária */
+}
+.navbar-brand, .nav-link {
+    color: white !important;
+}
+.navbar-toggler-icon {
+    filter: invert(1); /* Deixa o ícone do menu responsivo branco */
+}
+
+/* Cards */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra suave */
+}
+.card-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+/* Botões */
+.btn-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+.btn-primary:hover {
+    background-color: darken(var(--bs-primary), 10%); /* Mais escuro no hover */
+    border-color: darken(var(--bs-primary), 10%);
+}
+
+/* Badges de status */
+.badge.bg-planejada { background-color: var(--bs-info) !important; }
+.badge.bg-em_execucao { background-color: var(--bs-warning) !important; }
+.badge.bg-concluida { background-color: var(--bs-success) !important; }
+.badge.bg-cancelada { background-color: var(--bs-danger) !important; }
+.badge.bg-pendente_aprovacao { background-color: var(--bs-secondary) !important; }

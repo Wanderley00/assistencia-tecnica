@@ -1,0 +1,88 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_action_title }} - {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h1 class="card-title mb-0">{{ form_action_title }}: {{ os.numero_os }}</h1>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Resumo do Serviço</h5>
+            <p><strong>Cliente:</strong> {{ os.cliente.razao_social }}</p>
+            <p><strong>Serviço:</strong> {{ os.titulo_servico }}</p>
+            <p><strong>Técnico Responsável:</strong> {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
+            <hr>
+            <p>Ao assinar abaixo, o cliente declara estar ciente e de acordo com a conclusão dos serviços prestados nesta Ordem de Serviço.</p>
+
+            <form method="post" id="encerramento-os-form"> {# Adicione um ID ao formulário #}
+                {% csrf_token %}
+                {{ form.media }}
+
+                <h5 class="mb-3">{% trans "Assinatura do Cliente" %}</h5>
+                <div id="signature-pad" class="signature-pad-container" style="border: 1px solid #ccc; border-radius: 0.25rem; background-color: #f8f9fa;">
+                    <canvas style="width: 100%; height: 200px;"></canvas>
+                </div>
+                <button type="button" id="clear-signature" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Assinatura" %}</button>
+                
+                {# Campo oculto que será preenchido pelo JavaScript #}
+                {{ form.assinatura_cliente_data }}
+
+                <div class="mt-4">
+                    {# MUDE ESTE BOTÃO: type="button" e adicione um ID #}
+                    <button type="button" id="submit-signature" class="btn btn-success btn-lg">{% trans "Confirmar e Encerrar OS" %}</button>
+                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary btn-lg">{% trans "Cancelar" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.querySelector("canvas");
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(248, 249, 250)'
+        });
+        const clearButton = document.getElementById('clear-signature');
+        const hiddenInput = document.getElementById('id_assinatura_cliente_data');
+        const submitButton = document.getElementById('submit-signature'); // Seleciona o novo botão
+        const form = document.getElementById('encerramento-os-form'); // Seleciona o formulário pelo ID
+
+        // Redimensionar o canvas para DPI correto
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear(); // Limpa e redesenha se houver conteúdo
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Chama no carregamento inicial
+
+        clearButton.addEventListener('click', function () {
+            signaturePad.clear();
+        });
+
+        // Adiciona o listener de click ao novo botão de submit
+        submitButton.addEventListener('click', function(event) {
+            if (signaturePad.isEmpty()) {
+                alert("{% trans 'Por favor, forneça a assinatura do cliente.' %}");
+                // Não precisa de event.preventDefault() aqui, pois o botão já é type="button"
+            } else {
+                hiddenInput.value = signaturePad.toDataURL('image/png');
+                form.submit(); // Submete o formulário programaticamente
+            }
+        });
+
+        // Opcional: Se estiver editando uma OS já encerrada, carregar a assinatura existente
+        const initialSignatureData = hiddenInput.value;
+        if (initialSignatureData && initialSignatureData.length > 0) {
+            signaturePad.fromDataURL(initialSignatureData);
+        }
+    });
+</script>
+{% endblock %}

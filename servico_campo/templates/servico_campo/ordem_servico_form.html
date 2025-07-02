@@ -1,0 +1,117 @@
+{% extends 'servico_campo/base.html' %}
+
+{% block title %}{{ form_title|default:"Formulário de Ordem de Serviço" }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="card-title mb-0">{{ form_title|default:"Ordem de Serviço" }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" id="os-form">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Por favor, corrija os erros abaixo:</strong>
+                        <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field|escape }}: {{ error|escape }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.numero_os.id_for_label }}" class="form-label">{{ form.numero_os.label }}</label>
+                        {{ form.numero_os }}
+                        {% if form.numero_os.help_text %}<div class="form-text">{{ form.numero_os.help_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.titulo_servico.id_for_label }}" class="form-label">{{ form.titulo_servico.label }}</label>
+                        {{ form.titulo_servico }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cliente.id_for_label }}" class="form-label">{{ form.cliente.label }}</label>
+                        {{ form.cliente }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.tipo_manutencao.id_for_label }}" class="form-label">{{ form.tipo_manutencao.label }}</label>
+                        {{ form.tipo_manutencao }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.equipamento.id_for_label }}" class="form-label">{{ form.equipamento.label }}</label>
+                        {{ form.equipamento }}
+                        <small class="form-text text-muted">Selecione o cliente para carregar os equipamentos.</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.descricao_problema.id_for_label }}" class="form-label">{{ form.descricao_problema.label }}</label>
+                    {{ form.descricao_problema }}
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">Salvar Ordem de Serviço</button>
+                    <a href="{% url 'servico_campo:lista_os' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const clienteSelect = document.getElementById('id_cliente');
+            const equipamentoSelect = document.getElementById('id_equipamento');
+            const osForm = document.getElementById('os-form');
+
+            // Guarda o valor do equipamento que veio do servidor (caso de erro de validação)
+            const initialEquipamentoId = "{{ form.equipamento.value|default:'' }}";
+
+            function loadEquipamentos(equipamentoSelecionadoId) {
+                const clienteId = clienteSelect.value;
+                if (!clienteId) {
+                    equipamentoSelect.innerHTML = '<option value="">Selecione um cliente primeiro...</option>';
+                    return;
+                }
+
+                fetch(`{% url 'servico_campo:load_equipamentos' %}?cliente_id=${clienteId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        equipamentoSelect.innerHTML = '<option value="">---------</option>';
+                        data.forEach(equipamento => {
+                            const option = document.createElement('option');
+                            option.value = equipamento.id;
+                            option.textContent = `${equipamento.nome} (${equipamento.modelo || 'N/A'})`;
+                            equipamentoSelect.appendChild(option);
+                        });
+
+                        // Se um ID de equipamento foi passado, tenta selecioná-lo
+                        if (equipamentoSelecionadoId) {
+                            equipamentoSelect.value = equipamentoSelecionadoId;
+                        }
+                    })
+                    .catch(error => console.error('Erro ao carregar equipamentos:', error));
+            }
+            
+            // Adiciona o evento de mudança ao select de cliente
+            clienteSelect.addEventListener('change', () => loadEquipamentos(null));
+
+            // Carrega os equipamentos na carga inicial da página
+            if (clienteSelect.value) {
+                loadEquipamentos(initialEquipamentoId);
+            }
+        });
+    </script>
+{% endblock %}

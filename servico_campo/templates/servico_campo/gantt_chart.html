@@ -1,0 +1,262 @@
+{% extends 'servico_campo/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Gráfico de Linha do Tempo de Ordens de Serviço" %}{% endblock %}
+
+{% block extra_head %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style type="text/css">
+        /* --- ESTILOS GERAIS --- */
+        #chart_outer_container {
+            width: 100%; height: 600px; overflow-x: auto; overflow-y: hidden; 
+            border: 1px solid #ccc; box-sizing: border-box; margin-top: 20px;
+        }
+        #timeline_chart_div {
+            min-width: 1500px; height: 100%;
+        }
+        .filter-controls { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-controls .form-group { margin-bottom: 0; }
+        .filter-controls label { font-weight: bold; margin-bottom: 5px; }
+
+        /* --- Estilos de barras e tooltips (mantidos/refinados) --- */
+        /* REMOVIDAS TODAS AS CLASSES CSS RELACIONADAS A BORDAS DE ATRAZO/URGÊNCIA/NO PRAZO */
+        /* .timeline-bar-atrasada, .timeline-bar-urgente, .timeline-bar-no-prazo, .timeline-bar-default-border */
+
+        /* Estilo do tooltip (importante para exibir o HTML customizado) */
+        .google-visualization-tooltip {
+            max-width: 450px !important; white-space: normal !important; overflow: visible !important; 
+            height: auto !important; z-index: 10000 !important; 
+            background-color: #f7f7f7 !important; border: 1px solid #ddd !important; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; border-radius: 8px !important; 
+            padding: 0 !important; 
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; 
+        }
+        .google-visualization-tooltip > div { padding: 0 !important; margin: 0 !important; }
+
+        /* --- ESTILOS PARA O CONTEÚDO HTML DO TOOLTIP (mantidos) --- */
+        .timeline-tooltip-content {
+            padding: 15px !important; 
+            padding-left: 20px !important; /* Ajuste este valor se precisar mais/menos espaço */
+            font-size: 13px; line-height: 1.5; color: #444; 
+        }
+        .tooltip-header { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; color: #004085; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; text-align: left; }
+        .tooltip-body { display: block; }
+        .tooltip-item { margin-bottom: 4px; text-align: left; }
+        .tooltip-label { font-weight: bold; color: #666; margin-right: 5px; display: inline-block; }
+        .tooltip-value, .tooltip-status { font-weight: normal; color: #333; display: inline; }
+        .tooltip-status { font-weight: bold; }
+        .tooltip-divider { border-top: 1px solid #e0e0e0; margin: 10px 0; }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{% trans "Gráfico de Linha do Tempo de Ordens de Serviço" %}</h1>
+
+    <div class="card card-body">
+        <h5 class="card-title">{% trans "Visualização de Projetos por Técnico" %}</h5>
+        <p class="text-muted">
+            {% trans "Este gráfico exibe as Ordens de Serviço atribuídas aos técnicos dos últimos 3 meses." %}
+            {% trans "A duração da barra representa o período real de execução." %}
+            {% trans "As cores das barras indicam o status da Ordem de Serviço." %}
+        </p>
+
+        {# LEGENDA DE CORES #}
+        <div class="mt-3 mb-4">
+            <strong>{% trans "Legenda de Status:" %}</strong>
+            <span class="badge bg-success">{% trans "Concluída" %}</span>
+            <span class="badge bg-warning text-dark">{% trans "Em Execução" %}</span>
+            <span class="badge bg-info">{% trans "Planejada" %}</span>
+            <span class="badge bg-secondary">{% trans "Aguardando Plan." %}</span>
+            <span class="badge bg-danger">{% trans "Cancelada" %}</span>
+            <span class="badge bg-purple">{% trans "Pendente Aprovação" %}</span>
+        </div>
+
+        {# Controles de Filtro de Data #}
+        <div class="filter-controls">
+            <div class="form-group">
+                <label for="start_date_filter">{% trans "Data de Início:" %}</label>
+                <input type="date" id="start_date_filter" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="end_date_filter">{% trans "Data de Fim:" %}</label>
+                <input type="date" id="end_date_filter" class="form-control">
+            </div>
+            <button class="btn btn-primary" id="apply_filter_btn">{% trans "Aplicar Filtro" %}</button>
+            <button class="btn btn-secondary" id="reset_filter_btn">{% trans "Redefinir Filtro" %}</button>
+        </div>
+
+        {# Contêiner principal do gráfico #}
+        <div id="chart_outer_container">
+            <div id="timeline_chart_div"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['timeline']}); 
+        google.charts.setOnLoadCallback(function() {
+            fetchAndDrawChart(); 
+
+            document.getElementById('apply_filter_btn').addEventListener('click', fetchAndDrawChart);
+            document.getElementById('reset_filter_btn').addEventListener('click', function() {
+                document.getElementById('start_date_filter').value = '';
+                document.getElementById('end_date_filter').value = '';
+                fetchAndDrawChart(); 
+            });
+        });
+
+        let timelineChart = null; 
+
+        // REMOVIDO: Definição das propriedades de borda em JS (borderStylesJs)
+
+        function fetchAndDrawChart() {
+            const startDate = document.getElementById('start_date_filter').value;
+            const endDate = document.getElementById('end_date_filter').value;
+
+            let apiUrl = "{% url 'servico_campo:api_gantt_data' %}";
+            const params = new URLSearchParams();
+            if (startDate) {
+                params.append('start_date', startDate);
+            }
+            if (endDate) {
+                params.append('end_date', endDate);
+            }
+            if (params.toString()) {
+                apiUrl += '?' + params.toString();
+            }
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(api_data => {
+                    console.log("Dados recebidos da API (frontend):", api_data);
+
+                    if (!api_data || !api_data.data || api_data.data.length <= 1) { 
+                        document.getElementById('timeline_chart_div').innerHTML = `
+                            <div class="alert alert-info text-center mt-4" role="alert">
+                                <h5>📊 {% trans "Nenhum dado disponível" %}</h5>
+                                <p>{% trans "Não há Ordens de Serviço no período selecionado ou com técnicos atribuídos para exibir no gráfico." %}</p>
+                                <small class="text-muted">{% trans "Ajuste os filtros de data e tente novamente." %}</small>
+                            </div>
+                        `;
+                        return; 
+                    }
+
+                    var dataTable = new google.visualization.DataTable();
+                    
+                    // Colunas do DataTable (conforme a ordem do backend)
+                    // REMOVIDA: a coluna role:annotation (Border Class)
+                    dataTable.addColumn('string', 'Técnico'); 
+                    dataTable.addColumn('string', 'Ordem de Serviço'); 
+                    dataTable.addColumn({ type: 'string', role: 'tooltip', 'p': {html: true} }); 
+                    dataTable.addColumn({ type: 'string', role: 'style' }); // Para a cor de preenchimento
+                    // dataTable.addColumn({ type: 'string', id: 'borderClass', role: 'annotation' }); // REMOVIDA
+                    dataTable.addColumn('date', 'Início'); 
+                    dataTable.addColumn('date', 'Fim'); 
+
+                    let minDateData = null; 
+                    let maxDateData = null; 
+
+                    for (var i = 1; i < api_data.data.length; i++) {
+                        var row = api_data.data[i];
+                        // api_data.data[i] agora tem 6 elementos novamente (sem a coluna de borda)
+                        if (row && Array.isArray(row) && row.length === 6) { 
+                            var startDate = new (Function('return ' + row[2]))(); 
+                            var endDate = new (Function('return ' + row[3]))();
+                            
+                            if (minDateData === null || startDate < minDateData) minDateData = startDate;
+                            if (maxDateData === null || endDate > maxDateData) maxDateData = endDate;
+
+                            // Ordem dos dados no addRow deve corresponder à ordem das colunas do addColumn
+                            dataTable.addRow([
+                                row[0], // Técnico
+                                row[1], // Nome da OS
+                                row[5], // Tooltip HTML (API col 5 -> DataTable col 2)
+                                row[4], // Estilo (preenchimento da barra, API col 4 -> DataTable col 3)
+                                // REMOVIDO: row[6] (não existe mais)
+                                startDate, 
+                                endDate    
+                            ]);
+                        } else {
+                            // MUDANÇA AQUI: Mensagem de aviso atualizada
+                            console.warn("Linha de dados malformada da API (esperava 6 elementos):", row);
+                        }
+                    }
+
+                    if (minDateData === null || maxDateData === null) {
+                        minDateData = new Date(); 
+                        minDateData.setDate(minDateData.getDate() - 30); 
+                        maxDateData = new Date();
+                        maxDateData.setDate(maxDateData.getDate() + 7); 
+                    }
+
+                    const xAxisPaddingDays = 1; 
+                    const finalMinViewDate = new Date(minDateData.getFullYear(), minDateData.getMonth(), minDateData.getDate());
+                    finalMinViewDate.setDate(finalMinViewDate.getDate() - xAxisPaddingDays);
+
+                    const finalMaxViewDate = new Date(maxDateData.getFullYear(), maxDateData.getMonth(), maxDateData.getDate());
+                    finalMaxViewDate.setDate(finalMaxViewDate.getDate() + xAxisPaddingDays);
+
+
+                    if (!timelineChart) {
+                        timelineChart = new google.visualization.Timeline(document.getElementById('timeline_chart_div'));
+                    }
+
+                    var options = {
+                        height: Math.max(400, dataTable.getNumberOfRows() * 45 + 100), 
+                        timeline: {
+                            showRowLabels: true, 
+                            showBarLabels: true, 
+                            rowLabelStyle: { fontName: 'Arial', fontSize: 14, color: '#333' },
+                            barLabelStyle: { fontName: 'Arial', fontSize: 11, color: '#fff' }, 
+                            colorByRowLabel: false, 
+                            singleColor: '#0056b3' 
+                        },
+                        hAxis: {
+                            format: 'dd/MM/yyyy', 
+                            gridlines: {
+                                count: -1, 
+                                units: {
+                                    days: {format: ['dd/MM/yyyy', 'dd/MM']}, 
+                                    weeks: {format: ['dd/MM/yyyy', 'dd/MM']},
+                                    months: {format: ['MM/yyyy']}
+                                }
+                            },
+                            minorGridlines: {count: 0},
+                            textStyle: { fontSize: 10, color: '#666' },
+                            viewWindow: { 
+                                min: finalMinViewDate,
+                                max: finalMaxViewDate
+                            },
+                            viewWindowMode: 'explicit' 
+                        },
+                        tooltip: { isHtml: true },
+                        backgroundColor: '#ffffff'
+                    };
+
+                    timelineChart.draw(dataTable, options);
+
+                    // --- REMOVIDA: Lógica de aplicar bordas customizadas via JS (não é mais necessária) ---
+                    // google.visualization.events.addListener(timelineChart, 'ready', function() { ... });
+
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar dados para o Google Charts Timeline:", error);
+                    document.getElementById('timeline_chart_div').innerHTML = `
+                        <div class="alert alert-danger text-center mt-4" role="alert">
+                            <h5>⚠️ {% trans "Erro ao carregar gráfico" %}</h5>
+                            <p>{% trans "Ocorreu um erro ao carregar os dados do gráfico." %}</p>
+                            <small class="text-muted">{% trans "Detalhes:" %} ${error.message}</small>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %} {# Para internacionalização #}
+
+{% block title %}{% trans "Detalhes da Ordem de Serviço" %} {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        /* --- NOVAS REGRAS PARA O LAYOUT COM SIDEBAR --- */
+
+        /* 1. Esconde o menu lateral (sidebar) */
+        nav.sidebar {
+            display: none !important;
+        }
+
+        /* 2. Faz a área de conteúdo principal ('home') ocupar 100% da página */
+        section.home {
+            position: static !important; /* Remove o posicionamento absoluto */
+            left: 0 !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+        }
+        
+        /* 3. Esconde o cabeçalho da área de conteúdo (onde fica o menu do usuário) */
+        .home .header-content {
+            display: none !important;
+        }
+
+
+        /* --- REGRAS ANTIGAS QUE AINDA SÃO ÚTEIS --- */
+
+        /* Esconde botões de ação, modais, etc. */
+        .btn-group, .modal, .breadcrumb, .alert, td a, td form, .card-footer {
+            display: none !important;
+        }
+
+        /* Garante que o conteúdo ocupe todo o espaço */
+        .container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Remove sombras e bordas desnecessárias para economizar tinta */
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+            margin-bottom: 1cm; /* Adiciona um espaço para não cortar entre as páginas */
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Detalhes da OS" %}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{% trans "OS" %} {{ os.numero_os }} - {{ os.titulo_servico }}</h1>
+        <div class="btn-group" role="group" aria-label="Ações da OS">
+            {% if perms.servico_campo.change_ordemservico and os.status == 'AGUARDANDO_PLANEJAMENTO' %}
+        <a href="{% url 'servico_campo:planejar_os' os.pk %}" class="btn btn-info btn-sm" title="Planejar OS">
+            <i class="bi bi-people"></i> Planejar Equipe
+        </a>
+        {% endif %}
+            
+            <a href="{% url 'servico_campo:editar_os' os.pk %}" class="btn btn-warning btn-sm" title="{% trans 'Editar OS' %}"><i class="bi bi-pencil"></i> {% trans "Editar OS" %}</a>
+            <button id="print-button" class="btn btn-secondary btn-sm" title="{% trans 'Imprimir OS' %}"><i class="bi bi-printer"></i> {% trans "Imprimir" %}</button>
+            {% if os.status not in "CONCLUIDA,CANCELADA" %}
+                {% if pode_concluir %}
+                    {# Botão Ativo #}
+                    <a href="{% url 'servico_campo:encerrar_os' os.pk %}" class="btn btn-success btn-sm" title="Concluir e Encerrar OS">
+                        <i class="bi bi-check-circle"></i> Concluir OS
+                    </a>
+                {% else %}
+                    {# Botão Desabilitado com Dica #}
+                    <a href="#" class="btn btn-success btn-sm disabled" 
+                    title="Para concluir, é necessário: definir um técnico, registrar um relatório de campo e marcar um ponto." 
+                    aria-disabled="true" style="pointer-events: all !important;">
+                        <i class="bi bi-check-circle"></i> Concluir OS
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">{% trans "Informações da Ordem de Serviço" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>{% trans "Número da OS" %}:</strong>
+                    <p class="mb-0">{{ os.numero_os }}</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Status" %}:</strong>
+                    <div>
+                        {% if perms.servico_campo.change_ordemservico %}
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-sm badge bg-{{ os.status|lower }} dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {{ os.get_status_display }}
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    {% for status_value, status_display in status_choices_disponiveis %}
+                                        {% if os.status != status_value %}
+                                        <li>
+                                            <form action="{% url 'servico_campo:mudar_status_os' os.pk %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="novo_status" value="{{ status_value }}">
+                                                <button type="submit" class="dropdown-item">{{ status_display }}</button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <span class="badge bg-{{ os.status|lower }}">{{ os.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Data de Abertura" %}:</strong>
+                    <p class="mb-0">{{ os.data_abertura|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>Tipo de Manutenção:</strong>
+                    <p class="mb-0">{{ os.tipo_manutencao.nome }}</p> {# ALTERADO AQUI #}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>{% trans "Cliente" %}:</strong>
+                    <p class="mb-0">{{ os.cliente.razao_social }}</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Equipamento" %}:</strong>
+                    <p class="mb-0">{{ os.equipamento.nome }} ({{ os.equipamento.modelo }})</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>Técnico Responsável:</strong>
+                    {% if os.tecnico_responsavel %}
+                        <p class="mb-0">{{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
+                    {% else %}
+                        <p class="mb-0 text-muted">Aguardando planejamento</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>{% trans "Título do Serviço" %}:</strong>
+                    <p class="mb-0">{{ os.titulo_servico }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>{% trans "Descrição do Problema" %}:</strong>
+                    <p class="mb-0">{{ os.descricao_problema|linebreaksbr }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <strong>{% trans "Previsão de Conclusão" %}:</strong>
+                    <p class="mb-0">{% if os.data_previsao_conclusao %}{{ os.data_previsao_conclusao|date:"d/m/Y" }}{% else %}N/A{% endif %}</p>
+                </div>
+                <div class="col-md-6">
+                    <strong>{% trans "Observações Gerais" %}:</strong>
+                    <p class="mb-0">{{ os.observacoes_gerais|linebreaksbr|default:"Nenhuma." }}</p>
+                </div>
+            </div>
+
+            {% if os.equipe.all %}
+                <hr>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <strong>Equipe de Apoio:</strong>
+                        <ul class="list-group list-group-flush">
+                            {% for membro in os.equipe.all %}
+                                <li class="list-group-item py-1 ps-0">{{ membro.nome_completo }} ({{ membro.funcao }})</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    {# Seção para Documentos #}
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Documentos Anexados" %}</h5>
+            <a href="{% url 'servico_campo:upload_documento_os' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-cloud-upload"></i> {% trans "Novo Documento" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if documentos_os %}
+                <ul class="list-group list-group-flush">
+                    {% for doc in documentos_os %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                <strong>{{ doc.titulo }}</strong> (<small>{{ doc.tipo_documento.nome }}</small>) {# ALTERADO AQUI #}
+                                <br>
+                                <small class="text-muted">Upload em {{ doc.data_upload|date:"d/m/Y H:i" }} por {{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}</small>
+                            </div>
+
+                            <div class="btn-group" role="group">
+                                <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-info" title="Ver Documento">Ver</a>
+                                
+                                <a href="{{ doc.arquivo.url }}" download class="btn btn-sm btn-outline-secondary" title="Baixar Documento">Baixar</a>
+                                
+                                {% if perms.servico_campo.delete_documentoos %}
+                                    <a href="{% url 'servico_campo:excluir_documento_os' doc.pk %}" class="btn btn-sm btn-outline-danger" title="Remover Documento">Remover</a>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    Nenhum documento anexado a esta Ordem de Serviço.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Relatórios de Campo #}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Relatórios de Campo" %}</h5>
+            <a href="{% url 'servico_campo:novo_relatorio_campo' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-journal-check"></i> {% trans "Novo Relatório (RDO/FAT)" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if relatorios_campo %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Tipo" %}</th>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Técnico" %}</th>
+                                <th>{% trans "Atividades Principais" %}</th>
+                                <th>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for relatorio in relatorios_campo %}
+                                <tr>
+                                    <td>{{ relatorio.get_tipo_relatorio_display }}</td>
+                                    <td>{{ relatorio.data_relatorio|date:"d/m/Y" }}</td>
+                                    <td>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
+                                    <td>
+                                        {{ relatorio.descricao_atividades|truncatechars:100 }}
+                                        {% if relatorio.fotos.all %}
+                                            <div class="mt-2">
+                                                <strong>{% trans "Fotos" %}:</strong>
+                                                <div class="d-flex flex-wrap">
+                                                    {% for foto in relatorio.fotos.all %}
+                                                        <a href="{{ foto.imagem.url }}" target="_blank" class="me-2 mb-2" title="{{ foto.descricao|default:'' }}">
+                                                            <img src="{{ foto.imagem.url }}" alt="{{ foto.descricao|default:'' }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                        </a>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'servico_campo:editar_relatorio_campo' os.pk relatorio.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar Relatório' %}"><i class="bi bi-pencil"></i></a>
+                                        <a href="{% url 'servico_campo:upload_foto_relatorio' relatorio.pk %}" class="btn btn-sm btn-info" title="{% trans 'Anexar Foto' %}"><i class="bi bi-image"></i></a> {# Botão para anexar foto #}
+                                        <a href="{% url 'servico_campo:download_relatorio_pdf' relatorio.pk %}" class="btn btn-sm btn-dark" title="{% trans 'Baixar PDF' %}"><i class="bi bi-file-earmark-pdf"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhum relatório de campo registrado para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Registro de Ponto #}
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Registro de Ponto" %}</h5>
+            {% if not ponto_aberto %}
+                <button type="button" class="btn btn-sm btn-light" id="btnMarcarPonto" data-bs-toggle="modal" data-bs-target="#confirmMarcarPontoModal">
+                    <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
+                </button>
+            {% else %}
+                <button type="button" class="btn btn-sm btn-warning" id="btnEncerrarPonto" data-bs-toggle="modal" data-bs-target="#confirmEncerrarPontoModal" data-ponto-id="{{ ponto_aberto.pk }}">
+                    <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
+                </button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if registros_ponto %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Técnico" %}</th>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Entrada" %}</th>
+                                <th>{% trans "Saída" %}</th>
+                                <th>{% trans "Duração" %}</th>
+                                <th>{% trans "Local" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registro in registros_ponto %}
+                                <tr>
+                                    <td>{{ registro.tecnico.get_full_name|default:registro.tecnico.username }}</td>
+                                    <td>{{ registro.data|date:"d/m/Y" }}</td>
+                                    <td>{{ registro.hora_entrada|time:"H:i" }}</td>
+                                    <td>{% if registro.hora_saida %}{{ registro.hora_saida|time:"H:i" }}{% else %}<span class="badge bg-warning">{% trans "Em Aberto" %}</span>{% endif %}</td>
+                                    <td>
+                                        {{ registro.duracao_formatada }}
+                                    </td>
+                                    <td>{{ registro.localizacao|default:"N/A" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhum registro de ponto para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Despesas #}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Relatório de Reembolso de Despesas" %}</h5>
+            <a href="{% url 'servico_campo:nova_despesa' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-cash-coin"></i> {% trans "Registrar Nova Despesa" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if os.despesas.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Descrição" %}</th>
+                                <th>{% trans "Local" %}</th>
+                                <th>{% trans "Valor (R$)" %}</th>
+                                <th>{% trans "Comprovante" %}</th>
+                                <th>{% trans "Status" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despesa in os.despesas.all %}
+                                <tr>
+                                    <td>{{ despesa.data_despesa|date:"d/m/Y" }}</td>
+                                    <td>{{ despesa.descricao }}</td>
+                                    <td>{{ despesa.local_despesa|default:"N/A" }}</td>
+                                    <td>{{ despesa.valor|floatformat:2 }}</td>
+                                    <td>
+                                        {% if despesa.comprovante_anexo %}
+                                            <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}</a>
+                                        {% else %}
+                                            {% trans "Nenhum" %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if despesa.aprovada %}
+                                            <span class="badge bg-success">{% trans "Aprovada" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Pendente" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhuma despesa registrada para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Modais para Marcar/Encerrar Ponto #}
+    <div class="modal fade" id="confirmMarcarPontoModal" tabindex="-1" aria-labelledby="confirmMarcarPontoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmMarcarPontoModalLabel">{% trans "Confirmar Marcação de Ponto de Entrada" %}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% trans "Deseja marcar seu ponto de entrada agora para esta Ordem de Serviço?" %}
+                    <form id="formMarcarPonto" method="post" action="{% url 'servico_campo:registrar_ponto' os.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3 mt-3">
+                            <label for="id_localizacao_entrada" class="form-label">{% trans "Localização (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_entrada" name="localizacao" placeholder="{% trans 'Ex: Cliente A, Centro' %}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancelar" %}</button>
+                    <button type="submit" form="formMarcarPonto" class="btn btn-success">{% trans "Marcar Entrada" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmEncerrarPontoModal" tabindex="-1" aria-labelledby="confirmEncerrarPontoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="confirmEncerrarPontoModalLabel">{% trans "Confirmar Encerramento de Ponto de Saída" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% trans "Deseja encerrar seu ponto de saída agora para esta Ordem de Serviço?" %}
+                    <form id="formEncerrarPonto" method="post"> {# Action será definida via JS #}
+                        {% csrf_token %}
+                        <div class="mb-3 mt-3">
+                            <label for="id_localizacao_saida" class="form-label">{% trans "Observações (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_saida" name="observacoes" placeholder="{% trans 'Ex: Término do dia' %}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancelar" %}</button>
+                    <button type="submit" form="formEncerrarPonto" class="btn btn-warning">{% trans "Encerrar Saída" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Script para preencher a URL de encerramento do ponto no modal
+            const confirmEncerrarPontoModal = document.getElementById('confirmEncerrarPontoModal');
+            confirmEncerrarPontoModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget; // Botão que acionou o modal
+                const pontoId = button.getAttribute('data-ponto-id');
+                const formEncerrarPonto = document.getElementById('formEncerrarPonto');
+                // A URL para encerrar o ponto precisa do pk da OS e do pk do RegistroPonto
+                formEncerrarPonto.action = `/servico/ordens-servico/{{ os.pk }}/ponto/${pontoId}/encerrar/`;
+            });
+        });
+    </script>
+    <script>
+        // Script para o botão de Imprimir
+        document.getElementById('print-button').addEventListener('click', function() {
+            window.print();
+        });
+    </script>
+{% endblock %}

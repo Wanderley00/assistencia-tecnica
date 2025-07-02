@@ -1,0 +1,51 @@
+{# servico_campo/templates/servico_campo/partials/pagination_controls.html #}
+{% load i18n %}
+
+{% if is_paginated %}
+<nav aria-label="Navegação da Página" id="pagination-nav">
+    <ul class="pagination justify-content-center">
+        {% comment %} Função para construir os query params a partir do dicionário filters {% endcomment %}
+        {% with all_filters="" %}
+            {% for key, value in filters.items %}
+                {% if value %}
+                    {% if forloop.first %}{% else %}&{% endif %}{{ key }}={{ value }}
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&{{ all_filters }}">Primeira</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ all_filters }}">Anterior</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Primeira</span></li>
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+
+        {% for i in paginator.page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ i }}&{{ all_filters }}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ all_filters }}">Próxima</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&{{ all_filters }}">Última</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Próxima</span></li>
+            <li class="page-item disabled"><span class="page-link">Última</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}

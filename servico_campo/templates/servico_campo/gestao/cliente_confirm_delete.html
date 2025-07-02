@@ -1,0 +1,19 @@
+{% extends 'servico_campo/base.html' %}
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h1 class="mb-0">Confirmar Exclusão</h1>
+        </div>
+        <div class="card-body">
+            <p>Você tem certeza que deseja excluir o cliente <strong>"{{ cliente.razao_social }}"</strong>?</p>
+            <p class="text-danger">Atenção: Esta ação não pode ser desfeita. Se este cliente tiver Ordens de Serviço associadas, a exclusão pode ser bloqueada para proteger a integridade dos dados.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sim, tenho certeza</button>
+                <a href="{% url 'servico_campo:lista_clientes' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

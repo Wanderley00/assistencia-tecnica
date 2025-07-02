@@ -1,0 +1,279 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Lista de Ordens de Serviço" %}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{% trans "Ordens de Serviço" %}</h1>
+        {% if perms.servico_campo.add_ordemservico %}
+            <a href="{% url 'servico_campo:nova_os' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> {% trans "Abrir Nova OS" %}
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card card-body mb-4">
+        <form method="get" action="{% url 'servico_campo:lista_os' %}" id="search-filter-form">
+            <div class="d-flex flex-wrap gap-2 mb-3" id="status-filter-buttons">
+                <span class="fw-bold me-2">{% trans "Filtrar por Status" %}:</span>
+                {# ATUALIZADO: Adicione data-status-value="" explicitamente aqui #}
+                <a href="#" class="btn btn-sm {% if not filters.status %}btn-dark{% else %}btn-outline-dark{% endif %}" data-status-value="">{% trans "Todos" %}</a>
+                {% for value, display in status_choices %}
+                    {# ATUALIZADO: Garanta que o href seja apenas '#' para ser manipulado pelo JS #}
+                    <a href="#" class="btn btn-sm {% if filters.status == value %}btn-dark{% else %}btn-outline-dark{% endif %}" data-status-value="{{ value }}">
+                        {{ display }}
+                    </a>
+                {% endfor %}
+            </div>
+            
+            <div class="row g-3 align-items-end mt-3">
+                <div class="col-md-2">
+                    <label for="id_numero_os_filter" class="form-label">{% trans "Nº da OS" %}</label>
+                    <input type="text" class="form-control filter-input" id="id_numero_os_filter" name="numero_os" placeholder="Nº OS" value="{{ filters.numero_os }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="id_cliente_filter" class="form-label">{% trans "Cliente" %}</label>
+                    <input type="text" class="form-control filter-input" id="id_cliente_filter" name="cliente" placeholder="Cliente" value="{{ filters.cliente }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="id_equipamento_filter" class="form-label">{% trans "Equipamento" %}</label>
+                    <input type="text" class="form-control filter-input" id="id_equipamento_filter" name="equipamento" placeholder="Equipamento" value="{{ filters.equipamento }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="id_titulo_servico_filter" class="form-label">{% trans "Título" %}</label>
+                    <input type="text" class="form-control filter-input" id="id_titulo_servico_filter" name="titulo_servico" placeholder="Título" value="{{ filters.titulo_servico }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="id_tecnico_filter_text" class="form-label">{% trans "Técnico" %}</label>
+                    <input type="text" class="form-control filter-input" id="id_tecnico_filter_text" name="tecnico_nome" placeholder="Técnico" value="{{ filters.tecnico_nome }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="id_data_abertura_filter" class="form-label">{% trans "Data Abertura" %}</label>
+                    <input type="date" class="form-control filter-input" id="id_data_abertura_filter" name="data_abertura" title="Filtrar por Data de Abertura" value="{{ filters.data_abertura }}">
+                </div>
+                <div class="col-12 d-flex justify-content-end mt-3"> 
+                    <button type="submit" class="btn btn-info me-2">{% trans "Buscar" %}</button>
+                    <a href="{% url 'servico_campo:lista_os' %}" class="btn btn-secondary">{% trans "Limpar" %}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Número OS" %}</th>
+                    <th>{% trans "Cliente" %}</th>
+                    <th>{% trans "Equipamento" %}</th>
+                    <th>{% trans "Título do Serviço" %}</th>
+                    <th>{% trans "Técnico" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Data Abertura" %}</th>
+                    <th>{% trans "Ações" %}</th>
+                </tr>
+            </thead>
+            <tbody id="table-body-content"> 
+                {% if not ordens_servico %}
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="alert alert-info mt-3 mb-0" role="alert">
+                                {% trans "Nenhuma Ordem de Serviço encontrada com os critérios selecionados." %}<br>
+                                <small>{% trans "Filtros aplicados" %}: 
+                                    {% with active_filters_display="" %}
+                                        {% for key, value in filters.items %}
+                                            {% if value and key != 'page' %}
+                                                {% if not forloop.first %}, {% endif %}
+                                                <strong>{{ key|title }}:</strong> {{ value }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endwith %}
+                                    {{ active_filters_display }}
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    {% for os in ordens_servico %}
+                        <tr>
+                            <td>{{ os.numero_os }}</td>
+                            <td>{{ os.cliente.razao_social }}</td>
+                            <td>
+                                <a href="{% url 'servico_campo:detalhe_os' os.pk %}">{{ os.equipamento.nome }} ({{ os.equipamento.modelo }})</a>
+                            </td>
+                            <td>
+                                <a href="{% url 'servico_campo:detalhe_os' os.pk %}">{{ os.titulo_servico }}</a>
+                            </td>
+                            <td>
+                                {% if os.tecnico_responsavel %}
+                                    {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}
+                                {% else %}
+                                    <span class="text-muted">---</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ os.status|lower }}">{{ os.get_status_display }}</span>
+                            </td>
+                            <td>{{ os.data_abertura|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Ações da OS"> {# <-- NOVO: btn-group para agrupar e btn-group-sm para botões pequenos #}
+                                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes' %}"><i class="bi bi-eye"></i></a> {# Removido btn-sm daqui #}
+                                    {% if perms.servico_campo.change_ordemservico %}
+                                        <a href="{% url 'servico_campo:editar_os' os.pk %}" class="btn btn-warning" title="{% trans 'Editar' %}"><i class="bi bi-pencil"></i></a> {# Removido btn-sm daqui #}
+                                    {% endif %}
+                                    {% if perms.servico_campo.delete_ordemservico %}
+                                        <a href="{% url 'servico_campo:excluir_os' os.pk %}" class="btn btn-danger" title="{% trans 'Excluir' %}"><i class="bi bi-trash"></i></a> {# Removido btn-sm daqui #}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div id="pagination-container" class="mt-3"> 
+        {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+    </div>
+
+{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .badge.bg-planejada { background-color: #0d6efd !important; }
+        .badge.bg-em_execucao { background-color: #ffc107 !important; color: #000 !important; }
+        .badge.bg-concluida { background-color: #198754 !important; }
+        .badge.bg-cancelada { background-color: #dc3545 !important; }
+        .badge.bg-aguardando_planejamento { background-color: #6c757d !important; color: #fff !important; } 
+        .badge.bg-pendente_aprovacao { background-color: #6f42c1 !important; } 
+
+        .table thead th { vertical-align: bottom; padding-bottom: 0.5rem; }
+        .filter-row td { padding-top: 0.5rem; padding-bottom: 0.5rem; vertical-align: top; }
+        .filter-input { width: 100%; padding: 0.3rem 0.5rem; font-size: 0.85rem; height: auto; margin-bottom: 0; }
+        .filter-actions { display: flex; gap: 5px; justify-content: flex-end; align-items: flex-end; height: 100%; }
+        .filter-actions .btn-sm { padding: .25rem .5rem; font-size: .875rem; line-height: 1.5; border-radius: .2rem; }
+
+        .table thead tr:first-child th { vertical-align: top; }
+        .table th:nth-child(1), .table td:nth-child(1) { width: 10%; min-width: 80px; } 
+        .table th:nth-child(2), .table td:nth-child(2) { width: 15%; min-width: 120px; } 
+        .table th:nth-child(3), .table td:nth-child(3) { width: 15%; min-width: 120px; } 
+        .table th:nth-child(4), .table td:nth-child(4) { width: 15%; min-width: 120px; } 
+        .table th:nth-child(5), .table td:nth-child(5) { width: 12%; min-width: 100px; } 
+        .table th:nth-child(6), .table td:nth-child(6) { width: 10%; min-width: 80px; } 
+        .table th:nth-child(7), .table td:nth-child(7) { width: 10%; min-width: 90px; } 
+        .table th:nth-child(8), .table td:nth-child(8) { width: 8%; min-width: 60px; } 
+    </style>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchFilterForm = document.getElementById('search-filter-form');
+    const statusFilterButtonsContainer = document.getElementById('status-filter-buttons');
+    
+    // As referências para os inputs de filtro são estáticas
+    const osNumberFilter = document.getElementById('id_numero_os_filter');
+    const clienteFilter = document.getElementById('id_cliente_filter');
+    const equipamentoFilter = document.getElementById('id_equipamento_filter');
+    const tituloServicoFilter = document.getElementById('id_titulo_servico_filter');
+    const tecnicoFilterText = document.getElementById('id_tecnico_filter_text');
+    const dataAberturaFilter = document.getElementById('id_data_abertura_filter');
+    
+    let debounceTimer;
+
+    // Função para coletar todos os parâmetros do formulário e redirecionar
+    function submitFormWithFilters(pageNumber = 1) {
+        const urlParams = new URLSearchParams(); // Crie URLSearchParams vazio
+
+        // Adicione os parâmetros dos campos de filtro
+        // Se o valor estiver vazio, o .set não adiciona o parâmetro.
+        if (osNumberFilter.value) urlParams.set('numero_os', osNumberFilter.value);
+        if (clienteFilter.value) urlParams.set('cliente', clienteFilter.value);
+        if (equipamentoFilter.value) urlParams.set('equipamento', equipamentoFilter.value);
+        if (tituloServicoFilter.value) urlParams.set('titulo_servico', tituloServicoFilter.value);
+        if (tecnicoFilterText.value) urlParams.set('tecnico_nome', tecnicoFilterText.value);
+        if (dataAberturaFilter.value) urlParams.set('data_abertura', dataAberturaFilter.value);
+
+        // Adiciona o status do filtro ativo
+        // Pega o status do botão que tem a classe 'btn-dark' ATUALMENTE no DOM
+        const activeStatusLink = statusFilterButtonsContainer.querySelector('.btn-dark');
+        const statusValue = activeStatusLink ? activeStatusLink.dataset.statusValue : '';
+        if (statusValue) urlParams.set('status', statusValue); 
+        
+        // Define a página
+        if (pageNumber > 1) urlParams.set('page', pageNumber); 
+
+        // Redireciona a página para a nova URL com os filtros
+        window.location.href = `${searchFilterForm.action}?${urlParams.toString()}`;
+    }
+
+
+    // --- LISTENERS DE EVENTOS ---
+
+    // Listener para os botões de status (no card superior)
+    statusFilterButtonsContainer.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault(); 
+            
+            // 1. Atualiza a classe visual dos botões de filtro
+            statusFilterButtonsContainer.querySelectorAll('a').forEach(l => l.classList.replace('btn-dark', 'btn-outline-dark'));
+            e.currentTarget.classList.replace('btn-outline-dark', 'btn-dark');
+            
+            // 2. Aciona a submissão do formulário com os filtros atuais.
+            submitFormWithFilters(1); 
+        });
+    });
+
+    // Listener para a busca automática ao digitar (input/change)
+    [osNumberFilter, clienteFilter, equipamentoFilter, tituloServicoFilter, tecnicoFilterText, dataAberturaFilter].forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    submitFormWithFilters(1); 
+                }, 300);
+            });
+            input.addEventListener('change', () => { 
+                clearTimeout(debounceTimer); 
+                submitFormWithFilters(1); 
+            });
+        }
+    });
+
+    // Listener para o botão "Limpar"
+    const clearButton = searchFilterForm.querySelector('a.btn-secondary'); 
+    if (clearButton) {
+        clearButton.addEventListener('click', e => {
+            e.preventDefault(); 
+            window.location.href = searchFilterForm.action; 
+        });
+    }
+
+    // A paginação já é gerenciada pelos links GET normais do Django.
+    // Nada a fazer aqui.
+
+    // Função para inicializar o estado visual dos botões de status
+    function initializeStatusButtons() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentStatusFromUrl = urlParams.get('status') || ''; 
+
+        statusFilterButtonsContainer.querySelectorAll('a').forEach(link => {
+            const linkStatus = link.dataset.statusValue || ''; 
+            
+            if (linkStatus === currentStatusFromUrl) {
+                link.classList.replace('btn-outline-dark', 'btn-dark');
+            } else {
+                link.classList.replace('btn-dark', 'btn-outline-dark');
+            }
+        });
+    }
+
+    // --- CHAMADAS INICIAIS ---
+    initializeStatusButtons(); 
+});
+</script>
+{% endblock %}

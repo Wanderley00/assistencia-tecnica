@@ -1,0 +1,21 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirmar Exclusão de Ordem de Serviço" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white"><h1 class="mb-0">{% trans "Confirmar Exclusão" %}</h1></div>
+    <div class="card-body">
+        {# O bloco de mensagens do base.html já cuidará das mensagens do Django #}
+        <p>{% trans "Você tem certeza que deseja excluir a Ordem de Serviço" %} <strong>"{{ os.numero_os }} - {{ os.titulo_servico }}"</strong>?</p>
+        <p class="text-danger">{% trans "Atenção: Esta ação não pode ser desfeita. A exclusão será bloqueada se houver Registros de Ponto, Relatórios de Campo ou Despesas associados a esta Ordem de Serviço." %}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "Sim, excluir" %}</button>
+            <a href="{% url 'servico_campo:lista_os' %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

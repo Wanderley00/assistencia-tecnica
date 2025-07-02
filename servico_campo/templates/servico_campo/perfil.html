@@ -1,0 +1,35 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}Meu Perfil - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="mb-0">{% trans "Meu Perfil" %}</h1>
+    </div>
+    <div class="card-body">
+        <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+                <strong>{% trans "Nome de Usuário:" %}</strong> {{ user.username }}
+            </li>
+            <li class="list-group-item">
+                <strong>{% trans "Email:" %}</strong> {{ user.email }}
+            </li>
+            <li class="list-group-item">
+                <strong>{% trans "Grupos:" %}</strong> 
+                {% for group in user.groups.all %}
+                    <span class="badge bg-info">{{ group.name }}</span>
+                {% empty %}
+                    <span class="text-muted">Nenhum grupo atribuído.</span>
+                {% endfor %}
+            </li>
+            <li class="list-group-item">
+                <strong>{% trans "Data de Cadastro:" %}</strong> {{ user.date_joined|date:"d/m/Y H:i" }}
+            </li>
+        </ul>
+        <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-primary mt-3" target="_blank">{% trans "Editar Perfil (Admin)" %}</a>
+    </div>
+</div>
+{% endblock %}
