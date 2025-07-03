@@ -1,6 +1,6 @@
 /* =================================================================== */
 /* ===         CÓDIGO CSS CONSOLIDADO E CORRIGIDO PARA O MENU     === */
-/* ===         (Versão Final)                                     === */
+/* ===         (Versão FINAL E LIMPA)                             === */
 /* =================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -43,7 +43,6 @@ body {
 /* --- CABEÇALHO (LOGO E NOME) --- */
 .sidebar header {
   position: relative;
-  /* Garante que o toggle não seja cortado por overflow do menu-bar */
   z-index: 1; 
   margin-bottom: 20px; /* Espaço entre o cabeçalho e o menu */
 }
@@ -104,46 +103,42 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Removido overflow-y e padding-bottom daqui, transferidos para .menu-links */
 }
 
 .sidebar .menu {
-  flex-grow: 1; /* Permite que o menu ocupe o espaço restante */
-  display: flex; /* Adicionado */
-  flex-direction: column; /* Adicionado */
+  flex-grow: 1; 
+  display: flex; 
+  flex-direction: column; 
 }
 
 .sidebar .menu-links {
   padding-left: 0;
   list-style: none;
-  overflow-y: auto; /* A rolagem deve estar aqui */
-  padding-bottom: 10px; /* Espaço para o final da rolagem */
-  /* NOVO: Ajuste do scrollbar para não ser visível o tempo todo */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
+  overflow-y: auto; 
+  padding-bottom: 10px; 
+  scrollbar-width: none; 
+  -ms-overflow-style: none;  
 }
 .sidebar .menu-links::-webkit-scrollbar {
-  width: 0; /* Chrome, Safari */
+  width: 0; 
 }
-
 
 /* Base para todos os itens de navegação (li) */
 .sidebar .nav-link {
     margin-top: 5px;
-    /* Remover height: 50px; aqui, se presente. A altura é do 'a' interno. */
 }
 
 /* Base para todos os links principais e o item "Configurações" */
 .sidebar .nav-link > a,
 .sidebar .dropdown-toggle-sidebar {
-  height: 50px; /* Altura fixa para o link em si */
+  height: 50px; 
   width: 100%;
   display: flex;
   align-items: center;
   text-decoration: none;
   border-radius: 6px;
   transition: all 0.3s ease;
-  color: var(--text-color); /* Cor padrão do texto */
+  color: var(--text-color); 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -153,7 +148,7 @@ body {
 .sidebar .nav-link > a:hover,
 .sidebar .dropdown-toggle-sidebar:hover {
   background-color: var(--primary-color);
-  color: #fff; /* Texto branco no hover */
+  color: #fff; 
 }
 
 /* Ícones dos links principais e do item "Configurações" */
@@ -162,7 +157,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px; /* Espaço para o ícone */
+  min-width: 60px; 
   font-size: 20px;
   color: var(--text-color);
   transition: all 0.3s ease;
@@ -189,7 +184,7 @@ body {
 /* Estilos específicos para o link principal "Configurações" (contém o submenu) */
 .sidebar .dropdown-toggle-sidebar {
     position: relative;
-    padding-right: 20px; /* Espaço para o chevron */
+    padding-right: 20px; 
 }
 
 /* Ícone de seta (toggle) para o submenu de Configurações */
@@ -202,23 +197,19 @@ body {
     border-top-color: currentColor;
     border-right: 0;
     border-bottom: 0;
-    transform: rotate(90deg); /* Seta para a direita (colapsado) */
+    transform: rotate(90deg); 
     transition: transform .2s ease-in-out;
 }
 
 .sidebar .dropdown-toggle-sidebar[aria-expanded="true"]::after {
-    transform: rotate(180deg); /* Seta para baixo (expandido) */
+    transform: rotate(180deg); 
 }
 
-
 /* Estilo para o contêiner do submenu (o div.collapse) */
-/* Isso é CRUCIAL para que o Bootstrap Collapse funcione corretamente. */
-/* Não adicione overflow: hidden ou height fixo aqui */
 .sidebar .menu-links .collapse {
-    /* Padding e margem para o submenu */
     padding-top: 5px; 
     padding-bottom: 5px;
-    margin-left: 0; /* Remove qualquer margem indesejada do UL padrão do Bootstrap */
+    margin-left: 0; 
 }
 
 /* Estilo da lista de links DENTRO do submenu */
@@ -228,57 +219,49 @@ body {
     margin: 0;
 }
 
-/* servico_campo/static/servico_campo/css/sidebar.css */
-
-/* ... (Mantenha seu CSS existente até aqui) ... */
-
-/* Estilos para os links individuais dentro do submenu */
+/* Estilos para os LINKS individuais dentro do submenu */
 .sidebar .btn-toggle-nav li a {
     height: 40px; 
-    /* Ajuste o padding-left para diminuir o recuo. Tente 50px ou 45px. */
-    padding: 8px 14px 8px 50px; /* Alterado o padding-left de 60px para 50px */
+    padding: 8px 14px 8px 50px; 
     font-size: 14px;
     border-radius: 4px;
     display: flex;
-    align-items: center; /* Centraliza verticalmente */
+    align-items: center; 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     transition: background-color 0.3s ease, color 0.3s ease;
-    color: var(--text-color); /* Cor padrão do texto do sub-item */
+    color: var(--text-color); 
 }
 
 /* Ícones dos sub-itens */
 .sidebar .btn-toggle-nav li a .icon-sub-menu {
     min-width: 30px; 
     font-size: 16px;
-    margin-right: 10px; /* Espaço entre o ícone e o texto */
+    margin-right: 10px; 
     display: flex;
-    justify-content: center; /* Centraliza o ícone horizontalmente */
-    align-items: center; /* Centraliza o ícone verticalmente */
-    color: inherit; /* Herda a cor do link pai */
+    justify-content: center; 
+    align-items: center; 
+    color: inherit; 
     transition: color 0.3s ease;
 }
 
 /* Estado de HOVER para os LINKS individuais do submenu */
 .sidebar .btn-toggle-nav li a:hover {
-    background-color: var(--primary-color); /* Fundo azul forte */
-    color: #fff !important; /* <--- ADICIONE !important AQUI para forçar o texto a ficar branco */
+    background-color: var(--primary-color); 
+    color: #fff !important; 
 }
 
 /* Estado de HOVER para os ÍCONES dentro dos LINKS do submenu */
 .sidebar .btn-toggle-nav li a:hover .icon-sub-menu {
-    color: #fff; /* Ícone branco no hover */
+    color: #fff; 
 }
-
-/* ... (Mantenha o restante do seu CSS sem alterações) ... */
 
 /* --- ESTADO DO MENU FECHADO (SIDEBAR.CLOSE) --- */
 .sidebar.close .text {
   opacity: 0;
   pointer-events: none;
-  /* As transições de largura cuidam do desaparecimento */
-  width: 0; /* Ajuda a esconder o texto instantaneamente */
+  width: 0; 
 }
 
 .sidebar.close .toggle {
@@ -287,46 +270,46 @@ body {
 
 .sidebar.close .nav-link > a,
 .sidebar.close .dropdown-toggle-sidebar {
-  justify-content: center; /* Centraliza o ícone */
-  padding: 0; /* Remove padding que empurra o ícone */
+  justify-content: center; 
+  padding: 0; 
 }
 
 /* Ícones dos links principais no modo colapsado */
 .sidebar.close .nav-link > a .icon,
 .sidebar.close .dropdown-toggle-sidebar .icon {
-    min-width: 100%; /* Garante que o ícone ocupe o espaço para centralizar */
-    margin-right: 0; /* Remove margem entre ícone e texto oculto */
+    min-width: 100%; 
+    margin-right: 0; 
 }
 
 /* Ícone de seta (toggle) para o submenu "Configurações" no modo colapsado */
 .sidebar.close .dropdown-toggle-sidebar::after {
-    display: none; /* Oculta a seta */
+    display: none; 
 }
 
 /* Oculta completamente o submenu quando a sidebar está fechada */
 .sidebar.close .collapse {
-/*    display: none !important; /* Força ocultar o div.collapse */
+    display: none !important; 
     height: 0 !important;
     overflow: hidden !important;
     visibility: hidden !important;
     pointer-events: none !important;
-    transition: none !important; /* Desabilita transição para ocultação instantânea */
+    transition: none !important; 
 }
 
 /* --- ÁREA DE CONTEÚDO PRINCIPAL (move-se com a sidebar) --- */
 .home {
   position: relative;
-  left: 280px; /* Igual à largura do sidebar expandido */
-  width: calc(100% - 280px); /* Ocupa o resto da tela */
+  left: 280px; 
+  width: calc(100% - 280px); 
   height: 100vh;
   padding: 20px 40px;
   background-color: var(--body-color);
   transition: var(--tran-05);
-  overflow-y: auto; /* Permite rolagem do conteúdo principal */
+  overflow-y: auto; 
 }
 
 .sidebar.close ~ .home {
-  left: 88px; /* Igual à largura do sidebar colapsado */
+  left: 88px; 
   width: calc(100% - 88px);
 }
 
