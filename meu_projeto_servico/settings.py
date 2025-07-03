@@ -150,6 +150,10 @@ LOCALE_PATHS = [
 ]
 
 
+# settings.py
+
+# ...
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -157,12 +161,18 @@ STATIC_URL = 'static/'
 # Onde `collectstatic` vai copiar todos os arquivos estáticos para produção
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Seus apps já têm pastas 'static', mas se você tiver estáticos globais na raiz do projeto:
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'), # Ex: meu_projeto_servico/static/
-# ]
+# AONDE O DJANGO VAI PROCURAR ARQUIVOS ESTÁTICOS, ALÉM DAS PASTAS 'static' DOS APPS
+STATICFILES_DIRS = [
+    # Isto aponta para meu_projeto_servico/static/
+    os.path.join(BASE_DIR, 'static'),
+    # Se você tiver uma estrutura como servico_campo/static/servico_campo/,
+    # esta linha ajuda a collectstatic a encontrar.
+    # Pode ser necessário adicionar mais caminhos se tiver outras pastas 'static' globais.
+]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ...
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
