@@ -305,7 +305,7 @@ body {
 
 /* Oculta completamente o submenu quando a sidebar está fechada */
 .sidebar.close .collapse {
-    display: none !important; /* Força ocultar o div.collapse */
+/*    display: none !important; /* Força ocultar o div.collapse */
     height: 0 !important;
     overflow: hidden !important;
     visibility: hidden !important;
