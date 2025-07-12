@@ -1,3 +1,322 @@
+/* =================================================================== */
+/* ===         CÓDIGO CSS CONSOLIDADO E CORRIGIDO PARA O MENU     === */
+/* ===         (Versão FINAL E LIMPA)                             === */
+/* =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --body-color: #f0f2f5;
+  --sidebar-color: #FFF;
+  --primary-color: #0056b3;
+  --primary-color-light: #F6F5FF;
+  --toggle-color: #DDD;
+  --text-color: #707070;
+  --tran-05: all 0.5s ease;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--body-color);
+}
+
+/* --- ESTRUTURA PRINCIPAL DO SIDEBAR --- */
 .sidebar {
-    display: none !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 280px; /* Largura expandida */
+  padding: 10px 14px;
+  background: var(--sidebar-color);
+  z-index: 1000;
+  transition: var(--tran-05);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  display: flex; /* Adicionado para garantir que o flexbox do menu-bar funcione bem */
+  flex-direction: column; /* Adicionado para garantir que o flexbox do menu-bar funcione bem */
+}
+
+.sidebar.close {
+  width: 88px; /* Largura colapsada */
+}
+
+/* --- CABEÇALHO (LOGO E NOME) --- */
+.sidebar header {
+  position: relative;
+  z-index: 1; 
+  margin-bottom: 20px; /* Espaço entre o cabeçalho e o menu */
+}
+
+.sidebar header .image-text {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar header .image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+
+.sidebar header .logo-text {
+  display: flex;
+  flex-direction: column;
+  color: var(--text-color);
+}
+
+.sidebar header .name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sidebar header .profession {
+  font-size: 16px;
+  margin-top: -2px;
+}
+
+.sidebar header .toggle {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%) rotate(180deg); /* Seta para a esquerda quando expandido */
+  height: 25px;
+  width: 25px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--tran-05);
+}
+
+.sidebar.close .toggle {
+  transform: translateY(-50%) rotate(0deg); /* Seta para a direita quando colapsado */
+}
+
+/* --- CORPO E LINKS DO MENU --- */
+.sidebar .menu-bar {
+  flex-grow: 1; /* Permite que o menu-bar ocupe o espaço restante */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar .menu {
+  flex-grow: 1; 
+  display: flex; 
+  flex-direction: column; 
+}
+
+.sidebar .menu-links {
+  padding-left: 0;
+  list-style: none;
+  overflow-y: auto; 
+  padding-bottom: 10px; 
+  scrollbar-width: none; 
+  -ms-overflow-style: none;  
+}
+.sidebar .menu-links::-webkit-scrollbar {
+  width: 0; 
+}
+
+
+/* Base para todos os itens de navegação (li) */
+.sidebar .nav-link {
+    margin-top: 5px;
+}
+
+/* Base para todos os links principais e o item "Configurações" */
+.sidebar .nav-link > a,
+.sidebar .dropdown-toggle-sidebar {
+  height: 50px; 
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: var(--text-color); 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover para links principais e o item "Configurações" */
+.sidebar .nav-link > a:hover,
+.sidebar .dropdown-toggle-sidebar:hover {
+  background-color: var(--primary-color);
+  color: #fff; 
+}
+
+/* Ícones dos links principais e do item "Configurações" */
+.sidebar .nav-link > a .icon,
+.sidebar .dropdown-toggle-sidebar .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px; 
+  font-size: 20px;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+/* Texto dos links principais e do item "Configurações" */
+.sidebar .nav-link > a .text,
+.sidebar .dropdown-toggle-sidebar .text {
+  color: var(--text-color);
+  font-size: 17px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  opacity: 1;
+}
+
+/* Hover específico para ícones e textos dos links principais */
+.sidebar .nav-link > a:hover .icon,
+.sidebar .nav-link > a:hover .text,
+.sidebar .dropdown-toggle-sidebar:hover .icon,
+.sidebar .dropdown-toggle-sidebar:hover .text {
+  color: #fff;
+}
+
+/* Estilos específicos para o link principal "Configurações" (contém o submenu) */
+.sidebar .dropdown-toggle-sidebar {
+    position: relative;
+    padding-right: 20px; 
+}
+
+/* Ícone de seta (toggle) para o submenu de Configurações */
+.sidebar .dropdown-toggle-sidebar::after {
+    display: inline-block;
+    margin-left: auto;
+    vertical-align: middle;
+    content: "";
+    border: .3em solid transparent;
+    border-top-color: currentColor;
+    border-right: 0;
+    border-bottom: 0;
+    transform: rotate(90deg); 
+    transition: transform .2s ease-in-out;
+}
+
+.sidebar .dropdown-toggle-sidebar[aria-expanded="true"]::after {
+    transform: rotate(180deg); 
+}
+
+/* Estilo para o contêiner do submenu (o div.collapse) */
+.sidebar .menu-links .collapse {
+    padding-top: 5px; 
+    padding-bottom: 5px;
+    margin-left: 0; 
+}
+
+/* Estilo da lista de links DENTRO do submenu */
+.sidebar .btn-toggle-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Estilos para os LINKS individuais dentro do submenu */
+.sidebar .btn-toggle-nav li a {
+    height: 40px; 
+    padding: 8px 14px 8px 50px; 
+    font-size: 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: var(--text-color); 
+}
+
+/* Ícones dos sub-itens */
+.sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 30px; 
+    font-size: 16px;
+    margin-right: 10px; 
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    color: inherit; 
+    transition: color 0.3s ease;
+}
+
+/* Estado de HOVER para os LINKS individuais do submenu */
+.sidebar .btn-toggle-nav li a:hover {
+    background-color: var(--primary-color); 
+    color: #fff !important; 
+}
+
+/* Estado de HOVER para os ÍCONES dentro dos LINKS do submenu */
+.sidebar .btn-toggle-nav li a:hover .icon-sub-menu {
+    color: #fff; 
+}
+
+/* --- ESTADO DO MENU FECHADO (SIDEBAR.CLOSE) --- */
+.sidebar.close .text {
+  opacity: 0;
+  pointer-events: none;
+  width: 0; 
+}
+
+.sidebar.close .toggle {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.sidebar.close .nav-link > a,
+.sidebar.close .dropdown-toggle-sidebar {
+  justify-content: center; 
+  padding: 0; 
+}
+
+/* Ícones dos links principais no modo colapsado */
+.sidebar.close .nav-link > a .icon,
+.sidebar.close .dropdown-toggle-sidebar .icon {
+    min-width: 100%; 
+    margin-right: 0; 
+}
+
+/* Ícone de seta (toggle) para o submenu "Configurações" no modo colapsado */
+.sidebar.close .dropdown-toggle-sidebar::after {
+    display: none; 
+}
+
+/* Oculta completamente o submenu quando a sidebar está fechada */
+.sidebar.close .collapse {
+    display: none !important; 
+    height: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: none !important; 
+}
+
+/* --- ÁREA DE CONTEÚDO PRINCIPAL (move-se com a sidebar) --- */
+.home {
+  position: relative;
+  left: 280px; 
+  width: calc(100% - 280px); 
+  height: 100vh;
+  padding: 20px 40px;
+  background-color: var(--body-color);
+  transition: var(--tran-05);
+  overflow-y: auto; 
+}
+
+.sidebar.close ~ .home {
+  left: 88px; 
+  width: calc(100% - 88px);
+}
+
+.home .header-content {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 20px;
 }
