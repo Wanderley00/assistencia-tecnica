@@ -14,7 +14,7 @@
 
     <div class="card">
         <div class="card-header bg-warning text-dark">
-            <h1 class="card-title mb-0">{{ form_action_title }} para OS {{ os.numero_os }}</h1>
+            <h1 class="card-title mb-0">{{ form_action_title }} Despesa para OS {{ os.numero_os }}</h1>
         </div>
         <div class="card-body">
             {# IMPORTANTE: enctype é obrigatório para upload de arquivos #}
@@ -43,6 +43,13 @@
                     </div>
                 </div>
 
+                {# NOVO CAMPO: Categoria da Despesa #}
+                <div class="mb-3">
+                    <label for="{{ form.categoria_despesa.id_for_label }}" class="form-label">{{ form.categoria_despesa.label }}</label>
+                    {{ form.categoria_despesa }}
+                    {% if form.categoria_despesa.errors %}<div class="text-danger">{{ form.categoria_despesa.errors }}</div>{% endif %}
+                </div>
+
                 <div class="mb-3">
                     <label for="{{ form.descricao.id_for_label }}" class="form-label">{{ form.descricao.label }}</label>
                     {{ form.descricao }}
@@ -60,6 +67,16 @@
                         {{ form.tipo_pagamento }}
                         {% if form.tipo_pagamento.errors %}<div class="text-danger">{{ form.tipo_pagamento.errors }}</div>{% endif %}
                     </div>
+                </div>
+
+                {# NOVO CAMPO: Checkbox de Adiantamento #}
+                <div class="form-check mb-3">
+                    {{ form.is_adiantamento }}
+                    <label class="form-check-label" for="{{ form.is_adiantamento.id_for_label }}">
+                        {{ form.is_adiantamento.label }}
+                        {% if form.is_adiantamento.help_text %}<small class="form-text text-muted">{{ form.is_adiantamento.help_text }}</small>{% endif %}
+                    </label>
+                    {% if form.is_adiantamento.errors %}<div class="text-danger">{{ form.is_adiantamento.errors }}</div>{% endif %}
                 </div>
                 
                 <div class="mb-3">

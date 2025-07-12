@@ -1,0 +1,81 @@
+{# servico_campo/registro_ponto_form_edit.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_action_title }} - OS {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:detalhe_os' os.pk %}">{% trans "Detalhes da OS" %} {{ os.numero_os }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ form_action_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h1 class="card-title mb-0">{{ form_action_title }} para OS {{ os.numero_os }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.data.id_for_label }}" class="form-label">{{ form.data.label }}</label>
+                        {{ form.data }}
+                        {% if form.data.errors %}<div class="text-danger">{{ form.data.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.hora_entrada.id_for_label }}" class="form-label">{{ form.hora_entrada.label }}</label>
+                        {{ form.hora_entrada }}
+                        {% if form.hora_entrada.errors %}<div class="text-danger">{{ form.hora_entrada.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.hora_saida.id_for_label }}" class="form-label">{{ form.hora_saida.label }}</label>
+                        {{ form.hora_saida }}
+                        {% if form.hora_saida.errors %}<div class="text-danger">{{ form.hora_saida.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.localizacao.id_for_label }}" class="form-label">{{ form.localizacao.label }}</label>
+                    {{ form.localizacao }}
+                    {% if form.localizacao.errors %}<div class="text-danger">{{ form.localizacao.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.localizacao_saida.id_for_label }}" class="form-label">{{ form.localizacao_saida.label }}</label>
+                    {{ form.localizacao_saida }}
+                    {% if form.localizacao_saida.errors %}<div class="text-danger">{{ form.localizacao_saida.errors }}</div>{% endif %}
+                </div>
+
+                {# NOVO CAMPO: Observações de Entrada #}
+                <div class="mb-3">
+                    <label for="{{ form.observacoes_entrada.id_for_label }}" class="form-label">{{ form.observacoes_entrada.label }}</label>
+                    {{ form.observacoes_entrada }}
+                    {% if form.observacoes_entrada.errors %}<div class="text-danger">{{ form.observacoes_entrada.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.observacoes.id_for_label }}" class="form-label">{{ form.observacoes.label }}</label>
+                    {{ form.observacoes }}
+                    {% if form.observacoes.errors %}<div class="text-danger">{{ form.observacoes.errors }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-success mt-3">{% trans "Salvar Alterações" %}</button>
+                <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary mt-3">{% trans "Cancelar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

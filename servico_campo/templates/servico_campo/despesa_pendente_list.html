@@ -1,3 +1,5 @@
+{# servico_campo/despesa_pendente_list.html #}
+
 {% extends 'servico_campo/base.html' %}
 {% load i18n %}
 
@@ -36,20 +38,24 @@
                             <td>{{ despesa.valor|floatformat:2 }}</td>
                             <td>
                                 {% if despesa.comprovante_anexo %}
-                                    <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}</a>
+                                    <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}/Comprovante</a>
                                 {% else %}
                                     {% trans "Nenhum" %}
                                 {% endif %}
                             </td>
                             <td class="text-center d-flex justify-content-center">
-                                <form method="post" action="{% url 'servico_campo:aprovar_despesa' despesa.pk %}" class="me-2">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-success">{% trans "Aprovar" %}</button>
-                                </form>
-                                <form method="post" action="{% url 'servico_campo:rejeitar_despesa' despesa.pk %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">{% trans "Rejeitar" %}</button>
-                                </form>
+                                {% if perms.servico_campo.change_despesa %}
+                                <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn btn-sm btn-warning me-2" title="{% trans 'Editar Despesa' %}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% endif %}
+                                {# Botões de Aprovar/Rejeitar agora apontam para a nova view #}
+                                <a href="{% url 'servico_campo:acao_despesa' pk=despesa.pk acao='aprovar' %}" class="btn btn-sm btn-success me-2" title="{% trans 'Aprovar Despesa' %}">
+                                    {% trans "Aprovar" %}
+                                </a>
+                                <a href="{% url 'servico_campo:acao_despesa' pk=despesa.pk acao='rejeitar' %}" class="btn btn-sm btn-danger" title="{% trans 'Rejeitar Despesa' %}">
+                                    {% trans "Rejeitar" %}
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}

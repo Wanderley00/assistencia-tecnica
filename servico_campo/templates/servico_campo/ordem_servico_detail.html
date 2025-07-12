@@ -68,8 +68,15 @@
         <a href="{% url 'servico_campo:planejar_os' os.pk %}" class="btn btn-info btn-sm" title="Planejar OS">
             <i class="bi bi-people"></i> Planejar Equipe
         </a>
+    {# Botão "Editar Planejamento" - Aparece se JÁ FOI PLANEJADA (ou em execução, etc.) e tem permissão #}
+    {% elif perms.servico_campo.change_ordemservico and os.status != 'AGUARDANDO_PLANEJAMENTO' and os.status not in "CONCLUIDA,CANCELADA" %}
+        {# Condição mais explícita para "planejamento realizado": se possui tecnico, inicio planejado ou previsao de conclusao #}
+        {% if os.tecnico_responsavel or os.data_inicio_planejado or os.data_previsao_conclusao %}
+            <a href="{% url 'servico_campo:planejar_os' os.pk %}" class="btn btn-primary btn-sm" title="Editar Planejamento">
+                <i class="bi bi-calendar-range"></i> {% trans "Editar Planejamento" %}
+            </a>
         {% endif %}
-            
+    {% endif %}
             <a href="{% url 'servico_campo:editar_os' os.pk %}" class="btn btn-warning btn-sm" title="{% trans 'Editar OS' %}"><i class="bi bi-pencil"></i> {% trans "Editar OS" %}</a>
             <button id="print-button" class="btn btn-secondary btn-sm" title="{% trans 'Imprimir OS' %}"><i class="bi bi-printer"></i> {% trans "Imprimir" %}</button>
             {% if os.status not in "CONCLUIDA,CANCELADA" %}
@@ -168,17 +175,70 @@
 
             <div class="row mb-3">
                 <div class="col-12">
-                    <strong>{% trans "Descrição do Problema" %}:</strong>
+                    <strong>{% trans "Descrição do Problema (Original da OS):" %}</strong> {# Renomeado o label #}
                     <p class="mb-0">{{ os.descricao_problema|linebreaksbr }}</p>
                 </div>
             </div>
 
-            <div class="row mb-2">
-                <div class="col-md-6">
-                    <strong>{% trans "Previsão de Conclusão" %}:</strong>
-                    <p class="mb-0">{% if os.data_previsao_conclusao %}{{ os.data_previsao_conclusao|date:"d/m/Y" }}{% else %}N/A{% endif %}</p>
+            {# Exibição estruturada de Problemas Identificados dos RELATÓRIOS (AGORA PROCESSADO NA VIEW) #}
+            {% if problemas_detalhados_os %} {# Use a nova variável aqui #}
+                <hr>
+                <div class="row mt-2 mb-3">
+                    <div class="col-12">
+                        <strong>{% trans "Problemas Identificados (Detalhes de Relatórios):" %}</strong>
+                        <ul class="list-group list-group-flush">
+                            {% for problema_data in problemas_detalhados_os %}
+                                <li class="list-group-item py-1 ps-0">
+                                    <strong>{{ problema_data.categoria }}</strong>
+                                    {% if problema_data.subcategoria %}
+                                        / {{ problema_data.subcategoria }}
+                                    {% endif %}
+                                    {% if problema_data.observacao %}
+                                        : {{ problema_data.observacao }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
-                <div class="col-md-6">
+            {% else %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong>{% trans "Problemas Identificados (Detalhes de Relatórios):" %}</strong>
+                        <p class="mb-0 text-muted">Nenhum problema detalhado registrado em nenhum relatório de campo.</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Bloco de Datas de Planejamento e Execução #}
+            <hr> {# Adicione uma linha horizontal para separar visualmente #}
+            <h5 class="card-title mb-3">{% trans "Planejamento e Execução" %}</h5>
+            <div class="row mb-3">
+                {# Coluna para Início Planejado #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Início Planejado" %}:</strong>
+                    <p class="mb-0">{% if os.data_inicio_planejado %}{{ os.data_inicio_planejado|date:"d/m/Y" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Início Real #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Início Real" %}:</strong>
+                    <p class="mb-0">{% if os.data_inicio_real %}{{ os.data_inicio_real|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Previsão de Conclusão #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Previsão de Conclusão" %}:</strong>
+                    <p class="mb-0">{% if os.data_previsao_conclusao %}{{ os.data_previsao_conclusao|date:"d/m/Y" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Conclusão Real #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Conclusão Real" %}:</strong>
+                    <p class="mb-0">{% if os.data_fechamento %}{{ os.data_fechamento|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+            </div>
+
+            {# Bloco para Observações Gerais (em uma linha separada para clareza) #}
+            <div class="row mb-3">
+                <div class="col-12 d-flex flex-column">
                     <strong>{% trans "Observações Gerais" %}:</strong>
                     <p class="mb-0">{{ os.observacoes_gerais|linebreaksbr|default:"Nenhuma." }}</p>
                 </div>
@@ -191,7 +251,12 @@
                         <strong>Equipe de Apoio:</strong>
                         <ul class="list-group list-group-flush">
                             {% for membro in os.equipe.all %}
-                                <li class="list-group-item py-1 ps-0">{{ membro.nome_completo }} ({{ membro.funcao }})</li>
+                                <li class="list-group-item py-1 ps-0">
+                                    {{ membro.usuario.get_full_name|default:membro.usuario.username }}
+                                    {% if membro.funcao %}
+                                        - {{ membro.funcao }} {# Exibe a função se ela existir #}
+                                    {% endif %}
+                                </li> 
                             {% endfor %}
                         </ul>
                     </div>
@@ -268,13 +333,16 @@
                                     <td>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
                                     <td>
                                         {{ relatorio.descricao_atividades|truncatechars:100 }}
+                                        {# Bloco de exibição das fotos do relatório #}
                                         {% if relatorio.fotos.all %}
                                             <div class="mt-2">
                                                 <strong>{% trans "Fotos" %}:</strong>
-                                                <div class="d-flex flex-wrap">
+                                                <div class="d-flex flex-wrap"> {# Flexbox para as miniaturas ficarem lado a lado #}
                                                     {% for foto in relatorio.fotos.all %}
-                                                        <a href="{{ foto.imagem.url }}" target="_blank" class="me-2 mb-2" title="{{ foto.descricao|default:'' }}">
-                                                            <img src="{{ foto.imagem.url }}" alt="{{ foto.descricao|default:'' }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                        <a href="{{ foto.imagem.url }}" target="_blank" class="me-2 mb-2" title="{{ foto.descricao|default:'Foto' }}">
+                                                            <img src="{{ foto.imagem.url }}" 
+                                                                alt="{{ foto.descricao|default:'Miniatura' }}" 
+                                                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
                                                         </a>
                                                     {% endfor %}
                                                 </div>
@@ -282,9 +350,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'servico_campo:editar_relatorio_campo' os.pk relatorio.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar Relatório' %}"><i class="bi bi-pencil"></i></a>
-                                        <a href="{% url 'servico_campo:upload_foto_relatorio' relatorio.pk %}" class="btn btn-sm btn-info" title="{% trans 'Anexar Foto' %}"><i class="bi bi-image"></i></a> {# Botão para anexar foto #}
-                                        <a href="{% url 'servico_campo:download_relatorio_pdf' relatorio.pk %}" class="btn btn-sm btn-dark" title="{% trans 'Baixar PDF' %}"><i class="bi bi-file-earmark-pdf"></i></a>
+                                        <a href="{% url 'servico_campo:editar_relatorio_campo' os.pk relatorio.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar Relatório' %}" style="border: 1px solid red;"><i class="bi bi-pencil"></i></a>
+                                        <a href="{% url 'servico_campo:upload_foto_relatorio' relatorio.pk %}" class="btn btn-sm btn-info" title="{% trans 'Anexar Foto' %}" style="border: 1px solid blue;"><i class="bi bi-image"></i></a>
+                                        <a href="{% url 'servico_campo:download_relatorio_pdf' relatorio.pk %}" class="btn btn-sm btn-dark" title="{% trans 'Baixar PDF' %}" style="border: 1px solid green;"><i class="bi bi-file-earmark-pdf"></i></a>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -303,14 +371,19 @@
     <div class="card mb-4">
         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">{% trans "Registro de Ponto" %}</h5>
-            {% if not ponto_aberto %}
-                <button type="button" class="btn btn-sm btn-light" id="btnMarcarPonto" data-bs-toggle="modal" data-bs-target="#confirmMarcarPontoModal">
-                    <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
-                </button>
+            {% if is_team_member %} {# APENAS MOSTRA OS BOTÕES SE O USUÁRIO FOR MEMBRO DA EQUIPE #}
+                {% if not ponto_aberto %}
+                    <button type="button" class="btn btn-sm btn-light" id="btnMarcarPonto" data-bs-toggle="modal" data-bs-target="#confirmMarcarPontoModal">
+                        <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-sm btn-warning" id="btnEncerrarPonto" data-bs-toggle="modal" data-bs-target="#confirmEncerrarPontoModal" data-ponto-id="{{ ponto_aberto.pk }}">
+                        <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
+                    </button>
+                {% endif %}
             {% else %}
-                <button type="button" class="btn btn-sm btn-warning" id="btnEncerrarPonto" data-bs-toggle="modal" data-bs-target="#confirmEncerrarPontoModal" data-ponto-id="{{ ponto_aberto.pk }}">
-                    <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
-                </button>
+                {# Opcional: Mensagem para usuários que não são da equipe #}
+                <span class="text-muted small">{% trans "Você não faz parte da equipe desta OS para registrar ponto." %}</span>
             {% endif %}
         </div>
         <div class="card-body">
@@ -324,7 +397,8 @@
                                 <th>{% trans "Entrada" %}</th>
                                 <th>{% trans "Saída" %}</th>
                                 <th>{% trans "Duração" %}</th>
-                                <th>{% trans "Local" %}</th>
+                                <th>{% trans "Observações" %}</th>
+                                <th>{% trans "Ações" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -334,10 +408,38 @@
                                     <td>{{ registro.data|date:"d/m/Y" }}</td>
                                     <td>{{ registro.hora_entrada|time:"H:i" }}</td>
                                     <td>{% if registro.hora_saida %}{{ registro.hora_saida|time:"H:i" }}{% else %}<span class="badge bg-warning">{% trans "Em Aberto" %}</span>{% endif %}</td>
-                                    <td>
-                                        {{ registro.duracao_formatada }}
+                                    <td>{{ registro.duracao_formatada }}</td>
+                                    <td> {# NOVO CONTEÚDO PARA COLUNA "Observações" #}
+                                        {% if registro.observacoes_entrada %}
+                                            <small class="d-block">Entrada: {{ registro.observacoes_entrada|truncatechars:30 }}</small>
+                                        {% else %}
+                                            <small class="d-block">Entrada: N/A</small>
+                                        {% endif %}
+                                        {% if registro.hora_saida %} {# Só mostra observação de saída se o ponto foi encerrado #}
+                                            {% if registro.observacoes %}
+                                                <small class="d-block">Saída: {{ registro.observacoes|truncatechars:30 }}</small>
+                                            {% else %}
+                                                <small class="d-block">Saída: N/A</small>
+                                            {% endif %}
+                                        {% endif %}
                                     </td>
-                                    <td>{{ registro.localizacao|default:"N/A" }}</td>
+                                    <td> {# Botões de Ação para Registro de Ponto #}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if registro.hora_saida %} {# Se o ponto já foi encerrado #}
+                                                <a href="{% url 'servico_campo:detalhe_registro_ponto' registro.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes do Ponto' %}">{% trans "Ver Detalhes" %}</a>
+                                                {# NOVO BOTÃO: Editar Registro de Ponto #}
+                                                {% if perms.servico_campo.change_registroponto %}
+                                                    <a href="{% url 'servico_campo:editar_registro_ponto' registro.pk %}" class="btn btn-warning" title="{% trans 'Editar Registro de Ponto' %}"><i class="bi bi-pencil"></i></a>
+                                                {% endif %}
+                                            {% else %} {# Se o ponto ainda está em aberto, apenas o botão de exclusão ou nenhum #}
+                                                {# Você pode manter um botão desabilitado ou simplesmente não exibir nada #}
+                                                <a href="#" class="btn btn-info disabled" title="{% trans 'Ponto em aberto, detalhes e edição disponíveis após encerramento' %}" style="pointer-events: none;"><i class="bi bi-eye"></i> {% trans "Ver/Editar" %}</a>
+                                            {% endif %}
+                                            {% if perms.servico_campo.delete_registroponto %}
+                                                <a href="{% url 'servico_campo:excluir_registro_ponto' registro.pk %}" class="btn btn-danger" title="{% trans 'Excluir Registro de Ponto' %}"><i class="bi bi-trash"></i></a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -367,19 +469,33 @@
                             <tr>
                                 <th>{% trans "Data" %}</th>
                                 <th>{% trans "Descrição" %}</th>
+                                <th>{% trans "Categoria" %}</th>
                                 <th>{% trans "Local" %}</th>
                                 <th>{% trans "Valor (R$)" %}</th>
+                                <th>{% trans "Adiantamento?" %}</th>
                                 <th>{% trans "Comprovante" %}</th>
                                 <th>{% trans "Status" %}</th>
+                                <th>{% trans "Pago?" %}</th>
+                                <th>{% trans "Ações" %}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for despesa in os.despesas.all %}
                                 <tr>
                                     <td>{{ despesa.data_despesa|date:"d/m/Y" }}</td>
-                                    <td>{{ despesa.descricao }}</td>
+                                    <td>
+                                        <p class="mb-0">{{ despesa.descricao }}</p> {# Descrição principal #}
+                                    </td>
+                                    <td>{{ despesa.categoria_despesa.nome|default:"N/A" }}</td>
                                     <td>{{ despesa.local_despesa|default:"N/A" }}</td>
                                     <td>{{ despesa.valor|floatformat:2 }}</td>
+                                    <td>
+                                        {% if despesa.is_adiantamento %}
+                                            <span class="badge bg-primary"><i class="bi bi-wallet-fill"></i> {% trans "Sim" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         {% if despesa.comprovante_anexo %}
                                             <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}</a>
@@ -388,13 +504,48 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if despesa.aprovada %}
-                                            <span class="badge bg-success">{% trans "Aprovada" %}</span>
+                                        {% if despesa.status_aprovacao == 'APROVADA' %}
+                                            <span class="badge bg-success">{{ despesa.get_status_aprovacao_display }}</span>
+                                        {% elif despesa.status_aprovacao == 'REJEITADA' %}
+                                            <span class="badge bg-danger">{{ despesa.get_status_aprovacao_display }}</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{% trans "Pendente" %}</span>
+                                            <span class="badge bg-secondary">{{ despesa.get_status_aprovacao_display }}</span>
                                         {% endif %}
                                     </td>
+                                    <td> {# NOVA CÉLULA PARA O STATUS DE PAGAMENTO #}
+                                        {% if despesa.paga %}
+                                            <span class="badge bg-success">{% trans "Sim" %}</span>
+                                            {% if despesa.data_pagamento %}
+                                                <br><small class="text-muted fst-italic">{{ despesa.data_pagamento|date:"d/m/Y" }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td> {# Botões de Ação para Despesa #}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'servico_campo:detalhe_despesa' despesa.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes da Despesa' %}"><i class="bi bi-eye"></i></a>
+                                            <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn btn-warning" title="{% trans 'Editar Despesa' %}"><i class="bi bi-pencil"></i></a>
+                                            {% if perms.servico_campo.delete_despesa %}
+                                                <a href="{% url 'servico_campo:excluir_despesa' despesa.pk %}" class="btn btn-danger" title="{% trans 'Excluir Despesa' %}"><i class="bi bi-trash"></i></a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
                                 </tr>
+                                {# NOVA LINHA PARA O COMENTÁRIO #}
+                                {% if despesa.comentario_aprovacao %}
+                                <tr class="table-info-row">
+                                    <td colspan="10" class="pt-0 pb-1">
+                                        <small class="text-muted fst-italic ms-0">
+                                            {% trans "Comentário" %}: {{ despesa.comentario_aprovacao }}
+                                            {% if despesa.aprovado_por %} {# Adiciona o nome do aprovador/rejeitador #}
+                                                ({% trans "por" %} {{ despesa.aprovado_por.get_full_name|default:despesa.aprovado_por.username }}
+                                                {% if despesa.data_aprovacao %}{% trans "em" %} {{ despesa.data_aprovacao|date:"d/m/Y H:i" }}{% endif %})
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -408,6 +559,8 @@
     </div>
 
     {# Modais para Marcar/Encerrar Ponto #}
+    {# servico_campo/ordem_servico_detail.html #}
+
     <div class="modal fade" id="confirmMarcarPontoModal" tabindex="-1" aria-labelledby="confirmMarcarPontoModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -419,9 +572,18 @@
                     {% trans "Deseja marcar seu ponto de entrada agora para esta Ordem de Serviço?" %}
                     <form id="formMarcarPonto" method="post" action="{% url 'servico_campo:registrar_ponto' os.pk %}">
                         {% csrf_token %}
-                        <div class="mb-3 mt-3">
-                            <label for="id_localizacao_entrada" class="form-label">{% trans "Localização (Opcional)" %}:</label>
-                            <input type="text" class="form-control" id="id_localizacao_entrada" name="localizacao" placeholder="{% trans 'Ex: Cliente A, Centro' %}">
+                        <div class="mb-3 mt-3" style="display: none;">
+                            <label for="id_localizacao_entrada" class="form-label">{% trans "Localização" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_entrada" name="localizacao" placeholder="{% trans 'Ex: Cliente A, Centro' %}"readonly>
+                            
+                            {# NOVO: Campo oculto para as coordenadas GPS #}
+                            <input type="hidden" id="id_gps_coords" name="gps_coords">
+                            <small class="form-text text-muted" id="locationStatus">{% trans "Aguardando localização..." %}</small>
+                        </div>
+                        {# NOVO CAMPO: Observações para a entrada #}
+                        <div class="mb-3">
+                            <label for="id_observacoes_entrada" class="form-label">{% trans "Observações (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_observacoes_entrada" name="observacoes_entrada" placeholder="{% trans 'Ex: Início do turno' %}">
                         </div>
                     </form>
                 </div>
@@ -444,9 +606,17 @@
                     {% trans "Deseja encerrar seu ponto de saída agora para esta Ordem de Serviço?" %}
                     <form id="formEncerrarPonto" method="post"> {# Action será definida via JS #}
                         {% csrf_token %}
-                        <div class="mb-3 mt-3">
-                            <label for="id_localizacao_saida" class="form-label">{% trans "Observações (Opcional)" %}:</label>
-                            <input type="text" class="form-control" id="id_localizacao_saida" name="observacoes" placeholder="{% trans 'Ex: Término do dia' %}">
+                        <div class="mb-3 mt-3" style="display: none;">
+                            <label for="id_localizacao_saida_modal" class="form-label">{% trans "Localização de Saída (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_saida_modal" name="localizacao_saida" placeholder="{% trans 'Ex: Saída do Cliente' %}"readonly>
+                            {# NOVO CAMPO OCULTO PARA COORDENADAS GPS DE SAÍDA #}
+                            <input type="hidden" id="id_gps_coords_saida" name="gps_coords_saida">
+                            <small class="form-text text-muted" id="locationStatusSaida">{% trans "Aguardando localização..." %}</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_observacoes_saida" class="form-label">{% trans "Observações (Opcional)" %}:</label>
+                            {# Certifique-se de que o name seja 'observacoes' para o RegistroPontoSaidaForm #}
+                            <input type="text" class="form-control" id="id_observacoes_saida" name="observacoes" placeholder="{% trans 'Ex: Término do dia' %}">
                         </div>
                     </form>
                 </div>
@@ -457,6 +627,7 @@
             </div>
         </div>
     </div>
+
 
 
 {% endblock %}
@@ -479,6 +650,121 @@
         // Script para o botão de Imprimir
         document.getElementById('print-button').addEventListener('click', function() {
             window.print();
+        });
+    </script>
+    {# NOVO SCRIPT PARA GEOLOCALIZAÇÃO DE ENTRADA (MANTIDO DO ANTERIOR) #}
+    <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const confirmMarcarPontoModal = document.getElementById('confirmMarcarPontoModal');
+                const gpsCoordsInput = document.getElementById('id_gps_coords');
+                const localizacaoInput = document.getElementById('id_localizacao_entrada');
+                const locationStatus = document.getElementById('locationStatus');
+
+                confirmMarcarPontoModal.addEventListener('show.bs.modal', function () {
+                    locationStatus.textContent = "{% trans 'Aguardando localização...' %}";
+                    gpsCoordsInput.value = '';
+                    localizacaoInput.value = '';
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                const accuracy = position.coords.accuracy;
+                                gpsCoordsInput.value = `${lat},${lon},${accuracy}`;
+                                localizacaoInput.value = `GPS: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                                locationStatus.textContent = "{% trans 'Localização obtida com sucesso.' %}";
+                                locationStatus.classList.remove('text-danger', 'text-warning');
+                                locationStatus.classList.add('text-success');
+                            },
+                            function(error) {
+                                let errorMessage = "{% trans 'Erro ao obter localização.' %}";
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'PERMISSION_DENIED'; break;
+                                    case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'POSITION_UNAVAILABLE'; break;
+                                    case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'TIMEOUT'; break;
+                                    default: gpsCoordsInput.value = `ERROR:${error.code}`;
+                                }
+                                localizacaoInput.value = errorMessage;
+                                locationStatus.textContent = errorMessage;
+                                locationStatus.classList.remove('text-success', 'text-warning');
+                                locationStatus.classList.add('text-danger');
+                            },
+                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                        );
+                    } else {
+                        locationStatus.textContent = "{% trans 'Geolocalização não suportada pelo seu navegador.' %}";
+                        locationStatus.classList.add('text-danger');
+                        gpsCoordsInput.value = 'NOT_SUPPORTED';
+                        localizacaoInput.value = "{% trans 'Geolocalização não suportada.' %}";
+                    }
+                });
+
+                confirmMarcarPontoModal.addEventListener('hidden.bs.modal', function () {
+                    gpsCoordsInput.value = '';
+                    localizacaoInput.value = '';
+                    locationStatus.textContent = "{% trans 'Aguardando localização...' %}";
+                    locationStatus.classList.remove('text-success', 'text-danger');
+                    locationStatus.classList.add('text-muted');
+                });
+            });
+        </script>
+
+    {# NOVO SCRIPT PARA GEOLOCALIZAÇÃO DE SAÍDA #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmEncerrarPontoModal = document.getElementById('confirmEncerrarPontoModal');
+            const gpsCoordsInputSaida = document.getElementById('id_gps_coords_saida');
+            const localizacaoSaidaInput = document.getElementById('id_localizacao_saida_modal');
+            const locationStatusSaida = document.getElementById('locationStatusSaida');
+
+            confirmEncerrarPontoModal.addEventListener('show.bs.modal', function () {
+                locationStatusSaida.textContent = "{% trans 'Aguardando localização...' %}";
+                gpsCoordsInputSaida.value = '';
+                localizacaoSaidaInput.value = '';
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const accuracy = position.coords.accuracy;
+                            gpsCoordsInputSaida.value = `${lat},${lon},${accuracy}`;
+                            localizacaoSaidaInput.value = `GPS: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                            locationStatusSaida.textContent = "{% trans 'Localização obtida com sucesso.' %}";
+                            locationStatusSaida.classList.remove('text-danger', 'text-warning');
+                            locationStatusSaida.classList.add('text-success');
+                        },
+                        function(error) {
+                            let errorMessage = "{% trans 'Erro ao obter localização.' %}";
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'PERMISSION_DENIED'; break;
+                                case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'POSITION_UNAVAILABLE'; break;
+                                case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'TIMEOUT'; break;
+                                default: gpsCoordsInputSaida.value = `ERROR:${error.code}`;
+                            }
+                            localizacaoSaidaInput.value = errorMessage;
+                            locationStatusSaida.textContent = errorMessage;
+                            locationStatusSaida.classList.remove('text-success', 'text-warning');
+                            locationStatusSaida.classList.add('text-danger');
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                } else {
+                    locationStatusSaida.textContent = "{% trans 'Geolocalização não suportada pelo seu navegador.' %}";
+                    locationStatusSaida.classList.add('text-danger');
+                    gpsCoordsInputSaida.value = 'NOT_SUPPORTED';
+                    localizacaoSaidaInput.value = "{% trans 'Geolocalização não suportada.' %}";
+                }
+            });
+
+            confirmEncerrarPontoModal.addEventListener('hidden.bs.modal', function () {
+                gpsCoordsInputSaida.value = '';
+                localizacaoSaidaInput.value = '';
+                locationStatusSaida.textContent = "{% trans 'Aguardando localização...' %}";
+                locationStatusSaida.classList.remove('text-success', 'text-danger');
+                locationStatusSaida.classList.add('text-muted');
+            });
         });
     </script>
 {% endblock %}

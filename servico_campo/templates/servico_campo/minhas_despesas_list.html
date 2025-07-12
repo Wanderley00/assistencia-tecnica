@@ -1,0 +1,161 @@
+{# servico_campo/templates/servico_campo/minhas_despesas_list.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Minhas Despesas" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{% trans "Minhas Despesas" %}</h1>
+        {# Botão para registrar nova despesa, se for permitido ao técnico #}
+        {% if perms.servico_campo.add_despesa %}
+            <a href="{% url 'servico_campo:lista_os' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> {% trans "Registrar Nova Despesa (via OS)" %}
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card card-body mb-4">
+        <form method="get" action="{% url 'servico_campo:minhas_despesas' %}" id="filter-form">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="id_status_aprovacao_filter" class="form-label">{% trans "Status Aprovação" %}</label>
+                    <select class="form-select" id="id_status_aprovacao_filter" name="status_aprovacao">
+                        <option value="TODOS" {% if filters.status_aprovacao == 'TODOS' %}selected{% endif %}>{% trans "Todos" %}</option>
+                        {% for value, display in status_aprovacao_choices %}
+                            <option value="{{ value }}" {% if filters.status_aprovacao == value %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="id_status_pagamento_filter" class="form-label">{% trans "Status Pagamento" %}</label>
+                    <select class="form-select" id="id_status_pagamento_filter" name="status_pagamento">
+                        <option value="TODOS" {% if filters.status_pagamento == 'TODOS' %}selected{% endif %}>{% trans "Todos" %}</option>
+                        {% for value, display in status_pagamento_choices %}
+                            <option value="{{ value }}" {% if filters.status_pagamento == value %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 <div class="col-md-3">
+                    <label for="id_data_despesa_filter" class="form-label">{% trans "Data da Despesa" %}</label>
+                    <input type="date" class="form-control" id="id_data_despesa_filter" name="data_despesa" value="{{ filters.data_despesa }}">
+                </div>
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-info me-2">{% trans "Filtrar" %}</button>
+                    <a href="{% url 'servico_campo:minhas_despesas' %}" class="btn btn-secondary">{% trans "Limpar Filtros" %}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Data" %}</th>
+                    <th>{% trans "OS" %}</th>
+                    <th>{% trans "Descrição" %}</th>
+                    <th>{% trans "Valor (R$)" %}</th>
+                    <th>{% trans "Adiantamento?" %}</th>
+                    <th>{% trans "Status Aprovação" %}</th>
+                    <th>{% trans "Status Pagamento" %}</th>
+                    <th>{% trans "Ações" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for despesa in minhas_despesas %}
+                <tr>
+                    <td>{{ despesa.data_despesa|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'servico_campo:detalhe_os' despesa.ordem_servico.pk %}">{{ despesa.ordem_servico.numero_os }}</a>
+                    </td>
+                    <td>{{ despesa.descricao }}</td>
+                    <td>{{ despesa.valor|floatformat:2 }}</td>
+                    <td>
+                        {% if despesa.is_adiantamento %}
+                            <span class="badge bg-primary"><i class="bi bi-wallet-fill"></i> {% trans "Sim" %}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                        {% endif %}
+                    </td>
+                    <td> {# Status de Aprovação #}
+                        {% if despesa.status_aprovacao == 'APROVADA' %}
+                            <span class="badge bg-success">{{ despesa.get_status_aprovacao_display }}</span>
+                        {% elif despesa.status_aprovacao == 'REJEITADA' %}
+                            <span class="badge bg-danger">{{ despesa.get_status_aprovacao_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ despesa.get_status_aprovacao_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td> {# Status de Pagamento #}
+                        {% if despesa.paga %}
+                            <span class="badge bg-success">{% trans "Pago" %}</span>
+                        {% elif despesa.status_aprovacao == 'APROVADA' and despesa.conta_a_pagar %}
+                            {# Se aprovada e existe conta a pagar, mas não paga, mostra o status da conta #}
+                            {% if despesa.conta_a_pagar.status_pagamento == 'PENDENTE' %}
+                                <span class="badge bg-warning text-dark">{% trans "Aguardando Pagamento" %}</span>
+                            {% elif despesa.conta_a_pagar.status_pagamento == 'EM_ANALISE' %}
+                                <span class="badge bg-info">{% trans "Em Análise Pag." %}</span>
+                            {% elif despesa.conta_a_pagar.status_pagamento == 'CANCELADO' %}
+                                <span class="badge bg-danger">{% trans "Pag. Cancelado" %}</span>
+                            {% endif %}
+                        {% elif despesa.status_aprovacao == 'APROVADA' and not despesa.conta_a_pagar %}
+                            {# Despesa aprovada, mas Conta a Pagar ainda não gerada (raro se a lógica estiver correta) #}
+                            <span class="badge bg-info">{% trans "Aguardando Geração Contas Pagar" %}</span>
+                        {% else %}
+                            {# Despesa não aprovada (pendente ou rejeitada) #}
+                            <span class="badge bg-secondary">{% trans "Não Aplicável" %}</span>
+                        {% endif %}
+                    </td>
+                    <td> {# Botões de Ação #}
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'servico_campo:detalhe_despesa' despesa.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes' %}"><i class="bi bi-eye"></i></a>
+                            {% if despesa.status_aprovacao == 'PENDENTE' %} {# Permite editar se ainda não foi aprovada/rejeitada #}
+                                <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn btn-warning" title="{% trans 'Editar Despesa' %}"><i class="bi bi-pencil"></i></a>
+                            {% endif %}
+                            {# Excluir sempre, se tiver permissão, independentemente do status #}
+                            {% if perms.servico_campo.delete_despesa %}
+                                <a href="{% url 'servico_campo:excluir_despesa' despesa.pk %}" class="btn btn-danger" title="{% trans 'Excluir Despesa' %}"><i class="bi bi-trash"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% if despesa.comentario_aprovacao %}
+                <tr class="table-info-row">
+                    <td colspan="8" class="pt-0 pb-1"> {# Ajuste colspan se mudar o número de colunas #}
+                        <small class="text-muted fst-italic ms-0">
+                            {% trans "Comentário Aprovação" %}: {{ despesa.comentario_aprovacao }}
+                            {% if despesa.aprovado_por %}
+                                ({% trans "por" %} {{ despesa.aprovado_por.get_full_name|default:despesa.aprovado_por.username }}
+                                {% if despesa.data_aprovacao %}{% trans "em" %} {{ despesa.data_aprovacao|date:"d/m/Y H:i" }}{% endif %})
+                            {% endif %}
+                        </small>
+                    </td>
+                </tr>
+                {% endif %}
+                {% if despesa.conta_a_pagar and despesa.conta_a_pagar.comentario %}
+                <tr class="table-info-row">
+                    <td colspan="8" class="pt-0 pb-1"> {# Ajuste colspan se mudar o número de colunas #}
+                        <small class="text-muted fst-italic ms-0">
+                            {% trans "Comentário Pagamento" %}: {{ despesa.conta_a_pagar.comentario }}
+                            {% if despesa.conta_a_pagar.responsavel_pagamento %}
+                                ({% trans "por" %} {{ despesa.conta_a_pagar.responsavel_pagamento.get_full_name|default:despesa.conta_a_pagar.responsavel_pagamento.username }}
+                                {% if despesa.conta_a_pagar.data_atualizacao %}{% trans "em" %} {{ despesa.conta_a_pagar.data_atualizacao|date:"d/m/Y H:i" }}{% endif %})
+                            {% endif %}
+                        </small>
+                    </td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">{% trans "Nenhuma despesa encontrada." %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+
+{% endblock %}

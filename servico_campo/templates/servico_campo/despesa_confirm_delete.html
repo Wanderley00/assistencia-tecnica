@@ -1,0 +1,32 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirmar Exclusão de Despesa" %}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'servico_campo:detalhe_os' os.pk %}">{% trans "Detalhes da OS" %} {{ os.numero_os }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Excluir Despesa" %}</li>
+    </ol>
+</nav>
+<div class="card">
+    <div class="card-header bg-danger text-white"><h1 class="mb-0">{% trans "Confirmar Exclusão" %}</h1></div>
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <p>{% trans "Você tem certeza que deseja excluir a despesa" %} <strong>"{{ despesa.descricao }}"</strong>?</p>
+        <p class="text-danger">{% trans "Atenção: Esta ação não pode ser desfeita." %}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "Sim, excluir" %}</button>
+            <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

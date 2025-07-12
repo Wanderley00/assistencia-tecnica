@@ -48,11 +48,95 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="{{ form.problemas_identificados.id_for_label }}" class="form-label">{{ form.problemas_identificados.label }}</label>
-                        {{ form.problemas_identificados }}
-                        {% if form.problemas_identificados.errors %}<div class="text-danger">{{ form.problemas_identificados.errors }}</div>{% endif %}
+                    <hr>
+                    <h5 class="mb-3">{% trans "Problemas Identificados" %}</h5>
+                    <div id="problema-form-list">
+                        {{ problema_formset.management_form }}
+                        
+                        {% if problema_formset.non_form_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                <strong>Erros nos Problemas:</strong>
+                                <ul>
+                                    {% for error in problema_formset.non_form_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        {% for form in problema_formset %}
+                            <div class="row align-items-end mb-3 p-3 border rounded bg-light formset-problema-row" id="problema-{{ forloop.counter0 }}">
+                                {# Adiciona este bloco para erros de cada formulário do formset #}
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger col-12" role="alert">
+                                        <strong>Erro no problema {{ forloop.counter }}:</strong>
+                                        <ul>
+                                            {% for error in form.non_field_errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+
+                                {{ form.id }}
+                                <div class="col-md-4 mb-2">
+                                    <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }}</label>
+                                    {{ form.categoria }}
+                                    {% if form.categoria.errors %}<div class="text-danger">{{ form.categoria.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <label for="{{ form.subcategoria.id_for_label }}" class="form-label">{{ form.subcategoria.label }}</label>
+                                    {{ form.subcategoria }}
+                                    {% if form.subcategoria.errors %}<div class="text-danger">{{ form.subcategoria.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label for="{{ form.observacao.id_for_label }}" class="form-label">{{ form.observacao.label }}</label>
+                                    {{ form.observacao }}
+                                    {% if form.observacao.errors %}<div class="text-danger">{{ form.observacao.errors }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                                    {% if form.instance.pk %}
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
+                                            <label for="{{ form.DELETE.id_for_label }}" class="form-check-label">Remover</label>
+                                        </div>
+                                    {% else %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-problema-form-button">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
+                    <button type="button" id="add-problema-button" class="btn btn-outline-primary mt-2">
+                        <i class="bi bi-plus-circle"></i> Adicionar Problema
+                    </button>
+
+                    {# Template para adicionar novos formulários de problema via JavaScript #}
+                    <div id="empty-problema-form-template" style="display: none;">
+                        <div class="row align-items-end mb-3 p-3 border rounded bg-light formset-problema-row" id="problema-__prefix__">
+                            {{ problema_formset.empty_form.id }}
+                            <div class="col-md-4 mb-2">
+                                <label for="id_problemas_identificados_detalhes-__prefix__-categoria" class="form-label">{{ problema_formset.empty_form.categoria.label }}</label>
+                                {{ problema_formset.empty_form.categoria }}
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label for="id_problemas_identificados_detalhes-__prefix__-subcategoria" class="form-label">{{ problema_formset.empty_form.subcategoria.label }}</label>
+                                {{ problema_formset.empty_form.subcategoria }}
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label for="id_problemas_identificados_detalhes-__prefix__-observacao" class="form-label">{{ problema_formset.empty_form.observacao.label }}</label>
+                                {{ problema_formset.empty_form.observacao }}
+                            </div>
+                            <div class="col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-problema-form-button">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-md-6 mb-3">
                         <label for="{{ form.solucoes_aplicadas.id_for_label }}" class="form-label">{{ form.solucoes_aplicadas.label }}</label>
                         {{ form.solucoes_aplicadas }}
@@ -129,6 +213,106 @@
                             if (!signaturePad.isEmpty()) {
                                 hiddenInput.value = signaturePad.toDataURL();
                             }
+                        });
+                        // Opcional: Se estiver editando um relatório com assinatura, carregar a assinatura existente
+                        const initialSignatureData = hiddenInput.value;
+                        if (initialSignatureData && initialSignatureData.length > 0) {
+                            try {
+                                signaturePad.fromDataURL(initialSignatureData);
+                            } catch (e) {
+                                console.error("Erro ao carregar assinatura existente:", e);
+                            }
+                        }
+                        // --- Lógica de Problemas Identificados (NOVA) ---
+                        const addProblemaButton = document.getElementById('add-problema-button');
+                        const problemaFormList = document.getElementById('problema-form-list');
+                        const emptyProblemaFormTemplate = document.getElementById('empty-problema-form-template').innerHTML;
+                        const totalProblemaFormsInput = document.querySelector('#id_problemas_identificados_detalhes-TOTAL_FORMS');
+
+                        // Função para adicionar listener de remoção a um botão de problema
+                        function addRemoveProblemaListener(button) {
+                            button.addEventListener('click', function() {
+                                const formRow = button.closest('.formset-problema-row');
+                                if (formRow) {
+                                    const deleteCheckbox = formRow.querySelector('input[name$="-DELETE"]');
+                                    if (deleteCheckbox) {
+                                        deleteCheckbox.checked = true;
+                                        formRow.style.display = 'none'; // Esconde a linha visualmente
+                                    } else {
+                                        formRow.remove(); // Remove a linha para formulários recém-adicionados
+                                    }
+                                }
+                            });
+                        }
+
+                        // Função para carregar subcategorias dinamicamente
+                        function loadSubcategorias(categoriaSelect, subcategoriaSelect, selectedSubcategoryId = null) {
+                            const categoriaId = categoriaSelect.value;
+                            if (!categoriaId) {
+                                subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                                return;
+                            }
+
+                            fetch(`/servico/api/load-subcategorias-problema/?categoria_id=${categoriaId}`) // USE A URL DA API
+                                .then(response => response.json())
+                                .then(data => {
+                                    subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                                    data.forEach(subcategoria => {
+                                        const option = document.createElement('option');
+                                        option.value = subcategoria.id;
+                                        option.textContent = subcategoria.nome;
+                                        subcategoriaSelect.appendChild(option);
+                                    });
+                                    if (selectedSubcategoryId) {
+                                        subcategoriaSelect.value = selectedSubcategoryId;
+                                    }
+                                })
+                                .catch(error => console.error('Erro ao carregar subcategorias:', error));
+                        }
+
+                        // Configura listeners para categorias e subcategorias em um formulário de problema
+                        function setupProblemaFormFields(formRow) {
+                            const categoriaSelect = formRow.querySelector('.problema-categoria-select');
+                            const subcategoriaSelect = formRow.querySelector('.problema-subcategoria-select');
+                            const initialSubcategoryId = subcategoriaSelect ? subcategoriaSelect.dataset.initialValue : null; // Para re-selecionar ao carregar
+
+                            if (categoriaSelect && subcategoriaSelect) {
+                                // Ao mudar a categoria, carrega novas subcategorias
+                                categoriaSelect.addEventListener('change', function() {
+                                    loadSubcategorias(categoriaSelect, subcategoriaSelect);
+                                });
+
+                                // Carrega subcategorias na carga inicial se a categoria já está selecionada
+                                if (categoriaSelect.value) {
+                                    loadSubcategorias(categoriaSelect, subcategoriaSelect, subcategoriaSelect.value); // Passa o valor atual para re-selecionar
+                                }
+                            }
+                        }
+                        
+                        // Inicializa formulários de problema existentes
+                        document.querySelectorAll('.formset-problema-row').forEach(row => {
+                            addRemoveProblemaListener(row.querySelector('.remove-problema-form-button'));
+                            setupProblemaFormFields(row);
+                        });
+
+                        // Listener para adicionar novo problema
+                        addProblemaButton.addEventListener('click', function() {
+                            let formNum = parseInt(totalProblemaFormsInput.value);
+                            const newFormHtml = emptyProblemaFormTemplate.replace(/__prefix__/g, formNum);
+                            
+                            const newFormElement = document.createElement('div');
+                            newFormElement.innerHTML = newFormHtml;
+                            const newFormRow = newFormElement.firstElementChild; 
+                            
+                            problemaFormList.appendChild(newFormRow);
+                            
+                            // Configura o botão de remover e os campos do novo formulário
+                            const removeButton = newFormRow.querySelector('.remove-problema-form-button');
+                            if (removeButton) addRemoveProblemaListener(removeButton);
+                            
+                            setupProblemaFormFields(newFormRow); // Configura os campos do novo formulário
+                            
+                            totalProblemaFormsInput.value = formNum + 1; // Incrementa o contador
                         });
                     });
                 </script>

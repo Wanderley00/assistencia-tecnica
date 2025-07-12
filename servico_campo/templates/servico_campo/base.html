@@ -47,6 +47,14 @@
                     </a>
                 </li>
 
+                {# NOVO LINK: Minhas Despesas #}
+                <li class="nav-link">
+                    <a href="{% url 'servico_campo:minhas_despesas' %}">
+                        <i class='bi bi-wallet2 icon'></i> {# Ícone de carteira ou similar #}
+                        <span class="text nav-text">Minhas Despesas</span>
+                    </a>
+                </li>
+
                 <li class="nav-link">
                     <a href="{% url 'servico_campo:gantt_chart' %}">
                         <i class='bi bi-bar-chart-line icon'></i> {# Ícone de gráfico de barras ou similar #}
@@ -54,49 +62,100 @@
                     </a>
                 </li>
 
+                {# servico_campo/base.html #}
+
+                {# ... (links existentes antes do bloco de configurações, ex: Dashboard, OS, Gantt) ... #}
+
                 {% if user.is_authenticated %}
-                    {% if perms.configuracoes.view_tipomanutencao or perms.configuracoes.view_tipodocumento or perms.configuracoes.view_formapagamento %}
+                    {# AQUI É O BLOCO DE CONFIGURAÇÕES (ÚNICO E CORRETO) #}
+                    {# Condição para exibir o menu de Configurações #}
+                    {% if perms.configuracoes.view_tipomanutencao or perms.configuracoes.view_tipodocumento or perms.configuracoes.view_formapagamento or perms.servico_campo.view_regrajornadatrabalho or perms.servico_campo.view_categoriaproblema or perms.servico_campo.view_subcategoriaproblema %} 
                     <li class="nav-link menu-item-has-submenu">
                         <a href="#" class="dropdown-toggle-sidebar" data-bs-toggle="collapse" data-bs-target="#submenu-config" aria-expanded="false">
                             <i class='bi bi-gear icon'></i>
                             <span class="text nav-text">Configurações</span>
                         </a>
                         <div class="collapse" id="submenu-config">
-                            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-                                {% if perms.configuracoes.view_tipomanutencao %}
-                                <li>
-                                    <a href="{% url 'configuracoes:lista_tipos_manutencao' %}" class="link-dark d-inline-flex text-decoration-none rounded">
-                                        <i class="bi bi-tools icon-sub-menu"></i> Tipos de Manutenção
-                                    </a>
-                                </li>
-                                {% endif %}
-                                {% if perms.configuracoes.view_tipodocumento %}
-                                <li>
-                                    <a href="{% url 'configuracoes:lista_tipos_documento' %}" class="link-dark d-inline-flex text-decoration-none rounded">
-                                        <i class="bi bi-file-earmark-ruled icon-sub-menu"></i> Tipos de Documento
-                                    </a>
-                                </li>
-                                {% endif %}
-                                {% if perms.configuracoes.view_formapagamento %}
-                                <li>
-                                    <a href="{% url 'configuracoes:lista_formas_pagamento' %}" class="link-dark d-inline-flex text-decoration-none rounded">
-                                        <i class="bi bi-wallet2 icon-sub-menu"></i> Formas de Pagamento
-                                    </a>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </li>
-                    {% endif %}
-                {% endif %}
-                
-                {# Verifique permissões específicas para cada item de menu de gestão #}
-                {% if user.is_authenticated %}
+                                <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
+                                    {% if perms.configuracoes.view_tipomanutencao %}
+                                    <li>
+                                        <a href="{% url 'configuracoes:lista_tipos_manutencao' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-tools icon-sub-menu"></i> Tipos de Manutenção
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.configuracoes.view_tipodocumento %}
+                                    <li>
+                                        <a href="{% url 'configuracoes:lista_tipos_documento' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-file-earmark-ruled icon-sub-menu"></i> Tipos de Documento
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.configuracoes.view_formapagamento %}
+                                    <li>
+                                        <a href="{% url 'configuracoes:lista_formas_pagamento' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-wallet2 icon-sub-menu"></i> Formas de Pagamento
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {# LINK PARA REGRAS DE JORNADA #}
+                                    {% if perms.servico_campo.view_regrajornadatrabalho %}
+                                    <li>
+                                        <a href="{% url 'servico_campo:lista_regras_jornada' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-clock-history icon-sub-menu"></i> Regras de Jornada
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {# NOVOS LINKS PARA CATEGORIAS E SUBCATEGORIAS DE PROBLEMAS - ADICIONE AQUI! #}
+                                    {% if perms.servico_campo.view_categoriaproblema %}
+                                    <li>
+                                        <a href="{% url 'servico_campo:lista_categorias_problema' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-tags icon-sub-menu"></i> Categorias de Problemas
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.servico_campo.view_subcategoriaproblema %}
+                                    <li>
+                                        <a href="{% url 'servico_campo:lista_subcategorias_problema' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-tag icon-sub-menu"></i> Subcategorias de Problemas
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.configuracoes.view_categoriadespesa %} {# NOVO: Permissão para CategoriaDespesa #}
+                                    <li>
+                                        <a href="{% url 'configuracoes:lista_categorias_despesa' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-tag-fill icon-sub-menu"></i> {% trans "Categorias de Despesas" %}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {# NOVO LINK: Políticas de Despesas #}
+                                    {% if perms.configuracoes.view_politicadespesa %}
+                                    <li>
+                                        <a href="{% url 'configuracoes:lista_politicas_despesa' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-file-earmark-ruled icon-sub-menu"></i> {% trans "Políticas de Despesas" %}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %} {# Este endif é para o if das permissões de configuração #}
+
+                    {# ESTE É O BLOCO DE OUTROS ITENS DE GESTÃO (APÓS AS CONFIGURAÇÕES) #}
                     {% if perms.servico_campo.change_despesa %} {# Permissão para aprovar/rejeitar despesas #}
                         <li class="nav-link">
                             <a href="{% url 'servico_campo:lista_despesas_pendentes' %}">
                                 <i class='bi bi-cash-coin icon'></i>
                                 <span class="text nav-text">Aprovar Despesas</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {# NOVO LINK: Contas a Pagar #}
+                    {% if perms.servico_campo.view_contapagar %}
+                        <li class="nav-link">
+                            <a href="{% url 'servico_campo:lista_contas_a_pagar' %}">
+                                <i class='bi bi-currency-dollar icon'></i> {# Ou outro ícone de dinheiro #}
+                                <span class="text nav-text">{% trans "Contas a Pagar" %}</span>
                             </a>
                         </li>
                     {% endif %}
@@ -116,14 +175,6 @@
                             </a>
                         </li>
                     {% endif %}
-                    {% if perms.auth.view_user %} {# Permissão para visualizar usuários (modelo User do auth) #}
-                         <li class="nav-link">
-                            <a href="{% url 'servico_campo:lista_usuarios' %}">
-                                <i class='bi bi-person-gear icon'></i>
-                                <span class="text nav-text">Usuários</span>
-                            </a>
-                        </li>
-                    {% endif %}
                     {% if perms.auth.view_group %} {# Permissão para visualizar grupos (modelo Group do auth) #}
                         <li class="nav-link">
                             <a href="{% url 'servico_campo:lista_grupos' %}">
@@ -132,7 +183,15 @@
                             </a>
                         </li>
                     {% endif %}
-                {% endif %}
+                    {% if perms.auth.view_user %} {# Permissão para visualizar usuários (modelo User do auth) #}
+                         <li class="nav-link">
+                            <a href="{% url 'servico_campo:lista_usuarios' %}">
+                                <i class='bi bi-person-gear icon'></i>
+                                <span class="text nav-text">Usuários</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %} {# ESTE ENDIF FECHA O PRIMEIRO if user.is_authenticated #}
             </ul>
         </div>
     </div>

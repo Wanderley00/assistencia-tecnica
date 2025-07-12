@@ -34,4 +34,24 @@ urlpatterns = [
          views.FormaPagamentoUpdateView.as_view(), name='editar_forma_pagamento'),
     path('formas-pagamento/<int:pk>/excluir/',
          views.FormaPagamentoDeleteView.as_view(), name='excluir_forma_pagamento'),
+
+    # URLs para CategoriaDespesa
+    path('categorias-despesa/', views.CategoriaDespesaListView.as_view(),
+         name='lista_categorias_despesa'),
+    path('categorias-despesa/nova/',
+         views.CategoriaDespesaCreateView.as_view(), name='nova_categoria_despesa'),
+    path('categorias-despesa/<int:pk>/editar/',
+         views.CategoriaDespesaUpdateView.as_view(), name='editar_categoria_despesa'),
+    path('categorias-despesa/<int:pk>/excluir/',
+         views.CategoriaDespesaDeleteView.as_view(), name='excluir_categoria_despesa'),
+
+    # URLs para PoliticaDespesa
+    path('politicas-despesa/', views.PoliticaDespesaListView.as_view(),
+         name='lista_politicas_despesa'),
+    path('politicas-despesa/nova/',
+         views.PoliticaDespesaCreateView.as_view(), name='nova_politica_despesa'),
+    path('politicas-despesa/<int:pk>/editar/',
+         views.PoliticaDespesaUpdateView.as_view(), name='editar_politica_despesa'),
+    path('politicas-despesa/<int:pk>/excluir/',
+         views.PoliticaDespesaDeleteView.as_view(), name='excluir_politica_despesa'),
 ]

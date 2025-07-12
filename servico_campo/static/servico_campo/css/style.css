@@ -66,6 +66,7 @@ h1, h2, h3, h4, h5, h6 {
 .badge.bg-em_execucao { background-color: var(--bs-warning) !important; }
 .badge.bg-concluida { background-color: var(--bs-success) !important; }
 .badge.bg-cancelada { background-color: var(--bs-danger) !important; }
+.badge.bg-aguardando_planejamento { background-color: #495057 !important; color: #fff !important; } /* Um cinza mais escuro (var(--bs-dark) ou similar) */
 .badge.bg-pendente_aprovacao { background-color: var(--bs-purple) !important; } /* Cor roxa */
 .badge.bg-secondary { background-color: var(--bs-secondary) !important; } /* Para "Aguardando Planejamento" */
 
@@ -157,4 +158,45 @@ h1, h2, h3, h4, h5, h6 {
     min-height: 400px;
     min-width: 1200px; /* Aumentado para dar mais espaço, ajuste conforme sua tela */
     overflow-x: auto; /* Permite scroll horizontal se o conteúdo for maior */
+}
+
+.formset-row .col-md-3,
+.formset-row .col-md-2,
+.formset-row .col-md-1 { /* Aplica a todas as colunas que contêm campos do formset */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Alinha o conteúdo ao topo da coluna */
+    /* Adiciona um padding-bottom para dar espaço entre as linhas, se necessário */
+    padding-bottom: 10px; /* Ajuste este valor conforme o espaçamento desejado */
+    height: auto; /* Permite que a coluna se adapte ao conteúdo */
+}
+
+.formset-row label.form-label {
+    margin-bottom: 5px; /* Margem entre a label e o input */
+    line-height: 1.2; /* Garante que a altura da label não seja muito grande */
+}
+
+.formset-row .form-control {
+    flex-grow: 1; /* Permite que o input se estique para ocupar o espaço restante (se a label for curta) */
+    width: 100%; /* Garante que o input preencha a largura da coluna */
+}
+
+/* Estilo para o novo container do texto de ajuda */
+.formset-row .field-help-text {
+    font-size: 0.8em; /* Fonte menor para o texto de ajuda */
+    color: var(--text-color); /* Usa a cor padrão do texto para consistência */
+    margin-top: auto; /* Empurra o texto de ajuda para o final da coluna flexbox */
+    line-height: 1.2; /* Ajusta o espaçamento entre linhas */
+    padding-top: 5px; /* Espaçamento entre o input e o texto de ajuda */
+}
+
+/* Ajuste específico para o botão de remover/checkbox na última coluna */
+.formset-row .col-md-1.justify-content-center { /* Usando o seletor mais específico */
+    align-items: flex-end; /* Alinha o conteúdo (botão/checkbox) à base da coluna */
+    padding-bottom: 10px; /* Alinha com o padding-bottom das outras colunas */
+}
+
+/* Seletor para o input.form-check-input que desabilita/habilita */
+.formset-row .form-check-input.bg-light { /* Classe adicionada via JS */
+    background-color: var(--bs-light) !important; /* Cor de fundo quando desabilitado */
 }

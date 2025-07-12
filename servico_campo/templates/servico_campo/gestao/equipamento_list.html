@@ -4,9 +4,16 @@
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="mb-0">Gestão de Equipamentos</h1>
-        <a href="{% url 'servico_campo:novo_equipamento' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Adicionar Equipamento
-        </a>
+        <div> {# NOVO: Agrupar botões #}
+            <a href="{% url 'servico_campo:novo_equipamento' %}" class="btn btn-primary me-2"> {# Adicionado me-2 para margem #}
+                <i class="bi bi-plus-circle"></i> Adicionar Equipamento
+            </a>
+            {% if perms.servico_campo.add_equipamento %} {# Verificar permissão #}
+                <a href="{% url 'servico_campo:upload_massa_equipamentos' %}" class="btn btn-info"> {# Use um estilo diferente, ex: btn-info #}
+                    <i class="bi bi-cloud-arrow-up"></i> Cadastro em Massa
+                </a>
+            {% endif %}
+        </div>
     </div>
 
     <div class="card card-body">

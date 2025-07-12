@@ -8,8 +8,8 @@ from django.db import models
 from django.db.models import ProtectedError
 from . import models
 
-from .models import TipoManutencao, TipoDocumento, FormaPagamento
-from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm
+from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa
+from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm, CategoriaDespesaForm, PoliticaDespesaForm
 
 # Mixin de permissão para todas as views de configuração
 
@@ -173,4 +173,126 @@ class FormaPagamentoDeleteView(ConfiguracaoPermissionMixin, DeleteView):
         except ProtectedError:  # ALTERADO: Removido 'models.'
             messages.error(request, _(
                 "Não foi possível excluir esta forma de pagamento pois ele está associado a Ordens de Serviço existentes."))
+            return self.get(request, *args, **kwargs)
+
+
+# Views para CategoriaDespesa
+# Ou LoginRequiredMixin, se não for específico de gestor
+class CategoriaDespesaListView(LoginRequiredMixin, ListView):
+    permission_required = 'configuracoes.view_categoriadespesa'
+    model = CategoriaDespesa
+    template_name = 'configuracoes/categoria_despesa_list.html'
+    context_object_name = 'categorias_despesa'
+    ordering = ['nome']
+
+
+class CategoriaDespesaCreateView(LoginRequiredMixin, CreateView):
+    permission_required = 'configuracoes.add_categoriadespesa'
+    model = CategoriaDespesa
+    form_class = CategoriaDespesaForm
+    template_name = 'configuracoes/categoria_despesa_form.html'
+    success_url = reverse_lazy('configuracoes:lista_categorias_despesa')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Adicionar Nova Categoria de Despesa")
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _(
+            "Categoria de despesa adicionada com sucesso!"))
+        return super().form_valid(form)
+
+
+class CategoriaDespesaUpdateView(LoginRequiredMixin, UpdateView):
+    permission_required = 'configuracoes.change_categoriadespesa'
+    model = CategoriaDespesa
+    form_class = CategoriaDespesaForm
+    template_name = 'configuracoes/categoria_despesa_form.html'
+    success_url = reverse_lazy('configuracoes:lista_categorias_despesa')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Editar Categoria de Despesa")
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _(
+            "Categoria de despesa atualizada com sucesso!"))
+        return super().form_valid(form)
+
+
+class CategoriaDespesaDeleteView(LoginRequiredMixin, DeleteView):
+    permission_required = 'configuracoes.delete_categoriadespesa'
+    model = CategoriaDespesa
+    template_name = 'configuracoes/categoria_despesa_confirm_delete.html'
+    success_url = reverse_lazy('configuracoes:lista_categorias_despesa')
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except models.ProtectedError:
+            messages.error(request, _(
+                "Não foi possível excluir esta categoria de despesa pois ela está associada a despesas existentes."))
+            return self.get(request, *args, **kwargs)
+
+
+# Views para PoliticaDespesa
+class PoliticaDespesaListView(LoginRequiredMixin, ListView):
+    permission_required = 'configuracoes.view_politicadespesa'
+    model = PoliticaDespesa
+    template_name = 'configuracoes/politica_despesa_list.html'
+    context_object_name = 'politicas_despesa'
+    ordering = ['-ativa', '-data_upload']  # Ativas primeiro, depois por data
+
+
+class PoliticaDespesaCreateView(LoginRequiredMixin, CreateView):
+    permission_required = 'configuracoes.add_politicadespesa'
+    model = PoliticaDespesa
+    form_class = PoliticaDespesaForm
+    template_name = 'configuracoes/politica_despesa_form.html'
+    success_url = reverse_lazy('configuracoes:lista_politicas_despesa')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Anexar Nova Política de Despesa")
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _(
+            "Política de despesa adicionada com sucesso!"))
+        return super().form_valid(form)
+
+
+class PoliticaDespesaUpdateView(LoginRequiredMixin, UpdateView):
+    permission_required = 'configuracoes.change_politicadespesa'
+    model = PoliticaDespesa
+    form_class = PoliticaDespesaForm
+    template_name = 'configuracoes/politica_despesa_form.html'
+    success_url = reverse_lazy('configuracoes:lista_politicas_despesa')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Editar Política de Despesa")
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _(
+            "Política de despesa atualizada com sucesso!"))
+        return super().form_valid(form)
+
+
+class PoliticaDespesaDeleteView(LoginRequiredMixin, DeleteView):
+    permission_required = 'configuracoes.delete_politicadespesa'
+    model = PoliticaDespesa
+    template_name = 'configuracoes/politica_despesa_confirm_delete.html'
+    success_url = reverse_lazy('configuracoes:lista_politicas_despesa')
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except models.ProtectedError:
+            messages.error(request, _(
+                # Nenhuma foreign key, então menos chances de ProtectedError
+                "Não foi possível excluir esta política de despesa."))
             return self.get(request, *args, **kwargs)

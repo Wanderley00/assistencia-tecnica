@@ -253,7 +253,23 @@
         <p class="section-content">{{ relatorio.descricao_atividades|linebreaksbr }}</p>
 
         <div class="section-title">Problemas Identificados</div>
-        <p class="section-content">{{ relatorio.problemas_identificados|linebreaksbr|default:"Nenhum problema identificado." }}</p>
+        {% if relatorio.problemas_identificados_detalhes.all %}
+        <ul style="list-style-type: disc; margin-left: 20px; padding-left: 0; margin-top: 10px;">
+            {% for problema in relatorio.problemas_identificados_detalhes.all %}
+            <li style="margin-bottom: 5px;">
+                <strong>{{ problema.categoria.nome }}</strong>
+                {% if problema.subcategoria %}
+                    / {{ problema.subcategoria.nome }}
+                {% endif %}
+                {% if problema.observacao %}
+                    : {{ problema.observacao }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="section-content">Nenhum problema detalhado registrado.</p>
+        {% endif %}
 
         <div class="section-title">Soluções Aplicadas / Recomendações</div>
         <p class="section-content">{{ relatorio.solucoes_aplicadas|linebreaksbr|default:"Nenhuma solução aplicada ou recomendação fornecida." }}</p>

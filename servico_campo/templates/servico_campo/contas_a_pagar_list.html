@@ -1,0 +1,125 @@
+{# servico_campo/templates/servico_campo/contas_a_pagar_list.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gestão de Contas a Pagar" %}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{% trans "Contas a Pagar" %}</h1>
+        {# Botão para Visualizar Política de Despesa #}
+        {% if politica_despesa_ativa %}
+            <a href="{{ politica_despesa_ativa.arquivo.url }}" target="_blank" class="btn btn-info">
+                <i class="bi bi-journal-richtext"></i> {% trans "Ver Política de Despesa" %}
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card card-body mb-4">
+        <form method="get" action="{% url 'servico_campo:lista_contas_a_pagar' %}" id="filter-form">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="id_status_pagamento_filter" class="form-label">{% trans "Filtrar por Status" %}</label>
+                    <select class="form-select" id="id_status_pagamento_filter" name="status_pagamento">
+                        <option value="TODOS" {% if filters.status_pagamento == 'TODOS' %}selected{% endif %}>{% trans "Todos" %}</option>
+                        {% for value, display in status_pagamento_choices %}
+                            <option value="{{ value }}" {% if filters.status_pagamento == value %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-8 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-info me-2">{% trans "Filtrar" %}</button>
+                    <a href="{% url 'servico_campo:lista_contas_a_pagar' %}" class="btn btn-secondary">{% trans "Limpar Filtros" %}</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{% trans "Despesa (OS)" %}</th>
+                    <th>{% trans "Técnico" %}</th>
+                    <th>{% trans "Data Despesa" %}</th>
+                    <th>{% trans "Valor (R$)" %}</th>
+                    <th>{% trans "Comprovante Desp." %}</th>
+                    <th>{% trans "Adiantamento?" %}</th>
+                    <th>{% trans "Status Pagamento" %}</th>
+                    <th>{% trans "Data Pagamento" %}</th>
+                    <th>{% trans "Responsável" %}</th>
+                    <th>{% trans "Ações" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conta in contas_a_pagar %}
+                <tr>
+                    <td>
+                        <a href="{% url 'servico_campo:detalhe_os' conta.despesa.ordem_servico.pk %}">OS {{ conta.despesa.ordem_servico.numero_os }}</a>
+                        <br>
+                        <small class="text-muted">{{ conta.despesa.descricao|truncatechars:50 }}</small>
+                    </td>
+                    <td>{{ conta.despesa.tecnico.get_full_name|default:conta.despesa.tecnico.username }}</td>
+                    <td>{{ conta.despesa.data_despesa|date:"d/m/Y" }}</td>
+                    <td>{{ conta.despesa.valor|floatformat:2 }}</td>
+                    <td>
+                        {% if conta.despesa.comprovante_anexo %}
+                            <a href="{{ conta.despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}</a>
+                        {% else %}
+                            {% trans "Nenhum" %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conta.despesa.is_adiantamento %}
+                            <span class="badge bg-primary">{% trans "Sim" %}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conta.status_pagamento == 'PAGO' %}
+                            <span class="badge bg-success">{{ conta.get_status_pagamento_display }}</span>
+                        {% elif conta.status_pagamento == 'CANCELADO' %}
+                            <span class="badge bg-danger">{{ conta.get_status_pagamento_display }}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{{ conta.get_status_pagamento_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conta.data_pagamento %}
+                            {{ conta.data_pagamento|date:"d/m/Y H:i" }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if conta.responsavel_pagamento %}
+                            {{ conta.responsavel_pagamento.get_full_name|default:conta.responsavel_pagamento.username }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'servico_campo:editar_conta_a_pagar' conta.pk %}" class="btn btn-sm btn-primary" title="{% trans 'Editar Status de Pagamento' %}"><i class="bi bi-pencil"></i></a>
+                    </td>
+                </tr>
+                {% if conta.comentario %}
+                <tr class="table-info-row">
+                    <td colspan="10" class="pt-0 pb-1">
+                        <small class="text-muted fst-italic ms-0">{% trans "Comentário Pagamento" %}: {{ conta.comentario }}</small>
+                    </td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center">{% trans "Nenhuma conta a pagar encontrada." %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+
+{% endblock %}

@@ -3,8 +3,16 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
+from datetime import time, timedelta, datetime
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
-from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento  # NOVO IMPORT
+
+from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa  # NOVO IMPORT
+
+from django.core.exceptions import ValidationError
+
+User = get_user_model()  # Obtém o modelo de usuário ativo
 
 # 1. Cliente Model
 
@@ -83,6 +91,19 @@ class OrdemServico(models.Model):
         verbose_name="Descrição do Problema / Motivo da OS")
     data_abertura = models.DateTimeField(
         auto_now_add=True, verbose_name="Data de Abertura")
+
+    # NOVO CAMPO: Data de Início Planejado
+    data_inicio_planejado = models.DateField(
+        verbose_name="Início Planejado", null=True, blank=True,
+        help_text="Data planejada para o início das atividades da OS."
+    )
+
+    # NOVO CAMPO: Data de Início Real
+    data_inicio_real = models.DateTimeField(
+        verbose_name="Início Real", null=True, blank=True,
+        help_text="Data e hora do primeiro registro de ponto ou início efetivo."
+    )
+
     data_previsao_conclusao = models.DateField(
         verbose_name="Previsão de Conclusão", null=True, blank=True)
     data_fechamento = models.DateTimeField(
@@ -155,7 +176,12 @@ class RegistroPonto(models.Model):
         verbose_name="Hora de Saída", null=True, blank=True)
     # Pode ser usado para registro de geolocalização se o app for mobile
     localizacao = models.CharField(
-        max_length=255, verbose_name="Localização (GPS ou Descrição)", null=True, blank=True)
+        # Renomeado para 'Localização de Entrada'
+        max_length=255, verbose_name="Localização de Entrada (GPS ou Descrição)", null=True, blank=True)
+    localizacao_saida = models.CharField(  # NOVO CAMPO
+        max_length=255, verbose_name="Localização de Saída (GPS ou Descrição)", null=True, blank=True)
+    observacoes_entrada = models.TextField(
+        verbose_name="Observações de Entrada", null=True, blank=True)
     observacoes = models.TextField(
         verbose_name="Observações do Ponto", null=True, blank=True)
 
@@ -217,8 +243,8 @@ class RelatorioCampo(models.Model):
     data_relatorio = models.DateField(verbose_name="Data do Relatório")
     descricao_atividades = models.TextField(
         verbose_name="Descrição das Atividades Realizadas")
-    problemas_identificados = models.TextField(
-        verbose_name="Problemas Identificados", null=True, blank=True)
+    # problemas_identificados = models.TextField(
+    #     verbose_name="Problemas Identificados", null=True, blank=True)
     solucoes_aplicadas = models.TextField(
         verbose_name="Soluções Aplicadas / Recomendações", null=True, blank=True)
     material_utilizado = models.TextField(
@@ -288,56 +314,288 @@ class Despesa(models.Model):
     """
     # REMOVA: TIPO_PAGAMENTO_CHOICES = [('DINHEIRO', 'Dinheiro'), ('DEPOSITO_BANCARIO', 'Depósito Bancário'), ('CARTAO_CREDITO', 'Cartão de Crédito'), ('CARTAO_DEBITO', 'Cartão de Débito'), ('PIX', 'PIX'), ('OUTRO', 'Outro')]
 
+    # NOVO CAMPO: Indica se a despesa é um adiantamento
+    is_adiantamento = models.BooleanField(
+        default=False, verbose_name=_("Adiantamento?"),
+        help_text=_(
+            "Marque se esta despesa for um adiantamento para o serviço, exigindo pagamento antes do início.")
+    )
+
     ordem_servico = models.ForeignKey(
-        OrdemServico, on_delete=models.CASCADE, verbose_name="Ordem de Serviço", related_name="despesas")
-    tecnico = models.ForeignKey(
-        User, on_delete=models.PROTECT, verbose_name="Técnico Responsável pela Despesa")
-    data_despesa = models.DateField(verbose_name="Data da Despesa")
-    descricao = models.CharField(
-        max_length=255, verbose_name="Descrição da Despesa")
-    valor = models.DecimalField(max_digits=10, decimal_places=2,
-                                verbose_name="Valor (R$)", validators=[MinValueValidator(0)])
-    # ALTERADO: De CharField com choices para ForeignKey
+        OrdemServico, on_delete=models.CASCADE, related_name='despesas', verbose_name=_("Ordem de Serviço"))
+    tecnico = models.ForeignKey(User, on_delete=models.CASCADE,
+                                related_name='despesas_registradas', verbose_name=_("Técnico"))
+    data_despesa = models.DateField(verbose_name=_("Data da Despesa"))
+    descricao = models.CharField(max_length=255, verbose_name=_("Descrição"))
+    valor = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name=_("Valor"))
     tipo_pagamento = models.ForeignKey(
-        FormaPagamento, on_delete=models.PROTECT, verbose_name="Forma de Pagamento")
+        FormaPagamento, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Forma de Pagamento"))
+    categoria_despesa = models.ForeignKey(
+        CategoriaDespesa, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Categoria da Despesa"))
+    is_adiantamento = models.BooleanField(
+        default=False, verbose_name=_("É Adiantamento?"),
+        help_text=_(
+            "Marque se esta despesa for um adiantamento para o serviço, exigindo pagamento antes do início.")
+    )
     comprovante_anexo = models.FileField(
-        upload_to='comprovantes_despesas/', verbose_name="Comprovante (Imagem/PDF)", null=True, blank=True)
+        upload_to='comprovantes_despesas/', verbose_name=_("Comprovante (Imagem/PDF)"), null=True, blank=True)
     local_despesa = models.CharField(
-        max_length=255, verbose_name="Local da Despesa (Estabelecimento)", null=True, blank=True)
-    aprovada = models.BooleanField(
-        default=False, verbose_name="Aprovada para Reembolso")
+        max_length=255, verbose_name=_("Local da Despesa (Estabelecimento)"), null=True, blank=True)
+
+    STATUS_APROVACAO_CHOICES = [
+        ('PENDENTE', _('Pendente')),
+        ('APROVADA', _('Aprovada')),
+        ('REJEITADA', _('Rejeitada')),
+    ]
+    status_aprovacao = models.CharField(
+        max_length=10, choices=STATUS_APROVACAO_CHOICES, default='PENDENTE', verbose_name=_("Status de Aprovação")
+    )
     aprovado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
-                                     blank=True, related_name="despesas_aprovadas", verbose_name="Aprovado por")
+                                     blank=True, related_name="despesas_aprovadas", verbose_name=_("Aprovado por"))
     data_aprovacao = models.DateTimeField(
-        null=True, blank=True, verbose_name="Data de Aprovação")
+        null=True, blank=True, verbose_name=_("Data de Aprovação"))
+    comentario_aprovacao = models.TextField(
+        verbose_name=_("Comentário de Aprovação/Rejeição"), null=True, blank=True
+    )
+
+    # NOVOS CAMPOS PARA STATUS DE PAGAMENTO
+    paga = models.BooleanField(default=False, verbose_name=_("Paga?"))
+    data_pagamento = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Data do Pagamento"))
 
     class Meta:
-        verbose_name = "Despesa"
-        verbose_name_plural = "Despesas"
+        verbose_name = _("Despesa")
+        verbose_name_plural = _("Despesas")
         ordering = ['-data_despesa', 'descricao']
 
     def __str__(self):
         return f"Despesa de R$ {self.valor:.2f} em {self.data_despesa.strftime('%d/%m/%Y')} - {self.descricao} (OS: {self.ordem_servico.numero_os})"
 
 
+class ContaPagar(models.Model):
+    despesa = models.OneToOneField(Despesa, on_delete=models.CASCADE,
+                                   related_name='conta_a_pagar', verbose_name=_("Despesa Associada"))
+
+    STATUS_PAGAMENTO_CHOICES = [
+        ('PENDENTE', _('Pendente')),
+        ('EM_ANALISE', _('Em Análise')),
+        ('PAGO', _('Pago')),
+        # Para caso o pagamento seja cancelado por algum motivo
+        ('CANCELADO', _('Cancelado')),
+    ]
+    status_pagamento = models.CharField(
+        max_length=10, choices=STATUS_PAGAMENTO_CHOICES, default='PENDENTE', verbose_name=_("Status do Pagamento")
+    )
+
+    comentario = models.TextField(
+        verbose_name=_("Comentário do Pagamento"), null=True, blank=True,
+        help_text=_("Adicione detalhes sobre o pagamento ou análise.")
+    )
+    comprovante_pagamento = models.FileField(
+        upload_to='comprovantes_pagamento/', verbose_name=_("Comprovante de Pagamento (Imagem/PDF)"), null=True, blank=True
+    )
+
+    data_criacao = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Data de Criação"))
+    data_atualizacao = models.DateTimeField(
+        auto_now=True, verbose_name=_("Última Atualização"))
+
+    # Quem registrou/atualizou o status de pagamento
+    responsavel_pagamento = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Responsável pelo Pagamento"))
+
+    class Meta:
+        verbose_name = _("Conta a Pagar")
+        verbose_name_plural = _("Contas a Pagar")
+        ordering = ['-data_criacao']
+
+    def __str__(self):
+        return f"Conta a Pagar para Despesa {self.despesa.id} (OS: {self.despesa.ordem_servico.numero_os}) - Status: {self.get_status_pagamento_display()}"
+
+    def save(self, *args, **kwargs):
+        # Quando o status do ContaPagar for 'PAGO', atualiza a despesa associada
+        if self.status_pagamento == 'PAGO' and not self.despesa.paga:
+            self.despesa.paga = True
+            self.despesa.data_pagamento = timezone.now()
+            self.despesa.save()
+        # Se o status mudar de PAGO para outro, reseta a despesa
+        elif self.status_pagamento != 'PAGO' and self.despesa.paga:
+            self.despesa.paga = False
+            self.despesa.data_pagamento = None
+            self.despesa.save()
+        super().save(*args, **kwargs)
+
+
 class MembroEquipe(models.Model):
     """
     Representa um membro da equipe alocado para uma Ordem de Serviço específica.
+    AGORA APENAS USUÁRIOS DO SISTEMA PODEM SER MEMBROS DA EQUIPE.
     """
     ordem_servico = models.ForeignKey(
         OrdemServico, on_delete=models.CASCADE, related_name="equipe")
-    nome_completo = models.CharField(
-        max_length=150, verbose_name="Nome Completo do Membro")
-    funcao = models.CharField(max_length=100, verbose_name="Função na Equipe",
-                              help_text="Ex: Ajudante, Eletricista Auxiliar")
-    identificacao = models.CharField(
-        max_length=50, verbose_name="Identificação (Ex: RG, Matrícula)", blank=True)
+
+    usuario = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name="Membro da Equipe (Usuário)")
+
+    # REINTRODUZINDO ESTE CAMPO COMO OPCIONAL
+    funcao = models.CharField(
+        max_length=100,
+        verbose_name="Função na Equipe",
+        help_text="Ex: Ajudante, Eletricista Auxiliar",
+        blank=True,  # Torna o campo opcional no formulário
+        null=True  # Permite que o campo seja NULL no banco de dados
+    )
 
     class Meta:
         verbose_name = "Membro da Equipe"
         verbose_name_plural = "Membros da Equipe"
-        # Evita adicionar a mesma pessoa duas vezes na mesma OS
-        unique_together = ('ordem_servico', 'nome_completo')
+        unique_together = ('ordem_servico', 'usuario')
 
     def __str__(self):
-        return f"{self.nome_completo} ({self.funcao})"
+        return f"{self.usuario.get_full_name() or self.usuario.username}"
+
+
+class RegraJornadaTrabalho(models.Model):
+    """
+    Define as regras para cálculo de horas normais e extras.
+    """
+    nome = models.CharField(max_length=100, unique=True,
+                            verbose_name=_("Nome da Regra"))
+
+    # Jornada Normal Diária
+    horas_normais_diarias = models.DecimalField(
+        max_digits=4, decimal_places=2, default=8.00,
+        verbose_name=_("Horas Normais Diárias (Ex: 8.00)")
+    )
+
+    # Horário de Início e Fim da Jornada Normal
+    # Isso é importante para diferenciar horas extras que caem antes ou depois do turno normal
+    inicio_jornada_normal = models.TimeField(
+        default=time(8, 0, 0), verbose_name=_("Início da Jornada Normal (HH:MM)")
+    )
+    fim_jornada_normal = models.TimeField(
+        default=time(17, 0, 0), verbose_name=_("Fim da Jornada Normal (HH:MM)")
+    )
+
+    # Horas Extras 60%
+    # Pode ser uma duração após o fim da jornada normal, ou um horário limite
+    # Vamos usar um horário limite para maior flexibilidade
+    inicio_extra_60 = models.TimeField(
+        default=time(17, 0, 1), verbose_name=_("Início da Hora Extra 60% (HH:MM)")
+    )
+    fim_extra_60 = models.TimeField(
+        default=time(22, 0, 0), verbose_name=_("Fim da Hora Extra 60% (HH:MM)")
+    )
+
+    # Horas Extras 100% (Geralmente após a faixa de 60% ou em horários específicos)
+    inicio_extra_100 = models.TimeField(
+        default=time(22, 0, 1), verbose_name=_("Início da Hora Extra 100% (HH:MM)")
+    )
+    # Não precisamos de um 'fim_extra_100' se for até a meia-noite ou o próximo dia
+
+    # Regras para Fins de Semana e Feriados
+    # Assumimos que o trabalho em fins de semana/feriados é 100% extra, a menos que especificado
+    # Podemos ter uma flag para indicar se a regra normal se aplica em sábados/domingos
+    # Ou simplesmente considerar que Sábado e Domingo são sempre 100% extra
+    considerar_sabado_100_extra = models.BooleanField(
+        default=True, verbose_name=_("Considerar Sábado 100% Extra")
+    )
+    considerar_domingo_100_extra = models.BooleanField(
+        default=True, verbose_name=_("Considerar Domingo 100% Extra")
+    )
+
+    # Associação com Usuários (opcional, para regras específicas por técnico/equipe)
+    # Se uma regra for default para a empresa, não precisa de associação direta aqui.
+    # Podemos associar a um usuário ou deixar global.
+    # Por enquanto, vamos manter como uma regra geral.
+
+    # Campo para indicar se esta é a regra padrão (default)
+    is_default = models.BooleanField(
+        default=False, verbose_name=_("Regra Padrão (Default)")
+    )
+
+    class Meta:
+        verbose_name = _("Regra de Jornada de Trabalho")
+        verbose_name_plural = _("Regras de Jornada de Trabalho")
+
+    def __str__(self):
+        return self.nome
+
+    # Método para calcular horas (será implementado mais tarde)
+    def calcular_horas(self, hora_entrada: time, hora_saida: time, data: datetime.date) -> dict:
+        # Este método será implementado na próxima etapa
+        # Retornará um dicionário com 'normais', 'extra_60', 'extra_100'
+        return {
+            'normais': 0,
+            'extra_60': 0,
+            'extra_100': 0
+        }
+
+# 10. Categorias de Problema
+
+
+class CategoriaProblema(models.Model):
+    nome = models.CharField(max_length=100, unique=True,
+                            verbose_name=_("Nome da Categoria"))
+    ativo = models.BooleanField(default=True, verbose_name=_("Ativo"))
+
+    class Meta:
+        verbose_name = _("Categoria de Problema")
+        verbose_name_plural = _("Categorias de Problemas")
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+# 11. Subcategorias de Problema (relacionadas a uma Categoria)
+
+
+class SubcategoriaProblema(models.Model):
+    categoria = models.ForeignKey(
+        CategoriaProblema, on_delete=models.CASCADE, related_name="subcategorias", verbose_name=_("Categoria Principal")
+    )
+    nome = models.CharField(
+        max_length=100, verbose_name=_("Nome da Subcategoria"))
+    ativo = models.BooleanField(default=True, verbose_name=_("Ativo"))
+
+    class Meta:
+        verbose_name = _("Subcategoria de Problema")
+        verbose_name_plural = _("Subcategorias de Problemas")
+        # Uma subcategoria é única dentro de uma categoria
+        unique_together = ('categoria', 'nome')
+        ordering = ['categoria__nome', 'nome']
+
+    def __str__(self):
+        return f"{self.categoria.nome} - {self.nome}"
+
+# 12. Problemas Identificados (para cada relatório)
+
+
+class ProblemaRelatorio(models.Model):
+    """
+    Representa um problema individual identificado em um Relatório de Campo.
+    """
+    relatorio = models.ForeignKey(
+        'RelatorioCampo', on_delete=models.CASCADE, related_name="problemas_identificados_detalhes", verbose_name=_("Relatório de Campo")
+    )
+    categoria = models.ForeignKey(
+        CategoriaProblema, on_delete=models.PROTECT, verbose_name=_(
+            "Categoria do Problema")
+    )
+    subcategoria = models.ForeignKey(
+        SubcategoriaProblema, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("Subcategoria do Problema")
+    )
+    observacao = models.TextField(
+        verbose_name=_("Comentário / Observação do Problema"), null=True, blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Problema Identificado")
+        verbose_name_plural = _("Problemas Identificados")
+        # Pode haver múltiplos problemas do mesmo tipo em um relatório, então não unique_together
+        ordering = ['categoria__nome', 'subcategoria__nome']
+
+    def __str__(self):
+        sub = f" ({self.subcategoria.nome})" if self.subcategoria else ""
+        return f"{self.categoria.nome}{sub}: {self.observacao or 'Sem observação'}"

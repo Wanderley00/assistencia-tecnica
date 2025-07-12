@@ -5,6 +5,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, AuthenticationForm
 from django.utils.translation import gettext_lazy as _
 from django.forms import inlineformset_factory
+from django.core.validators import FileExtensionValidator
 
 from .models import (
     OrdemServico,
@@ -15,10 +16,17 @@ from .models import (
     RelatorioCampo,
     FotoRelatorio,
     Despesa,
-    MembroEquipe
+    MembroEquipe,
+    RegraJornadaTrabalho,
+    CategoriaProblema,
+    SubcategoriaProblema,
+    ProblemaRelatorio,
+    ContaPagar
 )
 
-from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento
+from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa
+
+from django.contrib.auth.models import User
 
 
 class OrdemServicoCreateForm(forms.ModelForm):
@@ -74,12 +82,18 @@ class OrdemServicoPlanejamentoForm(forms.ModelForm):
     """Formulário completo, usado na tela de planejamento."""
     class Meta:
         model = OrdemServico
-        fields = ['tecnico_responsavel',
+        fields = ['tecnico_responsavel', 'data_inicio_planejado',
                   'data_previsao_conclusao', 'observacoes_gerais']
         widgets = {
+            'data_inicio_planejado': forms.DateInput(attrs={'type': 'date'}),
             'data_previsao_conclusao': forms.DateInput(attrs={'type': 'date'}),
             'observacoes_gerais': forms.Textarea(attrs={'rows': 3}),
         }
+
+    # def __str__(self):
+    #     if self.usuario:
+    #         return f"{self.usuario.get_full_name() or self.usuario.username} ({self.funcao})"
+    #     return f"{self.nome_completo} ({self.funcao})"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -88,25 +102,48 @@ class OrdemServicoPlanejamentoForm(forms.ModelForm):
 
 
 class MembroEquipeForm(forms.ModelForm):
-    """Formulário para um único membro da equipe."""
+    """Formulário para um único membro da equipe (apenas usuários do sistema)."""
+    usuario = forms.ModelChoiceField(
+        queryset=User.objects.all().order_by('first_name', 'username'),
+        required=True,
+        label="Membro da Equipe",
+        widget=forms.Select(
+            attrs={'class': 'form-control membro-usuario-select'})
+    )
+
     class Meta:
         model = MembroEquipe
-        fields = ['nome_completo', 'funcao', 'identificacao']
+        # ALTERADO: Adicionado 'funcao' de volta
+        fields = ['usuario', 'funcao']  # <--- MUDE AQUI
 
-    # --- MÉTODO QUE FALTAVA ---
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
+        # Se você quiser adicionar uma classe específica ao campo 'funcao'
+        # self.fields['funcao'].widget.attrs.update({'class': 'form-control minha-classe-funcao'})
 
 
+# O inlineformset_factory continuará usando este formulário MembroEquipeForm
+# Nenhuma mudança aqui.
 MembroEquipeFormSet = inlineformset_factory(
     OrdemServico,
     MembroEquipe,
     form=MembroEquipeForm,
-    extra=0,
+    extra=1,
     can_delete=True,
     can_delete_extra=True
+)
+
+
+# O inlineformset_factory continuará usando este formulário MembroEquipeForm
+MembroEquipeFormSet = inlineformset_factory(
+    OrdemServico,
+    MembroEquipe,
+    form=MembroEquipeForm,
+    extra=1,  # Aumentei para 1 para sempre ter um campo vazio para adicionar
+    can_delete=True,
+    can_delete_extra=True  # Permite excluir campos extras não salvos
 )
 
 
@@ -128,12 +165,72 @@ class DocumentoOSForm(forms.ModelForm):
 class RegistroPontoForm(forms.ModelForm):
     class Meta:
         model = RegistroPonto
-        fields = ['localizacao', 'observacoes']
+        # Este será o formulário para EDIÇÃO COMPLETA
+        fields = ['data', 'hora_entrada', 'hora_saida',
+                  'localizacao', 'localizacao_saida', 'observacoes_entrada', 'observacoes']
+        widgets = {
+            'data': forms.DateInput(attrs={'type': 'date'}),
+            'hora_entrada': forms.TimeInput(attrs={'type': 'time'}),
+            'hora_saida': forms.TimeInput(attrs={'type': 'time'}),
+            'observacoes_entrada': forms.Textarea(attrs={'rows': 3}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
+        self.fields['localizacao'].label = _("Localização de Entrada")
+        self.fields['localizacao_saida'].label = _("Localização de Saída")
+        self.fields['observacoes'].label = _("Observações de Saída")
+
+
+# NOVO FORMULÁRIO: Para Marcar Ponto de Entrada
+class RegistroPontoEntradaForm(forms.ModelForm):
+    observacoes_entrada = forms.CharField(
+        max_length=255, required=False, label=_("Observações (Opcional)"))
+    localizacao = forms.CharField(
+        max_length=255, required=False, label=_("Localização (Opcional)"))
+    gps_coords = forms.CharField(
+        max_length=255, required=False, widget=forms.HiddenInput())  # Campo para GPS
+
+    class Meta:
+        model = RegistroPonto
+        # Apenas os campos que vêm do formulário (localização manual e observações, se tiver)
+        # data, hora_entrada, tecnico, os serão preenchidos na view
+        # observacoes agora será do modal de entrada também
+        fields = ['localizacao', 'observacoes_entrada']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['localizacao'].widget.attrs.update(
+            {'class': 'form-control', 'placeholder': _('Ex: Cliente A, Centro')})
+        self.fields['observacoes_entrada'].widget.attrs.update(
+            {'class': 'form-control', 'rows': 2, 'placeholder': _('Observações iniciais (opcional)')})
+
+
+# NOVO FORMULÁRIO: Para Encerrar Ponto de Saída
+class RegistroPontoSaidaForm(forms.ModelForm):
+    # Campos que o usuário pode preencher ao encerrar o ponto
+    localizacao_saida = forms.CharField(
+        max_length=255, required=False, label=_("Localização de Saída (Opcional)"))
+    observacoes = forms.CharField(
+        max_length=255, required=False, label=_("Observações (Opcional)"))
+    gps_coords_saida = forms.CharField(
+        max_length=255, required=False, widget=forms.HiddenInput())  # Campo para GPS de saída
+
+    class Meta:
+        model = RegistroPonto
+        # Apenas os campos que podem ser atualizados na saída
+        # hora_saida será preenchida na view
+        fields = ['localizacao_saida', 'observacoes']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['localizacao_saida'].widget.attrs.update(
+            {'class': 'form-control', 'placeholder': _('Ex: Saída do Cliente')})
+        self.fields['observacoes'].widget.attrs.update(
+            {'class': 'form-control', 'placeholder': _('Ex: Término do dia'), 'rows': 2})
 
 
 class RelatorioCampoForm(forms.ModelForm):
@@ -141,14 +238,15 @@ class RelatorioCampoForm(forms.ModelForm):
         model = RelatorioCampo
         fields = [
             'tipo_relatorio', 'data_relatorio', 'descricao_atividades',
-            'problemas_identificados', 'solucoes_aplicadas', 'material_utilizado',
+            # 'problemas_identificados'
+            'solucoes_aplicadas', 'material_utilizado',
             'horas_normais', 'horas_extras_60', 'horas_extras_100', 'km_rodado',
             'local_servico', 'observacoes_adicionais', 'assinatura_executante_data',
         ]
         widgets = {
             'data_relatorio': forms.DateInput(attrs={'type': 'date'}),
             'descricao_atividades': forms.Textarea(attrs={'rows': 5}),
-            'problemas_identificados': forms.Textarea(attrs={'rows': 3}),
+            # 'problemas_identificados': forms.Textarea(attrs={'rows': 3}),
             'solucoes_aplicadas': forms.Textarea(attrs={'rows': 3}),
             'material_utilizado': forms.Textarea(attrs={'rows': 3}),
             'observacoes_adicionais': forms.Textarea(attrs={'rows': 3}),
@@ -177,15 +275,27 @@ class DespesaForm(forms.ModelForm):
     class Meta:
         model = Despesa
         fields = ['data_despesa', 'descricao', 'valor',
-                  'tipo_pagamento', 'comprovante_anexo', 'local_despesa']
+                  'tipo_pagamento', 'categoria_despesa',  # NOVO CAMPO AQUI
+                  'comprovante_anexo', 'local_despesa',
+                  'is_adiantamento']
         widgets = {'data_despesa': forms.DateInput(attrs={'type': 'date'})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({'class': 'form-control'})
-        # NOVO: Define o queryset para tipo_pagamento
+            # Aplica 'form-control' a maioria dos campos
+            if not isinstance(field.widget, forms.CheckboxInput):  # Exclui checkboxes
+                field.widget.attrs.update({'class': 'form-control'})
+            # Adiciona classe para checkboxes se desejar estilização específica
+            elif isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+
+        # Define o queryset para tipo_pagamento
         self.fields['tipo_pagamento'].queryset = FormaPagamento.objects.filter(
+            ativo=True)
+
+        # NOVO: Define o queryset para categoria_despesa
+        self.fields['categoria_despesa'].queryset = CategoriaDespesa.objects.filter(
             ativo=True)
 
 
@@ -352,3 +462,236 @@ class OrdemServicoClienteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
+
+
+class RegraJornadaTrabalhoForm(forms.ModelForm):
+    class Meta:
+        model = RegraJornadaTrabalho
+        fields = '__all__'  # Inclui todos os campos do modelo
+        widgets = {
+            'inicio_jornada_normal': forms.TimeInput(attrs={'type': 'time'}),
+            'fim_jornada_normal': forms.TimeInput(attrs={'type': 'time'}),
+            'inicio_extra_60': forms.TimeInput(attrs={'type': 'time'}),
+            'fim_extra_60': forms.TimeInput(attrs={'type': 'time'}),
+            'inicio_extra_100': forms.TimeInput(attrs={'type': 'time'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            # Aplica 'form-control' a maioria dos campos, exceto checkboxes
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-control'})
+            # Adiciona classe para checkboxes também, se desejar
+            elif isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+
+    def clean_is_default(self):
+        """
+        Garante que apenas uma regra de jornada de trabalho seja marcada como padrão (is_default).
+        """
+        is_default = self.cleaned_data.get('is_default')
+        if is_default:
+            # Se esta regra está sendo marcada como padrão, desmarque as outras
+            qs = RegraJornadaTrabalho.objects.filter(is_default=True)
+            if self.instance.pk:  # Se for uma edição, exclui a própria instância da query
+                qs = qs.exclude(pk=self.instance.pk)
+            qs.update(is_default=False)
+        return is_default
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inicio_normal = cleaned_data.get('inicio_jornada_normal')
+        fim_normal = cleaned_data.get('fim_jornada_normal')
+        inicio_extra_60 = cleaned_data.get('inicio_extra_60')
+        fim_extra_60 = cleaned_data.get('fim_extra_60')
+        inicio_extra_100 = cleaned_data.get('inicio_extra_100')
+
+        # Validação de ordem dos horários
+        if inicio_normal and fim_normal and inicio_normal >= fim_normal:
+            self.add_error('fim_jornada_normal', _(
+                "O fim da jornada normal deve ser depois do início."))
+        if inicio_extra_60 and fim_extra_60 and inicio_extra_60 >= fim_extra_60:
+            self.add_error('fim_extra_60', _(
+                "O fim da hora extra 60% deve ser depois do início."))
+        if inicio_extra_60 and inicio_extra_100 and inicio_extra_60 >= inicio_extra_100:
+            self.add_error('inicio_extra_100', _(
+                "O início da hora extra 100% deve ser depois do início da hora extra 60%."))
+
+        # Validação de sobreposição de faixas de horário (básica)
+        if fim_normal and inicio_extra_60 and fim_normal > inicio_extra_60:
+            self.add_error('inicio_extra_60', _(
+                "O início da hora extra 60% deve ser após o fim da jornada normal."))
+        if fim_extra_60 and inicio_extra_100 and fim_extra_60 > inicio_extra_100:
+            self.add_error('inicio_extra_100', _(
+                "O início da hora extra 100% deve ser após o fim da hora extra 60%."))
+
+        return cleaned_data
+
+
+class CategoriaProblemaForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaProblema
+        fields = '__all__'
+        widgets = {
+            'nome': forms.TextInput(attrs={'placeholder': _('Ex: Elétrica, Mecânica')}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nome'].widget.attrs.update({'class': 'form-control'})
+        self.fields['ativo'].widget.attrs.update({'class': 'form-check-input'})
+
+
+class SubcategoriaProblemaForm(forms.ModelForm):
+    class Meta:
+        model = SubcategoriaProblema
+        fields = '__all__'
+        widgets = {
+            'nome': forms.TextInput(attrs={'placeholder': _('Ex: Curto-circuito, Falha de Software')}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].widget.attrs.update({'class': 'form-control'})
+        self.fields['nome'].widget.attrs.update({'class': 'form-control'})
+        self.fields['ativo'].widget.attrs.update({'class': 'form-check-input'})
+
+# Formulário para um problema individual em um relatório
+
+
+class ProblemaRelatorioForm(forms.ModelForm):
+    class Meta:
+        model = ProblemaRelatorio
+        fields = ['categoria', 'subcategoria', 'observacao']
+        widgets = {
+            'categoria': forms.Select(attrs={'class': 'form-control problema-categoria-select'}),
+            'subcategoria': forms.Select(attrs={'class': 'form-control problema-subcategoria-select'}),
+            'observacao': forms.Textarea(attrs={'rows': 2, 'placeholder': _('Detalhes específicos do problema...')}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['categoria'].queryset = CategoriaProblema.objects.filter(
+            ativo=True)
+
+        # 1. Obter o ID da subcategoria que está sendo validada (seja do POST ou da instância)
+        subcategoria_id_from_data = None
+        if 'subcategoria' in self.data and self.data.get('subcategoria'):
+            try:
+                subcategoria_id_from_data = int(self.data['subcategoria'])
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk and self.instance.subcategoria:
+            subcategoria_id_from_data = self.instance.subcategoria.pk
+
+        # 2. Iniciar o queryset da subcategoria com um conjunto vazio ou filtrado pela categoria,
+        #    mas *sempre adicionar* a subcategoria que veio nos dados do formulário (POST ou instância).
+        #    Isso garante que o valor submetido possa ser "encontrado" pelo widget.
+
+        # Começa com o queryset de todas as subcategorias ativas.
+        # A validação de pertinência à categoria é feita no clean().
+        qs_subcategorias = SubcategoriaProblema.objects.filter(
+            ativo=True).order_by('nome')
+
+        # Se há uma subcategoria vindo dos dados (POST ou instância),
+        # garanta que ela esteja no queryset do campo.
+        if subcategoria_id_from_data:
+            try:
+                # Tenta obter a subcategoria do banco de dados
+                subcategoria_do_banco = SubcategoriaProblema.objects.get(
+                    pk=subcategoria_id_from_data)
+                # Adiciona essa subcategoria ao queryset, garantindo que ela seja uma opção.
+                qs_subcategorias = (qs_subcategorias | SubcategoriaProblema.objects.filter(
+                    pk=subcategoria_do_banco.pk)).distinct().order_by('nome')
+            except SubcategoriaProblema.DoesNotExist:
+                # Se a subcategoria do POST não existe mais, ela não será adicionada,
+                # e o erro de "escolha inválida" poderá persistir se não houver outra opção válida.
+                # Neste caso, o clean() deve pegar o erro de qualquer forma.
+                pass
+
+        self.fields['subcategoria'].queryset = qs_subcategorias
+
+        # Observação não é obrigatória
+        self.fields['observacao'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        categoria = cleaned_data.get('categoria')
+        subcategoria = cleaned_data.get('subcategoria')
+
+        # Validação da combinação categoria/subcategoria
+        if categoria and subcategoria:
+            if subcategoria.categoria != categoria:
+                self.add_error(
+                    'subcategoria',
+                    _("A subcategoria selecionada não pertence à categoria principal.")
+                )
+        # Se você quiser que a subcategoria seja obrigatória se uma categoria for selecionada, adicione:
+        # elif categoria and not subcategoria:
+        #     self.add_error('subcategoria', _("Por favor, selecione uma subcategoria para a categoria escolhida."))
+
+        # A observação é opcional, então não precisa de validação extra aqui para obrigatoriedade.
+
+        return cleaned_data
+
+    # O inline formset para ProblemaRelatorio (definido na view)
+ProblemaRelatorioFormSet = inlineformset_factory(
+    RelatorioCampo,
+    ProblemaRelatorio,
+    form=ProblemaRelatorioForm,
+    extra=1,  # Começa com um campo vazio
+    can_delete=True,
+    can_delete_extra=True
+)
+
+
+class ContaPagarForm(forms.ModelForm):
+    class Meta:
+        model = ContaPagar
+        # Excluímos 'despesa' e 'responsavel_pagamento' porque serão preenchidos na view.
+        # 'data_criacao' e 'data_atualizacao' são automáticas.
+        fields = ['status_pagamento', 'comentario', 'comprovante_pagamento']
+        widgets = {
+            'comentario': forms.Textarea(attrs={'rows': 4}),
+            # 'comprovante_pagamento': forms.ClearableFileInput(), # Já é o padrão, mas para explicitar
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            # Aplica 'form-control' a maioria dos campos, exceto FileInput (comprovante)
+            if not isinstance(field.widget, forms.FileInput):
+                field.widget.attrs.update({'class': 'form-control'})
+
+# NOVO FORMULÁRIO: Para upload de clientes em massa
+
+
+class BulkClientUploadForm(forms.Form):
+    csv_file = forms.FileField(
+        label=_("Arquivo CSV de Clientes"),
+        help_text=_("Faça o upload de um arquivo CSV com os dados dos clientes. "
+                    "O arquivo deve ter as colunas: razao_social, cnpj_cpf, endereco, cidade, estado, cep, telefone, email, contato_principal, telefone_contato, email_contato."),
+        # Valida a extensão do arquivo
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['csv_file'].widget.attrs.update({'class': 'form-control'})
+
+
+# NOVO FORMULÁRIO: Para upload de equipamentos em massa
+# NOVO FORMULÁRIO: Para upload de equipamentos em massa
+class BulkEquipmentUploadForm(forms.Form):
+    csv_file = forms.FileField(
+        label=_("Arquivo CSV de Equipamentos"),
+        help_text=_("Faça o upload de um arquivo CSV com os dados dos equipamentos. "
+                    "O arquivo deve ter as colunas: cliente_cnpj_cpf, nome, modelo, numero_serie, descricao, localizacao."),
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['csv_file'].widget.attrs.update({'class': 'form-control'})

@@ -14,7 +14,6 @@ from django.contrib.messages import constants as messages
 from pathlib import Path
 
 import os
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,30 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Pega do ambiente ou usa default
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY', 'django-insecure-7_c1ij_xocq_f-&%54m+q5zjx4*7xsy_ez%@)%(9x454#$=ds_')
+SECRET_KEY = 'django-insecure-7_c1ij_xocq_f-&%54m+q5zjx4*7xsy_ez%@)%(9x454#$=ds_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG_VALUE', 'False') == 'True'
-
+DEBUG = True
 
 ALLOWED_HOSTS = []
-
-# Configuração para Render
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-# ADICIONE ESTA LINHA TAMBÉM POR GARANTIA OU SE QUISER FIXO
-ALLOWED_HOSTS.append('assistencia-tecnica-django.onrender.com')
-# Se você quiser permitir todos os subdomínios .onrender.com (menos seguro para produção, mas útil para testes)
-# ALLOWED_HOSTS.append('.onrender.com')
 
 
 # Application definition
 INSTALLED_APPS = [
-    # Adicione esta linha AQUI, antes de 'django.contrib.staticfiles'
-    'whitenoise.runserver_nostatic',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -61,8 +46,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # Adicione Whitenoise Middleware AQUI, DEPOIS de SecurityMiddleware
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -98,20 +81,11 @@ LOGOUT_REDIRECT_URL = 'login'  # Onde redirecionar após o logout
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),  # Pega do Render
-        conn_max_age=600  # Opcional: tempo de vida máximo da conexão
-    )
-}
-
-# Fallback para SQLite em desenvolvimento local se DATABASE_URL não estiver definida
-if os.environ.get('DATABASE_URL') is None:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
 
 
 # Password validation
@@ -150,29 +124,11 @@ LOCALE_PATHS = [
 ]
 
 
-# settings.py
-
-# ...
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-# Onde `collectstatic` vai copiar todos os arquivos estáticos para produção
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# AONDE O DJANGO VAI PROCURAR ARQUIVOS ESTÁTICOS, ALÉM DAS PASTAS 'static' DOS APPS
-STATICFILES_DIRS = [
-    # Isto aponta para meu_projeto_servico/static/
-    os.path.join(BASE_DIR, 'static'),
-    # Se você tiver uma estrutura como servico_campo/static/servico_campo/,
-    # esta linha ajuda a collectstatic a encontrar.
-    # Pode ser necessário adicionar mais caminhos se tiver outras pastas 'static' globais.
-]
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# ...
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -185,8 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuração de arquivos de mídia (uploads do usuário)
 MEDIA_URL = '/media/'
-# A pasta 'media' na raiz do seu projeto
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'  # Cria uma pasta 'media' na raiz do seu projeto
 
 
 MESSAGE_TAGS = {
