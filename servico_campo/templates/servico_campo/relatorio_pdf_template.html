@@ -238,12 +238,12 @@
                 <td colspan="3">{{ relatorio.ordem_servico.equipamento.nome }} ({{ relatorio.ordem_servico.equipamento.modelo }})</td>
             </tr>
             <tr>
-                <th>Técnico Executante:</th>
+                <th>Executante:</th>
                 <td colspan="3">{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
             </tr>
             {% if relatorio.ordem_servico.tecnico_responsavel and relatorio.ordem_servico.tecnico_responsavel != relatorio.tecnico %}
             <tr>
-                <th>Técnico Responsável OS:</th>
+                <th>Responsável OS:</th>
                 <td colspan="3">{{ relatorio.ordem_servico.tecnico_responsavel.get_full_name|default:relatorio.ordem_servico.tecnico_responsavel.username }}</td>
             </tr>
             {% endif %}

@@ -1,8 +1,9 @@
 {% extends 'servico_campo/base.html' %}
+{% load i18n %}
 {% block title %}{{ form_title }}{% endblock %}
 
 {% block content %}
-<form method="post">
+<form method="post" id="planejamento-os-form">
     {% csrf_token %}
     <div class="card">
         <div class="card-header"><h1 class="mb-0">{{ form_title }}</h1></div>
@@ -39,7 +40,7 @@
 
     <div class="card mt-4">
         <div class="card-header"><h4>Equipe de Apoio (Opcional)</h4></div>
-        <div class="card-body"> {# REMOVIDA A DUPLICAÇÃO DA card-body AQUI #}
+        <div class="card-body"> 
             {{ formset.management_form }}
             
             {# Adicione este bloco para exibir erros do formset #}
@@ -71,19 +72,19 @@
                         
                         {{ form.id }} 
                         
-                        <div class="col-md-5 d-flex flex-column"> {# Ajuste a largura para o campo usuario #}
-                            <label for="{{ form.usuario.id_for_label }}" class="form-label mb-0">{{ form.usuario.label }}</label>
+                        <div class="col-md-5 d-flex flex-column"> 
+                            <label for="{{ form.usuario.id_for_label }}" class="form-label mb-0">Membro da Equipe</label>
                             {{ form.usuario }}
                             {% if form.usuario.errors %}<div class="text-danger">{{ form.usuario.errors }}</div>{% endif %}
                         </div>
                         
-                        <div class="col-md-5 d-flex flex-column"> {# REINTRODUZIDO: Coluna para o campo funcao #}
-                            <label for="{{ form.funcao.id_for_label }}" class="form-label mb-0">{{ form.funcao.label }}</label>
+                        <div class="col-md-5 d-flex flex-column"> 
+                            <label for="{{ form.funcao.id_for_label }}" class="form-label mb-0">Função na Equipe</label>
                             {{ form.funcao }}
                             {% if form.funcao.errors %}<div class="text-danger">{{ form.funcao.errors }}</div>{% endif %}
                         </div>
 
-                        <div class="col-md-2 d-flex flex-column align-items-end justify-content-center"> {# Ajuste a largura para o botão #}
+                        <div class="col-md-2 d-flex flex-column align-items-end justify-content-center"> 
                             {% if form.instance.pk %}
                                 <div class="form-check">
                                     {{ form.DELETE }}
@@ -106,7 +107,7 @@
     </div>
     
     <div class="mt-4">
-        <button type="submit" class="btn btn-success">Salvar Planejamento</button>
+        <button type="submit" class="btn btn-success" id="submit-planejamento-button">Salvar Planejamento</button>
         <a href="{% url 'servico_campo:detalhe_os' object.pk %}" class="btn btn-secondary">Cancelar</a>
     </div>
 </form>
@@ -114,18 +115,36 @@
 <div id="empty-form-template" style="display: none;">
     <div class="row align-items-start mb-3 p-3 border rounded bg-light formset-row" id="form-__prefix__">
         {{ formset.empty_form.id }}
-        <div class="col-md-5 d-flex flex-column"> {# Ajuste a largura #}
+        <div class="col-md-5 d-flex flex-column"> 
             <label for="id_equipe-__prefix__-usuario" class="form-label mb-0">Membro da Equipe</label>
             {{ formset.empty_form.usuario }}
         </div>
-        <div class="col-md-5 d-flex flex-column"> {# REINTRODUZIDO #}
+        <div class="col-md-5 d-flex flex-column"> 
             <label for="id_equipe-__prefix__-funcao" class="form-label mb-0">Função na Equipe</label>
             {{ formset.empty_form.funcao }}
         </div>
-        <div class="col-md-2 d-flex flex-column align-items-end justify-content-center"> {# Ajuste a largura #}
-             <button type="button" class="btn btn-sm btn-outline-danger remove-form-button">
+        <div class="col-md-2 d-flex flex-column align-items-end justify-content-center"> 
+            <button type="button" class="btn btn-sm btn-outline-danger remove-form-button">
                 <i class="bi bi-trash"></i>
             </button>
+        </div>
+    </div>
+</div>
+
+{# NOVO MODAL DE CARREGAMENTO #}
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loadingModalLabel">{% trans "Processando..." %}</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{% trans "Carregando..." %}</span>
+                </div>
+                <p class="mt-3">{% trans "Sua solicitação está sendo processada. Por favor, aguarde." %}</p>
+                <p class="text-muted small">{% trans "Isso pode levar alguns segundos, especialmente se um e-mail estiver sendo enviado." %}</p>
+            </div>
         </div>
     </div>
 </div>
@@ -175,6 +194,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         totalFormsInput.value = formNum + 1; // Incrementa o contador de formulários
     });
+
+    const planejamentoOsForm = document.getElementById('planejamento-os-form'); // O ID que adicionamos ao <form>
+    const submitPlanejamentoButton = document.getElementById('submit-planejamento-button'); // O ID do botão de submit
+    const loadingModalElement = document.getElementById('loadingModal');
+    const loadingModal = new bootstrap.Modal(loadingModalElement); // Instancia o modal Bootstrap
+
+    if (planejamentoOsForm && submitPlanejamentoButton) {
+        planejamentoOsForm.addEventListener('submit', function() {
+            // Desabilita o botão para evitar múltiplos cliques
+            submitPlanejamentoButton.disabled = true; 
+            loadingModal.show(); // Mostra o modal
+        });
+    }
 });
 </script>
 {% endblock %}

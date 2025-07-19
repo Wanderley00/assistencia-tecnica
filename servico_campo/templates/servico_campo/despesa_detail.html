@@ -25,7 +25,7 @@
                     <strong>{% trans "OS:" %}</strong> <a href="{% url 'servico_campo:detalhe_os' os.pk %}">{{ os.numero_os }}</a>
                 </div>
                 <div class="col-md-6 mb-2">
-                    <strong>{% trans "Técnico:" %}</strong> {{ despesa.tecnico.get_full_name|default:despesa.tecnico.username }}
+                    <strong>{% trans "Responsável:" %}</strong> {{ despesa.tecnico.get_full_name|default:despesa.tecnico.username }}
                 </div>
                 <div class="col-md-6 mb-2">
                     <strong>{% trans "Data da Despesa:" %}</strong> {{ despesa.data_despesa|date:"d/m/Y" }}

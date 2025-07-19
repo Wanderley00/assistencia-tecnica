@@ -19,6 +19,11 @@
                 </div>
             {% endif %}
 
+            
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+
             <div class="input-box">
                 {{ form.username }}
                 <i class='bx bxs-user'></i>
@@ -29,7 +34,7 @@
             </div>
 
             <div class="remember-forgot">
-                <a href="#">Esqueceu a senha?</a>
+                <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
             </div>
 
             <button type="submit" class="btn">Login</button>

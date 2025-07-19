@@ -6,6 +6,13 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Authenti
 from django.utils.translation import gettext_lazy as _
 from django.forms import inlineformset_factory
 from django.core.validators import FileExtensionValidator
+from django.contrib.auth.forms import PasswordResetForm
+from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+from .utils import get_email_backend
+from configuracoes.models import ConfiguracaoEmail
 
 from .models import (
     OrdemServico,
@@ -21,7 +28,7 @@ from .models import (
     CategoriaProblema,
     SubcategoriaProblema,
     ProblemaRelatorio,
-    ContaPagar
+    ContaPagar,
 )
 
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa
@@ -29,12 +36,21 @@ from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, 
 from django.contrib.auth.models import User
 
 
+class PasswordResetFormCustom(PasswordResetForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update({
+            'class': 'form-control',  # Adiciona a classe Bootstrap
+            'placeholder': _('Seu endereço de e-mail')  # Placeholder útil
+        })
+
+
 class OrdemServicoCreateForm(forms.ModelForm):
     """Formulário simplificado, usado apenas na criação da OS."""
     class Meta:
         model = OrdemServico
         fields = ['numero_os', 'cliente', 'equipamento', 'titulo_servico',
-                  'tipo_manutencao', 'descricao_problema']
+                  'tipo_manutencao', 'gestor_responsavel', 'descricao_problema']
         widgets = {
             'descricao_problema': forms.Textarea(attrs={'rows': 4}),
         }
@@ -55,13 +71,19 @@ class OrdemServicoCreateForm(forms.ModelForm):
         self.fields['tipo_manutencao'].queryset = TipoManutencao.objects.filter(
             ativo=True)
 
+        # Filtra usuários que são gestores (exemplo: se tiver um grupo 'Gestores')
+        # self.fields['gestor_responsavel'].queryset = User.objects.filter(groups__name='Gestores').order_by('first_name')
+        # OU, para listar todos os usuários, como fallback:
+        self.fields['gestor_responsavel'].queryset = User.objects.all().order_by(
+            'first_name', 'username')  # NOVO: Define o queryset para gestor_responsavel
+
 
 class OrdemServicoUpdateForm(forms.ModelForm):
     """Formulário para editar os dados principais de uma Ordem de Serviço."""
     class Meta:
         model = OrdemServico
         fields = ['numero_os', 'cliente', 'equipamento', 'titulo_servico',
-                  'tipo_manutencao', 'descricao_problema', 'status']
+                  'tipo_manutencao', 'gestor_responsavel', 'descricao_problema', 'status']
         widgets = {
             'descricao_problema': forms.Textarea(attrs={'rows': 4}),
         }
@@ -77,6 +99,12 @@ class OrdemServicoUpdateForm(forms.ModelForm):
         self.fields['tipo_manutencao'].queryset = TipoManutencao.objects.filter(
             ativo=True)
 
+        # Filtra usuários que são gestores (exemplo: se tiver um grupo 'Gestores')
+        # self.fields['gestor_responsavel'].queryset = User.objects.filter(groups__name='Gestores').order_by('first_name')
+        # OU, para listar todos os usuários, como fallback:
+        self.fields['gestor_responsavel'].queryset = User.objects.all().order_by(
+            'first_name', 'username')  # NOVO: Define o queryset para gestor_responsavel
+
 
 class OrdemServicoPlanejamentoForm(forms.ModelForm):
     """Formulário completo, usado na tela de planejamento."""
@@ -90,15 +118,18 @@ class OrdemServicoPlanejamentoForm(forms.ModelForm):
             'observacoes_gerais': forms.Textarea(attrs={'rows': 3}),
         }
 
-    # def __str__(self):
-    #     if self.usuario:
-    #         return f"{self.usuario.get_full_name() or self.usuario.username} ({self.funcao})"
-    #     return f"{self.nome_completo} ({self.funcao})"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': 'form-control'})
+
+        # NOVO: Define o queryset para tecnico_responsavel e garante que ele seja opcional no formulário
+        self.fields['tecnico_responsavel'].queryset = User.objects.all().order_by(
+            'first_name', 'username')
+        # Adiciona uma opção vazia
+        self.fields['tecnico_responsavel'].empty_label = "--------"
+        # Garante que o campo possa ser nulo
+        self.fields['tecnico_responsavel'].required = False
 
 
 class MembroEquipeForm(forms.ModelForm):
@@ -444,12 +475,11 @@ class GroupForm(forms.ModelForm):
 
 
 class LoginFormCustom(AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['username'].widget.attrs.update(
-            {'placeholder': 'Usuário', 'required': 'required'})
-        self.fields['password'].widget.attrs.update(
-            {'placeholder': 'Senha', 'required': 'required'})
+    # Seu formulário de login (sem alterações)
+    username = forms.CharField(widget=forms.TextInput(
+        attrs={'class': 'form-control', 'placeholder': 'Usuário'}))
+    password = forms.CharField(widget=forms.PasswordInput(
+        attrs={'class': 'form-control', 'placeholder': 'Senha'}))
 
 
 class OrdemServicoClienteForm(forms.ModelForm):
@@ -636,6 +666,7 @@ class ProblemaRelatorioForm(forms.ModelForm):
 
         return cleaned_data
 
+
     # O inline formset para ProblemaRelatorio (definido na view)
 ProblemaRelatorioFormSet = inlineformset_factory(
     RelatorioCampo,
@@ -683,7 +714,6 @@ class BulkClientUploadForm(forms.Form):
 
 
 # NOVO FORMULÁRIO: Para upload de equipamentos em massa
-# NOVO FORMULÁRIO: Para upload de equipamentos em massa
 class BulkEquipmentUploadForm(forms.Form):
     csv_file = forms.FileField(
         label=_("Arquivo CSV de Equipamentos"),
@@ -695,3 +725,55 @@ class BulkEquipmentUploadForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['csv_file'].widget.attrs.update({'class': 'form-control'})
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    def send_mail(self, subject_template_name, email_template_name,
+                  context, from_email, to_email, html_email_template_name=None):
+        """
+        Sobrescreve o método de envio para usar nossa função auxiliar,
+        garantindo que as credenciais do banco de dados sejam sempre usadas.
+        """
+        email_backend = get_email_backend()
+        if not email_backend:
+            print(
+                f"Falha ao enviar e-mail para {to_email}: Nenhuma configuração de e-mail encontrada.")
+            return
+
+        subject = render_to_string(subject_template_name, context)
+        subject = ''.join(subject.splitlines())
+
+        body = render_to_string(email_template_name, context)
+        html_content = render_to_string(html_email_template_name, context)
+
+        # Usamos o e-mail configurado no banco como remetente
+        from_email = email_backend.username
+
+        email_message = EmailMultiAlternatives(
+            subject, body, from_email, [to_email],
+            connection=email_backend  # Força o uso da nossa conexão!
+        )
+        email_message.attach_alternative(html_content, 'text/html')
+
+        try:
+            email_message.send()
+        except Exception as e:
+            print(
+                f"Erro ao enviar e-mail de redefinição de senha para {to_email}: {e}")
+
+
+class ConfiguracaoEmailForm(forms.ModelForm):
+    # Seu formulário de configuração de e-mail (sem alterações)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field.widget.input_type != 'hidden':
+                field.widget.attrs.update({'class': 'form-control'})
+
+    class Meta:
+        model = ConfiguracaoEmail
+        fields = ['email_host', 'email_port',
+                  'email_host_user', 'email_host_password']
+        widgets = {
+            'email_host_password': forms.PasswordInput(render_value=True),
+        }

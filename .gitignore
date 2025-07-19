@@ -48,3 +48,5 @@ env/
 
 # Render specific (optional, but good for Render.com build cache)
 .render/
+
+.env/

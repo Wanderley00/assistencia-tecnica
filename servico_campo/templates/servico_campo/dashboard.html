@@ -10,17 +10,17 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><h5 class="mb-0">Últimas Manutenções por Ativo</h5></div>
+                <div class="card-header"><h5 class="mb-0">Últimos Serviços por Ativo</h5></div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th class="ps-3">Ativo</th>
-                                    <th>Última Manutenção (OS)</th>
+                                    <th>Último Serviço (OS)</th>
                                     <th>Tipo</th>
                                     <th>Data de Conclusão</th>
-                                    <th>Técnico Responsável</th>
+                                    <th>Responsável pela Obra</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -33,7 +33,7 @@
                                             <td>{{ item.ultima_os.data_fechamento|date:"d/m/Y" }}</td>
                                             <td>{{ item.ultima_os.tecnico_responsavel.get_full_name|default:"N/A" }}</td>
                                         {% else %}
-                                            <td colspan="4" class="text-muted">Nenhuma manutenção concluída registrada.</td>
+                                            <td colspan="4" class="text-muted">Nenhum serviço concluído registrado.</td>
                                         {% endif %}
                                     </tr>
                                 {% empty %}
@@ -118,7 +118,7 @@
         </div>
         <div class="col-md-6 mb-3">
             <div class="card">
-                <div class="card-header"><h5 class="mb-0">Manutenções por Tipo</h5></div>
+                <div class="card-header"><h5 class="mb-0">Serviço de Campo</h5></div>
                 <div class="card-body">
                     <canvas id="tipoManutencaoChart"></canvas>
                 </div>

@@ -11,11 +11,16 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied, ImproperlyConfigured
 from django.db.models import Q
+from django.contrib.auth import views as auth_views
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, FormView
@@ -32,15 +37,26 @@ import json
 from django.db.models import Min, Max
 from django.db import models
 from django import forms
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+import pandas as pd
+from django.http import HttpResponse
+import io
+from django.core.mail import get_connection
+from .utils import get_email_backend
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.core.mail import EmailMultiAlternatives
+from django.contrib.auth import get_user_model
 
 # Imports Locais (do seu app)
 from .models import (
     OrdemServico, Cliente, Equipamento, DocumentoOS, RegistroPonto,
     RelatorioCampo, FotoRelatorio, Despesa, MembroEquipe, RegraJornadaTrabalho,
-    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar
+    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar, ConfiguracaoEmail
 )
 # NOVO IMPORT
-from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, PoliticaDespesa
+from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, PoliticaDespesa, ConfiguracaoEmail
 
 from .forms import (
     DocumentoOSForm, RegistroPontoForm, RelatorioCampoForm,
@@ -48,8 +64,10 @@ from .forms import (
     EquipamentoForm, UserCreationFormCustom, UserUpdateFormCustom, GroupForm, OrdemServicoClienteForm,
     OrdemServicoPlanejamentoForm, OrdemServicoCreateForm, MembroEquipeFormSet, OrdemServicoUpdateForm, RegraJornadaTrabalhoForm,
     CategoriaProblemaForm, SubcategoriaProblemaForm, ProblemaRelatorioFormSet, RegistroPontoEntradaForm, RegistroPontoSaidaForm,
-    ContaPagarForm, BulkClientUploadForm, BulkEquipmentUploadForm
+    ContaPagarForm, BulkClientUploadForm, BulkEquipmentUploadForm, LoginFormCustom, ConfiguracaoEmailForm
 )
+
+User = get_user_model()
 
 
 def organizar_permissoes():
@@ -1101,7 +1119,7 @@ class DespesaPendenteListView(GestorRequiredMixin, ListView):
 class OrdemServicoCreateView(GestorRequiredMixin, CreateView):
     permission_required = 'servico_campo.add_ordemservico'
     model = OrdemServico
-    form_class = OrdemServicoCreateForm  # <-- MUDANÇA AQUI
+    form_class = OrdemServicoCreateForm
     template_name = 'servico_campo/ordem_servico_form.html'
 
     def get_success_url(self):
@@ -1112,24 +1130,103 @@ class OrdemServicoCreateView(GestorRequiredMixin, CreateView):
         context['form_title'] = 'Abrir Nova Ordem de Serviço'
         return context
 
+    def form_valid(self, form):
+        """
+        Salva a OS e envia um e-mail de notificação APENAS para o gestor.
+        """
+        response = super().form_valid(form)
+        os_nova = self.object
+
+        # Lógica de e-mail para o Gestor
+        gestor = os_nova.gestor_responsavel
+        if gestor and gestor.email:
+            try:
+                email_backend = get_email_backend()
+                if email_backend:
+                    subject = f"Nova Ordem de Serviço Atribuída: OS {os_nova.numero_os}"
+                    email_context = {
+                        'os': os_nova, 'gestor': gestor,
+                        'domain': self.request.get_host(),
+                        'protocol': 'https' if self.request.is_secure() else 'http',
+                    }
+                    html_content = render_to_string(
+                        'servico_campo/email/nova_os_gestor.html', email_context)
+                    text_content = f"Nova OS {os_nova.numero_os} atribuída a você."
+
+                    email = EmailMultiAlternatives(subject, text_content, email_backend.username, [
+                                                   gestor.email], connection=email_backend)
+                    email.attach_alternative(html_content, "text/html")
+                    email.send()
+                    messages.success(
+                        self.request, f"OS {os_nova.numero_os} aberta e notificação enviada para o gestor.")
+            except Exception as e:
+                messages.error(
+                    self.request, f"A OS foi criada, mas ocorreu um erro ao notificar o gestor: {e}")
+
+        # A lógica de e-mail para técnicos foi removida daqui.
+
+        return response
+
 
 class OrdemServicoUpdateView(GestorRequiredMixin, UpdateView):
-    permission_required = 'servico_campo.change_ordemservico'
     model = OrdemServico
-    # Aponte para o novo formulário de edição
-    form_class = OrdemServicoUpdateForm
-    # Reutilize o template de formulário genérico
+    form_class = OrdemServicoCreateForm  # Pode usar o mesmo form da criação
     template_name = 'servico_campo/ordem_servico_form.html'
+    permission_required = 'servico_campo.change_ordemservico'
+
+    def get_success_url(self):
+        return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Define um título dinâmico para a página
-        context['form_title'] = f"Editar Ordem de Serviço - {self.object.numero_os}"
+        context['form_title'] = f"Editar Ordem de Serviço #{self.object.numero_os}"
         return context
 
-    def get_success_url(self):
-        # Após salvar, volta para a tela de detalhes da OS
-        return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.pk})
+    # --- ADICIONE ESTE MÉTODO ---
+    def form_valid(self, form):
+        """
+        Salva as alterações da OS e envia um e-mail de notificação
+        APENAS se o gestor responsável for alterado.
+        """
+        # Verifica se o campo do gestor foi realmente modificado
+        if 'gestor_responsavel' in form.changed_data:
+            # Salva o formulário primeiro para que a alteração seja aplicada
+            response = super().form_valid(form)
+            os_atualizada = self.object
+
+            novo_gestor = os_atualizada.gestor_responsavel
+
+            if novo_gestor and novo_gestor.email:
+                try:
+                    email_backend = get_email_backend()
+                    if email_backend:
+                        subject = f"Alteração de Gestor na OS {os_atualizada.numero_os}"
+                        email_context = {
+                            'os': os_atualizada,
+                            'gestor': novo_gestor,
+                            'domain': self.request.get_host(),
+                            'protocol': 'https' if self.request.is_secure() else 'http',
+                        }
+                        html_content = render_to_string(
+                            'servico_campo/email/nova_os_gestor.html', email_context)
+                        text_content = f"Você foi designado como novo gestor da OS {os_atualizada.numero_os}."
+
+                        email = EmailMultiAlternatives(subject, text_content, email_backend.username, [
+                                                       novo_gestor.email], connection=email_backend)
+                        email.attach_alternative(html_content, "text/html")
+                        email.send()
+
+                        messages.info(
+                            self.request, f"O gestor foi alterado. Uma notificação foi enviada para {novo_gestor.email}.")
+
+                except Exception as e:
+                    messages.error(
+                        self.request, f"A OS foi salva, mas ocorreu um erro ao notificar o novo gestor: {e}")
+
+            return response
+
+        # Se o gestor não mudou, apenas salva e continua sem enviar e-mail.
+        return super().form_valid(form)
 
 
 class OrdemServicoEncerramentoView(LoginRequiredMixin, UpdateView):
@@ -1198,6 +1295,19 @@ class ClienteDeleteView(GestorRequiredMixin, DeleteView):
     template_name = 'servico_campo/gestao/cliente_confirm_delete.html'
     success_url = reverse_lazy('servico_campo:lista_clientes')
 
+    # NOVO: Adicione este método post para tratar o erro
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            messages.success(
+                request, f"Cliente '{self.object.razao_social}' excluído com sucesso.")
+            return response
+        except models.ProtectedError:
+            messages.error(
+                request, f"Não foi possível excluir o cliente '{self.get_object().razao_social}', pois ele está associado a uma ou mais Ordens de Serviço.")
+            # Redireciona de volta para a mesma página de confirmação para mostrar o erro
+            return self.get(request, *args, **kwargs)
+
 
 class EquipamentoListView(GestorRequiredMixin, ListView):
     permission_required = 'servico_campo.view_equipamento'
@@ -1238,6 +1348,19 @@ class EquipamentoDeleteView(GestorRequiredMixin, DeleteView):
     model = Equipamento
     template_name = 'servico_campo/gestao/equipamento_confirm_delete.html'
     success_url = reverse_lazy('servico_campo:lista_equipamentos')
+
+    # NOVO: Adicione este método post para tratar o erro
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            messages.success(
+                request, f"Equipamento '{self.object.nome}' excluído com sucesso.")
+            return response
+        except models.ProtectedError:
+            messages.error(
+                request, f"Não foi possível excluir o equipamento '{self.get_object().nome}', pois ele está associado a uma ou mais Ordens de Serviço.")
+            # Redireciona de volta para a mesma página de confirmação para mostrar o erro
+            return self.get(request, *args, **kwargs)
 
 
 class UserListView(GestorRequiredMixin, ListView):
@@ -1385,11 +1508,15 @@ class OrdemServicoClienteCreateView(LoginRequiredMixin, CreateView):
         return context
 
 
-class OrdemServicoPlanejamentoUpdateView(GestorRequiredMixin, UpdateView):
+class OrdemServicoPlanejamentoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     permission_required = 'servico_campo.change_ordemservico'
     model = OrdemServico
-    form_class = OrdemServicoPlanejamentoForm  # <-- MUDANÇA AQUI
+    form_class = OrdemServicoPlanejamentoForm
     template_name = 'servico_campo/ordem_servico_planejamento.html'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        return obj
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1402,22 +1529,99 @@ class OrdemServicoPlanejamentoUpdateView(GestorRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
+        # Obtendo tecnico_antigo de form.initial e convertendo para objeto User se for um ID
+        tecnico_antigo_pk_from_initial = form.initial.get(
+            'tecnico_responsavel')
+        tecnico_antigo_obj = None
+        if tecnico_antigo_pk_from_initial:
+            try:
+                tecnico_antigo_obj = User.objects.get(
+                    pk=tecnico_antigo_pk_from_initial)
+            except User.DoesNotExist:
+                tecnico_antigo_obj = None
+
+        response = super().form_valid(form)
+
+        os_atualizada = self.object
+        novo_tecnico = os_atualizada.tecnico_responsavel
+
         context = self.get_context_data()
         formset = context['formset']
 
         if formset.is_valid():
-            # Define o status para 'Planejada'
-            form.instance.status = 'PLANEJADA'
-            self.object = form.save()
-
-            formset.instance = self.object
+            formset.instance = os_atualizada
             formset.save()
-
-            messages.success(
-                self.request, "Ordem de Serviço planejada e atribuída com sucesso!")
-            return redirect(self.get_success_url())
         else:
+            messages.error(
+                self.request, "Erros encontrados no planejamento da equipe.")
             return self.render_to_response(self.get_context_data(form=form))
+
+        # --- SEÇÃO DE E-MAIL E MENSAGENS PARA O TÉCNICO ---
+        # Comparar PKs para robustez, usando o objeto `tecnico_antigo_obj` recém-obtido.
+        tecnico_antigo_pk_final = tecnico_antigo_obj.pk if tecnico_antigo_obj else None
+        novo_tecnico_pk_final = novo_tecnico.pk if novo_tecnico else None
+
+        # Houve uma mudança real no técnico responsável feita pelo usuário
+        if tecnico_antigo_pk_final != novo_tecnico_pk_final:
+            # Cenário: Houve um técnico designado (seja novo ou alterado)
+            if novo_tecnico:
+                if novo_tecnico.email:
+                    try:
+                        email_backend = get_email_backend()
+                        if not email_backend:
+                            messages.error(
+                                self.request, "Não foi possível carregar as configurações de e-mail para notificar o responsável. Verifique as configurações de e-mail no sistema.")
+                        else:
+                            subject = ""
+                            message_for_user = ""
+
+                            # Lógica para decidir se é primeira atribuição ou alteração
+                            if tecnico_antigo_pk_final is None:
+                                subject = f"Você foi designado para uma nova Ordem de Serviço: OS {os_atualizada.numero_os}"
+                                message_for_user = f"A OS {os_atualizada.numero_os} foi atribuída ao responsável {novo_tecnico.get_full_name()} e a notificação foi enviada."
+                            else:
+                                subject = f"Alteração de Responsável na OS {os_atualizada.numero_os}"
+                                message_for_user = f"O responsável foi alterado para {novo_tecnico.get_full_name()}. Uma notificação foi enviada."
+
+                            email_context = {
+                                'os': os_atualizada,
+                                'tecnico': novo_tecnico,
+                                'domain': self.request.get_host(),
+                                'protocol': 'https' if self.request.is_secure() else 'http',
+                            }
+                            html_content = render_to_string(
+                                'servico_campo/email/nova_os_tecnico.html', email_context)
+                            text_content = f"Detalhes: OS {os_atualizada.numero_os} - {os_atualizada.titulo_servico}. Acesse: {self.request.build_absolute_uri(os_atualizada.get_absolute_url())}"
+
+                            email = EmailMultiAlternatives(subject, text_content, email_backend.username, [
+                                                           novo_tecnico.email], connection=email_backend)
+                            email.attach_alternative(html_content, "text/html")
+                            email.send()
+                            messages.success(self.request, message_for_user)
+
+                    except Exception as e:
+                        messages.error(
+                            self.request, f"O planejamento foi salvo, mas ocorreu um erro ao notificar o responsável: {e}")
+                else:
+                    messages.warning(
+                        self.request, f"O responsável {novo_tecnico.get_full_name()} foi atribuído, mas não possui um e-mail cadastrado para notificação.")
+            elif tecnico_antigo_obj and novo_tecnico is None:
+                # Cenário: Responsável foi REMOVIDO
+                messages.info(
+                    self.request, f"O responsável ({tecnico_antigo_obj.get_full_name()}) foi removido da OS {os_atualizada.numero_os}.")
+
+        else:  # Não houve mudança real no responsável feita pelo usuário no formulário
+            messages.success(
+                self.request, f"Planejamento da OS {os_atualizada.numero_os} atualizado com sucesso!")
+
+        # 2. LÓGICA DE ATUALIZAÇÃO DE STATUS (executa independentemente do e-mail)
+        if novo_tecnico and os_atualizada.status == 'AGUARDANDO_PLANEJAMENTO':
+            os_atualizada.status = 'PLANEJADA'
+            os_atualizada.save(update_fields=['status'])
+            # messages.info(
+            #     self.request, "O status da Ordem de Serviço foi atualizado para 'Planejada'.")
+
+        return response
 
     def get_success_url(self):
         return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.pk})
@@ -1640,7 +1844,7 @@ class GanttDataJsonView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
                             <span class="tooltip-value">{os.equipamento.nome} ({os.equipamento.modelo or 'N/A'})</span>
                         </div>
                         <div class="tooltip-item">
-                            <span class="tooltip-label">Técnico:</span>
+                            <span class="tooltip-label">Responsável:</span>
                             <span class="tooltip-value">{tecnico_nome_completo}</span>
                         </div>
                         <div class="tooltip-divider"></div>
@@ -2198,3 +2402,299 @@ class BulkEquipmentUploadView(GestorRequiredMixin, FormView):
         if 'failed_rows_import' in request.session:
             del request.session['failed_rows_import']
         return super().get(request, *args, **kwargs)
+
+
+class CustomLoginView(auth_views.LoginView):
+    """
+    View de Login customizada para garantir que o parâmetro 'next'
+    na URL tenha precedência sobre LOGIN_REDIRECT_URL.
+    """
+    template_name = 'registration/login.html'
+    authentication_form = LoginFormCustom
+
+    def get_success_url(self):
+        # Tenta obter a URL de redirecionamento do parâmetro 'next'
+        # Primeiro, verifica no POST (quando o formulário é submetido)
+        next_url = self.request.POST.get(self.redirect_field_name)
+        if not next_url:
+            # Se não estiver no POST, verifica no GET (quando a página de login é acessada)
+            next_url = self.request.GET.get(self.redirect_field_name)
+
+        if next_url:
+            return next_url
+
+        # Se 'next' não estiver presente em nenhum lugar, usa a URL padrão
+        # Fallback para '/' se LOGIN_REDIRECT_URL não estiver definido
+        return settings.LOGIN_REDIRECT_URL or '/'
+
+
+class CustomPasswordResetView(auth_views.PasswordResetView):
+    template_name = 'registration/password_reset_form.html'
+    # Este será o template HTML
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = '/password_reset/done/'
+    # form_class = PasswordResetFormCustom # Se você já está usando um custom form
+
+    # NOVO MÉTODO: Sobrescreve o send_mail para usar EmailMessage e HTML
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email, html_email_template_name=None):
+        print(
+            f"DEBUG_RESET: Iniciando send_mail para redefinição de senha para {to_email}")
+
+        try:
+            subject = render_to_string(subject_template_name, context)
+            subject = "".join(subject.splitlines())
+
+            html_message = render_to_string(html_email_template_name, context)
+
+            # O from_email já virá do settings, que agora será gerenciado pelo backend
+            # sender_email = settings.DEFAULT_FROM_EMAIL # Não precisa desta linha extra
+
+            print(
+                f"DEBUG_RESET: Tentando enviar email de: {from_email} para: {to_email} com assunto: {subject}")
+
+            # send_mail agora usará as configurações do DatabaseEmailBackend automaticamente
+            send_mail(
+                subject,
+                strip_tags(html_message),
+                from_email,  # O from_email que é passado para este método, que vem do settings.DEFAULT_FROM_EMAIL
+                [to_email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            print(
+                f"DEBUG_RESET: Email de redefinição de senha enviado com sucesso para {to_email}")
+
+        except Exception as e:
+            import traceback
+            print(
+                f"DEBUG_RESET: ERRO FATAL ao enviar email de redefinição de senha para {to_email}: {e}")
+            traceback.print_exc()
+            raise
+        finally:
+            print(f"DEBUG_RESET: Configurações restauradas.")
+
+
+def download_modelo_clientes(request):
+    # Definindo as colunas que o modelo deve ter
+    colunas = [
+        'Razao Social/Nome', 'CNPJ/CPF', 'Endereço', 'Cidade',
+        'Estado', 'CEP', 'Contato Principal'
+    ]
+
+    # Criando um DataFrame vazio com essas colunas
+    df_modelo = pd.DataFrame(columns=colunas)
+
+    # Criando a resposta HTTP com o arquivo Excel
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="modelo_cadastro_clientes.xlsx"'
+
+    # Escrevendo o DataFrame no objeto de resposta
+    df_modelo.to_excel(response, index=False, engine='openpyxl')
+
+    return response
+
+
+def cadastro_massa_clientes(request):
+    if request.method == 'POST':
+        try:
+            arquivo_excel = request.FILES.get('arquivo_excel')
+            if not arquivo_excel or not arquivo_excel.name.endswith('.xlsx'):
+                messages.error(
+                    request, 'Arquivo inválido. Por favor, envie um arquivo .xlsx')
+                return redirect(request.path_info)
+
+            df = pd.read_excel(arquivo_excel, dtype=str).fillna('')
+
+            clientes_a_criar = []
+
+            for index, row in df.iterrows():
+                if not row['CNPJ/CPF']:
+                    continue
+
+                # CORREÇÃO 1: Usando 'cnpj_cpf' para a verificação de existência
+                if not Cliente.objects.filter(cnpj_cpf=row['CNPJ/CPF']).exists():
+                    cliente = Cliente(
+                        razao_social=row['Razao Social/Nome'],
+                        # CORREÇÃO 2: Usando 'cnpj_cpf' para criar o novo cliente
+                        cnpj_cpf=row['CNPJ/CPF'],
+                        endereco=row.get('Endereço', ''),
+                        cidade=row.get('Cidade', ''),
+                        estado=row.get('Estado', ''),
+                        cep=row.get('CEP', ''),
+                        contato_principal=row.get('Contato Principal', '')
+                    )
+                    clientes_a_criar.append(cliente)
+
+            if clientes_a_criar:
+                Cliente.objects.bulk_create(clientes_a_criar)
+                messages.success(
+                    request, f'{len(clientes_a_criar)} novos clientes foram cadastrados com sucesso!')
+            else:
+                messages.warning(
+                    request, 'Nenhum cliente novo para cadastrar. Os CNPJs/CPFs enviados podem já existir no sistema.')
+
+        except KeyError as e:
+            messages.error(
+                request, f'A planilha enviada não contém a coluna obrigatória: {e}. Por favor, baixe e utilize o modelo padrão.')
+        except Exception as e:
+            messages.error(
+                request, f'Ocorreu um erro inesperado ao processar o arquivo: {e}')
+
+        return redirect(request.path_info)
+
+    return render(request, 'servico_campo/gestao/cadastro_massa_clientes.html')
+
+
+def download_modelo_equipamentos(request):
+    """
+    Gera e fornece o download de um modelo de planilha Excel para o 
+    cadastro de equipamentos.
+    """
+    colunas = [
+        'CNPJ/CPF do Cliente',  # Obrigatório
+        'Nome do Equipamento',  # Obrigatório
+        'Modelo',
+        'Número de Série',
+        'Descrição Detalhada do Equipamento',
+        'Localização do Equipamento no Cliente'
+    ]
+
+    df_modelo = pd.DataFrame(columns=colunas)
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="modelo_cadastro_equipamentos.xlsx"'
+    df_modelo.to_excel(response, index=False, engine='openpyxl')
+    return response
+
+
+def cadastro_massa_equipamentos(request):
+    """
+    Renderiza a página de upload e processa a planilha enviada para
+    cadastrar equipamentos em massa.
+    """
+    if request.method == 'POST':
+        try:
+            arquivo_excel = request.FILES.get('arquivo_excel')
+            if not arquivo_excel or not arquivo_excel.name.endswith('.xlsx'):
+                messages.error(
+                    request, 'Arquivo inválido. Por favor, envie um arquivo .xlsx')
+                return redirect(request.path_info)
+
+            df = pd.read_excel(arquivo_excel, dtype=str).fillna('')
+
+            equipamentos_a_criar = []
+            erros_de_importacao = []
+
+            for index, row in df.iterrows():
+                cliente_cnpj = row.get('CNPJ/CPF do Cliente')
+                nome_equipamento = row.get('Nome do Equipamento')
+
+                if not cliente_cnpj or not nome_equipamento:
+                    erros_de_importacao.append(
+                        f"Linha {index+2}: 'CNPJ/CPF do Cliente' e 'Nome do Equipamento' são obrigatórios.")
+                    continue
+
+                try:
+                    cliente_obj = Cliente.objects.get(cnpj_cpf=cliente_cnpj)
+                    numero_serie = row.get('Número de Série')
+
+                    if numero_serie and Equipamento.objects.filter(numero_serie=numero_serie).exists():
+                        erros_de_importacao.append(
+                            f"Linha {index+2}: Já existe um equipamento com o Número de Série '{numero_serie}'.")
+                        continue
+
+                    # **CORREÇÃO APLICADA AQUI**
+                    # Usando os nomes `localizacao` e `descricao` do seu models.py
+                    equipamento = Equipamento(
+                        cliente=cliente_obj,
+                        nome=nome_equipamento,
+                        modelo=row.get('Modelo', ''),
+                        numero_serie=numero_serie,
+                        localizacao=row.get(
+                            'Localização do Equipamento no Cliente', ''),
+                        descricao=row.get(
+                            'Descrição Detalhada do Equipamento', '')
+                    )
+                    equipamentos_a_criar.append(equipamento)
+
+                except Cliente.DoesNotExist:
+                    erros_de_importacao.append(
+                        f"Linha {index+2}: Cliente com CNPJ/CPF '{cliente_cnpj}' não foi encontrado.")
+                except Exception as e:
+                    erros_de_importacao.append(
+                        f"Linha {index+2}: Erro inesperado ao processar: {e}")
+
+            if equipamentos_a_criar:
+                Equipamento.objects.bulk_create(equipamentos_a_criar)
+                messages.success(
+                    request, f'{len(equipamentos_a_criar)} novos equipamentos cadastrados com sucesso!')
+
+            if erros_de_importacao:
+                for erro in erros_de_importacao:
+                    messages.warning(request, erro)
+
+            if not equipamentos_a_criar and not erros_de_importacao:
+                messages.info(
+                    request, 'Nenhum equipamento novo para cadastrar.')
+
+        except KeyError as e:
+            messages.error(
+                request, f'A planilha não contém a coluna obrigatória: {e}. Por favor, baixe e utilize o modelo padrão.')
+        except Exception as e:
+            messages.error(
+                request, f'Ocorreu um erro geral ao processar o arquivo: {e}')
+
+        return redirect(request.path_info)
+
+    return render(request, 'servico_campo/gestao/cadastro_massa_equipamentos.html')
+
+
+@require_POST  # Garante que esta view só aceite requisições POST
+def testar_conexao_email(request):
+    """
+    Recebe dados de configuração de e-mail via POST (JSON) e tenta
+    enviar um e-mail de teste, retornando o resultado.
+    """
+    try:
+        # Lê os dados JSON enviados pelo JavaScript
+        data = json.loads(request.body)
+        host = data.get('host')
+        port = int(data.get('port'))
+        user = data.get('user')
+        password = data.get('password')
+
+        if not all([host, port, user, password]):
+            return JsonResponse({'status': 'error', 'message': 'Todos os campos são obrigatórios para o teste.'}, status=400)
+
+        # Tenta criar uma conexão com as credenciais fornecidas
+        connection = get_connection(
+            backend='django.core.mail.backends.smtp.EmailBackend',
+            host=host,
+            port=port,
+            username=user,
+            password=password,
+            use_tls=True,  # Usando os valores que fixamos no modelo
+            use_ssl=False,
+            fail_silently=False
+        )
+
+        # Prepara e envia um e-mail de teste para o próprio remetente
+        subject = "E-mail de Teste do Sistema"
+        body = "Olá!\n\nSe você recebeu este e-mail, suas configurações de SMTP estão funcionando corretamente."
+        from_email = user
+        to_email = [user]
+
+        email = EmailMessage(subject, body, from_email,
+                             to_email, connection=connection)
+        email.send()
+
+        # Se tudo deu certo, retorna sucesso
+        return JsonResponse({'status': 'success', 'message': f'E-mail de teste enviado com sucesso para {user}!'})
+
+    except Exception as e:
+        # Se qualquer erro ocorrer, retorna o erro
+        return JsonResponse({'status': 'error', 'message': f'Falha no teste: {str(e)}'}, status=400)

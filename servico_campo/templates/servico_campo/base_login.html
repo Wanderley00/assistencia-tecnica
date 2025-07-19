@@ -1,0 +1,20 @@
+{# servico_campo/templates/servico_campo/base_login.html #}
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="pt-br" >
+<head>
+  <meta charset="UTF-8">
+  <title>P3 Smart Solutions - {% block title %}{% endblock %}</title>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {# A classe "wrapper" geralmente envolve o formulário de login #}
+    {# O bloco "content" será preenchido pelos templates que herdam deste #}
+    {% block content %}{% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

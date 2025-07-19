@@ -172,4 +172,21 @@ urlpatterns = [
 
     path('equipamentos/upload-massa/', views.BulkEquipmentUploadView.as_view(),
          name='upload_massa_equipamentos'),
+
+    path('clientes/cadastro-em-massa/', views.cadastro_massa_clientes,
+         name='cadastro_massa_clientes'),
+
+    path('clientes/download-modelo/', views.download_modelo_clientes,
+         name='download_modelo_clientes'),
+
+    path('gestao/equipamentos/cadastro-em-massa/',
+         views.cadastro_massa_equipamentos, name='cadastro_massa_equipamentos'),
+    path('gestao/equipamentos/download-modelo/',
+         views.download_modelo_equipamentos, name='download_modelo_equipamentos'),
+
+    path('gestao/equipamentos/<int:pk>/editar/',
+         views.EquipamentoUpdateView.as_view(), name='editar_equipamento'),
+
+    path('configuracoes/testar-email/',
+         views.testar_conexao_email, name='testar_conexao_email'),
 ]

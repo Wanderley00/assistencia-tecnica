@@ -14,6 +14,39 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     {% block extra_head %}{% endblock %}
+    <style>
+        /* Define um fundo um pouco mais escuro para o hover, melhorando o contraste */
+
+        .btn-success:hover {
+            background-color: #157347; /* Tom de verde mais escuro */
+            border-color: #146c43;
+        }
+
+        .btn-warning:hover {
+            background-color: #d39e00; /* Tom de amarelo/laranja mais escuro */
+            border-color: #c69500;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b; /* Tom de vermelho mais escuro */
+            border-color: #b02a37;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7; /* Tom de azul mais escuro */
+            border-color: #0a58ca;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5c636a; /* Tom de cinza mais escuro */
+            border-color: #565e64;
+        }
+
+        .btn-info:hover {
+            background-color: #31d2f2; /* Tom de ciano mais vibrante */
+            border-color: #25cff2;
+        }
+    </style>
 </head>
 <body>
 
@@ -58,7 +91,7 @@
                 <li class="nav-link">
                     <a href="{% url 'servico_campo:gantt_chart' %}">
                         <i class='bi bi-bar-chart-line icon'></i> {# Ícone de gráfico de barras ou similar #}
-                        <span class="text nav-text">Gráfico de Gantt</span>
+                        <span class="text nav-text">Planejamento</span>
                     </a>
                 </li>
 
@@ -80,7 +113,7 @@
                                     {% if perms.configuracoes.view_tipomanutencao %}
                                     <li>
                                         <a href="{% url 'configuracoes:lista_tipos_manutencao' %}" class="link-dark d-inline-flex text-decoration-none rounded">
-                                            <i class="bi bi-tools icon-sub-menu"></i> Tipos de Manutenção
+                                            <i class="bi bi-tools icon-sub-menu"></i> Tipos de Serviço
                                         </a>
                                     </li>
                                     {% endif %}
@@ -133,6 +166,13 @@
                                     <li>
                                         <a href="{% url 'configuracoes:lista_politicas_despesa' %}" class="link-dark d-inline-flex text-decoration-none rounded">
                                             <i class="bi bi-file-earmark-ruled icon-sub-menu"></i> {% trans "Políticas de Despesas" %}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.configuracoes.change_configuracaoemail %} {# Permissão para configurar email #}
+                                    <li>
+                                        <a href="{% url 'configuracoes:configuracao_email' %}" class="link-dark d-inline-flex text-decoration-none rounded">
+                                            <i class="bi bi-envelope-fill icon-sub-menu"></i> {% trans "Configurações de Email" %}
                                         </a>
                                     </li>
                                     {% endif %}

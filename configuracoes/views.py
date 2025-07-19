@@ -8,10 +8,13 @@ from django.db import models
 from django.db.models import ProtectedError
 from . import models
 
-from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa
-from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm, CategoriaDespesaForm, PoliticaDespesaForm
+from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa, ConfiguracaoEmail
+from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm, CategoriaDespesaForm, PoliticaDespesaForm, ConfiguracaoEmailForm
 
 # Mixin de permissão para todas as views de configuração
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
 
 class ConfiguracaoPermissionMixin(LoginRequiredMixin, PermissionRequiredMixin):
@@ -46,7 +49,7 @@ class TipoManutencaoCreateView(ConfiguracaoPermissionMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = _("Adicionar Novo Tipo de Manutenção")
+        context['form_title'] = _("Adicionar Novo Tipo de Serviço")
         return context
 
 
@@ -59,7 +62,7 @@ class TipoManutencaoUpdateView(ConfiguracaoPermissionMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = _("Editar Tipo de Manutenção")
+        context['form_title'] = _("Editar Tipo de Serviço")
         return context
 
 
@@ -74,7 +77,7 @@ class TipoManutencaoDeleteView(ConfiguracaoPermissionMixin, DeleteView):
             return super().post(request, *args, **kwargs)
         except ProtectedError:  # ALTERADO: Removido 'models.'
             messages.error(request, _(
-                "Não foi possível excluir este tipo de manutenção pois ele está associado a Ordens de Serviço existentes."))
+                "Não foi possível excluir este tipo de Serviço pois ele está associado a Ordens de Serviço existentes."))
             return self.get(request, *args, **kwargs)
 
 
@@ -296,3 +299,83 @@ class PoliticaDespesaDeleteView(LoginRequiredMixin, DeleteView):
                 # Nenhuma foreign key, então menos chances de ProtectedError
                 "Não foi possível excluir esta política de despesa."))
             return self.get(request, *args, **kwargs)
+
+
+class ConfiguracaoEmailUpdateView(LoginRequiredMixin, UpdateView):
+    permission_required = 'configuracoes.change_configuracaoemail'
+    model = ConfiguracaoEmail
+    form_class = ConfiguracaoEmailForm
+    template_name = 'configuracoes/configuracao_email_form.html'  # Novo template
+    # Redireciona para a mesma página
+    success_url = reverse_lazy('configuracoes:configuracao_email')
+
+    def get_object(self, queryset=None):
+        # Garante que sempre editamos a única instância existente (singleton)
+        return ConfiguracaoEmail.get_solo()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Configurações de Envio de E-mail")
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, _(
+            "Configurações de e-mail salvas com sucesso!"))
+        # IMPORTANTE: Reconfigurar o backend de e-mail do Django IMEDIATAMENTE.
+        # Isso garante que as novas configurações sejam usadas sem reiniciar o servidor.
+        self._reconfigure_email_backend(form.instance)
+        return super().form_valid(form)
+
+    def _reconfigure_email_backend(self, config_instance):
+        """
+        Reconfigura o backend de e-mail do Django em tempo de execução.
+        """
+        from django.core.mail import get_connection, backends
+        from django.conf import settings
+
+        # Define as configurações do settings temporariamente para a conexão
+        settings.EMAIL_BACKEND = config_instance.email_backend
+        settings.EMAIL_HOST = config_instance.email_host
+        settings.EMAIL_PORT = config_instance.email_port
+        settings.EMAIL_USE_TLS = config_instance.email_use_tls
+        settings.EMAIL_USE_SSL = config_instance.email_use_ssl
+        settings.EMAIL_HOST_USER = config_instance.email_host_user
+        settings.EMAIL_HOST_PASSWORD = config_instance.email_host_password
+        settings.DEFAULT_FROM_EMAIL = config_instance.default_from_email
+        settings.SERVER_EMAIL = config_instance.default_from_email
+
+        # Recria a conexão de e-mail (se o backend já tiver sido acessado)
+        # Isso é um pouco hacky, pois reconfigura globalmente.
+        # Uma alternativa seria passar a conexão configurada para cada send_mail.
+        # Para simplicidade e efeito global, redefinir settings funciona.
+        try:
+            # Força o Django a recarregar a conexão padrão com as novas settings
+            # Isso pode não funcionar perfeitamente em todos os cenários sem reiniciar o app,
+            # mas é o melhor que se pode fazer para reconfiguração em runtime.
+            if hasattr(backends, '_connections') and 'default' in backends._connections:
+                del backends._connections['default']
+        except Exception as e:
+            print(f"Erro ao reconfigurar conexão de email em runtime: {e}")
+
+
+def configuracao_email_view(request):
+    config, created = ConfiguracaoEmail.objects.get_or_create(pk=1)
+
+    if request.method == 'POST':
+        form = ConfiguracaoEmailForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, 'Configurações de e-mail salvas com sucesso!')
+            return redirect('configuracoes:configuracao_email')
+        else:
+            messages.error(
+                request, 'O formulário contém erros. Por favor, corrija-os.')
+    else:
+        form = ConfiguracaoEmailForm(instance=config)
+
+    context = {
+        'form': form
+    }
+    # Opcional: Mover o template para a pasta do app 'configuracoes' também seria uma boa prática
+    return render(request, 'configuracoes/configuracao_email.html', context)

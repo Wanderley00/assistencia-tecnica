@@ -54,4 +54,11 @@ urlpatterns = [
          views.PoliticaDespesaUpdateView.as_view(), name='editar_politica_despesa'),
     path('politicas-despesa/<int:pk>/excluir/',
          views.PoliticaDespesaDeleteView.as_view(), name='excluir_politica_despesa'),
+
+    # NOVO: URL para Configurações de Email
+    path('configuracao-email/', views.ConfiguracaoEmailUpdateView.as_view(),
+         name='configuracao_email'),
+
+    path('configuracao-email/', views.configuracao_email_view,
+         name='configuracao_email'),
 ]

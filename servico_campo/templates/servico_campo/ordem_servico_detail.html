@@ -142,7 +142,7 @@
 
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <strong>Tipo de Manutenção:</strong>
+                    <strong>Tipo de Serviço:</strong>
                     <p class="mb-0">{{ os.tipo_manutencao.nome }}</p> {# ALTERADO AQUI #}
                 </div>
             </div>
@@ -157,11 +157,23 @@
                     <p class="mb-0">{{ os.equipamento.nome }} ({{ os.equipamento.modelo }})</p>
                 </div>
                 <div class="col-md-4">
-                    <strong>Técnico Responsável:</strong>
+                    <strong>Responsável pela Obra:</strong>
                     {% if os.tecnico_responsavel %}
                         <p class="mb-0">{{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
                     {% else %}
                         <p class="mb-0 text-muted">Aguardando planejamento</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# NOVO: Linha para o Gestor Responsável #}
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>Gestor Responsável:</strong>
+                    {% if os.gestor_responsavel %}
+                        <p class="mb-0">{{ os.gestor_responsavel.get_full_name|default:os.gestor_responsavel.username }}</p>
+                    {% else %}
+                        <p class="mb-0 text-muted">Não atribuído</p>
                     {% endif %}
                 </div>
             </div>
@@ -320,7 +332,7 @@
                             <tr>
                                 <th>{% trans "Tipo" %}</th>
                                 <th>{% trans "Data" %}</th>
-                                <th>{% trans "Técnico" %}</th>
+                                <th>{% trans "Responsável" %}</th>
                                 <th>{% trans "Atividades Principais" %}</th>
                                 <th>{% trans "Ações" %}</th>
                             </tr>
@@ -392,7 +404,7 @@
                     <table class="table table-sm table-striped">
                         <thead>
                             <tr>
-                                <th>{% trans "Técnico" %}</th>
+                                <th>{% trans "Responsável" %}</th>
                                 <th>{% trans "Data" %}</th>
                                 <th>{% trans "Entrada" %}</th>
                                 <th>{% trans "Saída" %}</th>

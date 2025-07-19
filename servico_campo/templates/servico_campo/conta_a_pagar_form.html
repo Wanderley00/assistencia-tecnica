@@ -22,7 +22,7 @@
             <p><strong>{% trans "OS:" %}</strong> <a href="{% url 'servico_campo:detalhe_os' conta_a_pagar.despesa.ordem_servico.pk %}">{{ conta_a_pagar.despesa.ordem_servico.numero_os }}</a></p>
             <p><strong>{% trans "Descrição:" %}</strong> {{ conta_a_pagar.despesa.descricao }}</p>
             <p><strong>{% trans "Valor:" %}</strong> R$ {{ conta_a_pagar.despesa.valor|floatformat:2 }}</p>
-            <p><strong>{% trans "Técnico:" %}</strong> {{ conta_a_pagar.despesa.tecnico.get_full_name|default:conta_a_pagar.despesa.tecnico.username }}</p>
+            <p><strong>{% trans "Responsável:" %}</strong> {{ conta_a_pagar.despesa.tecnico.get_full_name|default:conta_a_pagar.despesa.tecnico.username }}</p>
             <p><strong>{% trans "Status Aprovação:" %}</strong> {{ conta_a_pagar.despesa.get_status_aprovacao_display }}</p>
             {% if conta_a_pagar.despesa.comprovante_anexo %}
                 <p><strong>{% trans "Comprovante Despesa:" %}</strong> <a href="{{ conta_a_pagar.despesa.comprovante_anexo.url }}" target="_blank">{% trans "Ver Comprovante" %}</a></p>

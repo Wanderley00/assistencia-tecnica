@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from django.contrib.messages import constants as messages
 from pathlib import Path
-
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7_c1ij_xocq_f-&%54m+q5zjx4*7xsy_ez%@)%(9x454#$=ds_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['assistencia-tecnica-django.onrender.com',
                  '127.0.0.1', 'localhost']  # <--- MUDANÇA AQUI: Adicione seu domínio
@@ -78,6 +77,18 @@ WSGI_APPLICATION = 'meu_projeto_servico.wsgi.application'
 
 LOGIN_REDIRECT_URL = '/servico/dashboard/'  # Onde redirecionar após o login
 LOGOUT_REDIRECT_URL = 'login'  # Onde redirecionar após o logout
+
+# Ou use reverse_lazy para maior robustez: reverse_lazy('login')
+LOGIN_URL = 'login'
+
+
+EMAIL_BACKEND = 'servico_campo.mail_backends.DatabaseEmailBackend'
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+SERVER_EMAIL = 'webmaster@localhost'
+
+# Opcional: Para controlar o comportamento de falha silenciosa em produção
+EMAIL_FAIL_SILENTLY = False  # Mantenha como False para depuração, True para produção
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

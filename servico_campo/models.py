@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import time, timedelta, datetime
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.urls import reverse
 
 
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa  # NOVO IMPORT
@@ -86,7 +87,7 @@ class OrdemServico(models.Model):
     # ALTERADO: De CharField com choices para ForeignKey
     tipo_manutencao = models.ForeignKey(
         # Sem default agora, será obrigatório
-        TipoManutencao, on_delete=models.PROTECT, verbose_name="Tipo de Manutenção")
+        TipoManutencao, on_delete=models.PROTECT, verbose_name="Tipo de Serviço")
     descricao_problema = models.TextField(
         verbose_name="Descrição do Problema / Motivo da OS")
     data_abertura = models.DateTimeField(
@@ -111,11 +112,27 @@ class OrdemServico(models.Model):
     status = models.CharField(max_length=25, choices=STATUS_CHOICES,
                               default='AGUARDANDO_PLANEJAMENTO', verbose_name="Status da OS")
     tecnico_responsavel = models.ForeignKey(
-        User, on_delete=models.PROTECT, verbose_name="Técnico Responsável", related_name="ordens_servico_atuais", null=True, blank=True)
+        User, on_delete=models.PROTECT, verbose_name="Responsável", related_name="ordens_servico_atuais", null=True, blank=True)
+
+    gestor_responsavel = models.ForeignKey(
+        User, on_delete=models.PROTECT, verbose_name="Gestor Responsável", related_name="ordens_servico_gerenciadas", null=True, blank=True
+    )
+
     observacoes_gerais = models.TextField(
         verbose_name="Observações Gerais", null=True, blank=True)
     assinatura_cliente_data = models.TextField(
         verbose_name="Dados da Assinatura do Cliente", null=True, blank=True)
+
+    def get_absolute_url(self):
+        """
+        Retorna a URL canônica para uma instância desta Ordem de Serviço.
+        """
+        # 'servico_campo:detalhe_os' é o nome da sua URL para ver o detalhe da OS.
+        # 'pk' é a chave primária da OS.
+        return reverse('servico_campo:detalhe_os', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return f"OS {self.numero_os} - {self.titulo_servico}"
 
     class Meta:
         verbose_name = "Ordem de Serviço"
@@ -599,3 +616,38 @@ class ProblemaRelatorio(models.Model):
     def __str__(self):
         sub = f" ({self.subcategoria.nome})" if self.subcategoria else ""
         return f"{self.categoria.nome}{sub}: {self.observacao or 'Sem observação'}"
+
+
+class ConfiguracaoEmail(models.Model):
+    # --- Campos Editáveis pelo Usuário ---
+    email_host = models.CharField(
+        max_length=255, verbose_name="Servidor SMTP (Host)")
+    email_port = models.PositiveIntegerField(verbose_name="Porta", default=587)
+    email_host_user = models.EmailField(
+        verbose_name="E-mail de Envio (Usuário)")
+    email_host_password = models.CharField(
+        max_length=255, verbose_name="Senha do E-mail")
+
+    # --- Campos Fixos (Não Editáveis) ---
+    email_backend = models.CharField(
+        max_length=255,
+        default='django.core.mail.backends.smtp.EmailBackend',
+        editable=False
+    )
+    email_use_tls = models.BooleanField(
+        verbose_name="Usar TLS",
+        default=True,
+        editable=False
+    )
+    email_use_ssl = models.BooleanField(
+        verbose_name="Usar SSL",
+        default=False,
+        editable=False
+    )
+
+    def __str__(self):
+        return f"Configuração de E-mail para {self.email_host}"
+
+    class Meta:
+        verbose_name = "Configuração de E-mail"
+        verbose_name_plural = "Configurações de E-mail"

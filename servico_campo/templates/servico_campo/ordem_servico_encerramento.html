@@ -12,7 +12,7 @@
             <h5 class="card-title">Resumo do Serviço</h5>
             <p><strong>Cliente:</strong> {{ os.cliente.razao_social }}</p>
             <p><strong>Serviço:</strong> {{ os.titulo_servico }}</p>
-            <p><strong>Técnico Responsável:</strong> {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
+            <p><strong>Responsável:</strong> {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
             <hr>
             <p>Ao assinar abaixo, o cliente declara estar ciente e de acordo com a conclusão dos serviços prestados nesta Ordem de Serviço.</p>
 
