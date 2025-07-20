@@ -29,6 +29,7 @@ body {
   border-radius: 10px;
   padding: 30px 40px;
   border: 1px solid #ddd;
+  max-width: 100%;
 }
 
 .wrapper h1 {
@@ -134,4 +135,19 @@ body {
     border-radius: 5px;
     margin-bottom: 15px;
     text-align: center;
+}
+
+/* ADICIONE O BLOCO DE CÓDIGO ABAIXO NO FINAL DO ARQUIVO */
+/* ========================================= */
+/* ===         MEDIA QUERIES             === */
+/* ========================================= */
+@media (max-width: 480px) {
+  .wrapper {
+    width: 90%; /* Ocupa 90% da largura da tela */
+    padding: 20px; /* Reduz o espaçamento interno */
+  }
+
+  .wrapper h1 {
+    font-size: 24px; /* Diminui o tamanho do título */
+  }
 }

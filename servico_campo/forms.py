@@ -595,9 +595,13 @@ class ProblemaRelatorioForm(forms.ModelForm):
         model = ProblemaRelatorio
         fields = ['categoria', 'subcategoria', 'observacao']
         widgets = {
-            'categoria': forms.Select(attrs={'class': 'form-control problema-categoria-select'}),
-            'subcategoria': forms.Select(attrs={'class': 'form-control problema-subcategoria-select'}),
-            'observacao': forms.Textarea(attrs={'rows': 2, 'placeholder': _('Detalhes específicos do problema...')}),
+            'categoria': forms.Select(attrs={'class': 'form-select problema-categoria-select'}),
+            'subcategoria': forms.Select(attrs={'class': 'form-select problema-subcategoria-select'}),
+            'observacao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': _('Detalhes específicos do problema...')
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -665,7 +669,6 @@ class ProblemaRelatorioForm(forms.ModelForm):
         # A observação é opcional, então não precisa de validação extra aqui para obrigatoriedade.
 
         return cleaned_data
-
 
     # O inline formset para ProblemaRelatorio (definido na view)
 ProblemaRelatorioFormSet = inlineformset_factory(

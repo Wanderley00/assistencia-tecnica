@@ -79,22 +79,22 @@
                                 {% endif %}
 
                                 {{ form.id }}
-                                <div class="col-md-4 mb-2">
+                                <div class="col-12 col-md-4 mb-2">
                                     <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }}</label>
                                     {{ form.categoria }}
                                     {% if form.categoria.errors %}<div class="text-danger">{{ form.categoria.errors }}</div>{% endif %}
                                 </div>
-                                <div class="col-md-4 mb-2">
+                                <div class="col-12 col-md-4 mb-2">
                                     <label for="{{ form.subcategoria.id_for_label }}" class="form-label">{{ form.subcategoria.label }}</label>
                                     {{ form.subcategoria }}
                                     {% if form.subcategoria.errors %}<div class="text-danger">{{ form.subcategoria.errors }}</div>{% endif %}
                                 </div>
-                                <div class="col-md-3 mb-2">
+                                <div class="col-12 col-md-3 mb-2">
                                     <label for="{{ form.observacao.id_for_label }}" class="form-label">{{ form.observacao.label }}</label>
                                     {{ form.observacao }}
                                     {% if form.observacao.errors %}<div class="text-danger">{{ form.observacao.errors }}</div>{% endif %}
                                 </div>
-                                <div class="col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                                <div class="col-12 col-md-1 mb-2 d-flex align-items-end justify-content-center">
                                     {% if form.instance.pk %}
                                         <div class="form-check">
                                             {{ form.DELETE }}
@@ -117,19 +117,19 @@
                     <div id="empty-problema-form-template" style="display: none;">
                         <div class="row align-items-end mb-3 p-3 border rounded bg-light formset-problema-row" id="problema-__prefix__">
                             {{ problema_formset.empty_form.id }}
-                            <div class="col-md-4 mb-2">
+                            <div class="col-12 col-md-4 mb-2">
                                 <label for="id_problemas_identificados_detalhes-__prefix__-categoria" class="form-label">{{ problema_formset.empty_form.categoria.label }}</label>
                                 {{ problema_formset.empty_form.categoria }}
                             </div>
-                            <div class="col-md-4 mb-2">
+                            <div class="col-12 col-md-4 mb-2">
                                 <label for="id_problemas_identificados_detalhes-__prefix__-subcategoria" class="form-label">{{ problema_formset.empty_form.subcategoria.label }}</label>
                                 {{ problema_formset.empty_form.subcategoria }}
                             </div>
-                            <div class="col-md-3 mb-2">
+                            <div class="col-12 col-md-3 mb-2">
                                 <label for="id_problemas_identificados_detalhes-__prefix__-observacao" class="form-label">{{ problema_formset.empty_form.observacao.label }}</label>
                                 {{ problema_formset.empty_form.observacao }}
                             </div>
-                            <div class="col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                            <div class="col-12 col-md-1 mb-2 d-flex align-items-end justify-content-center">
                                 <button type="button" class="btn btn-sm btn-outline-danger remove-problema-form-button">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -194,7 +194,6 @@
                 <button type="button" id="clear-signature" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Assinatura" %}</button>
                 <input type="hidden" name="assinatura_executante_data" id="id_assinatura_executante_data">
 
-                {# Adicione no block extra_js #}
                 {% block extra_js %}
                 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
                 <script>
@@ -317,9 +316,12 @@
                     });
                 </script>
                 {% endblock %}
-                <button type="submit" class="btn btn-success mt-3">{% trans "Salvar Relatório" %}</button>
-                <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary mt-3">{% trans "Cancelar" %}</a>
-            </form>
+                <hr>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+                    <button type="submit" class="btn btn-success">{% trans "Salvar Relatório" %}</button>
+                </div>
+                 </form>
         </div>
     </div>
 {% endblock %}

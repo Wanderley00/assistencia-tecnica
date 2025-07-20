@@ -4,7 +4,7 @@
 {% block title %}{% trans "Lista de Ordens de Serviço" %}{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
         <h1 class="mb-0">{% trans "Ordens de Serviço" %}</h1>
         {% if perms.servico_campo.add_ordemservico %}
             <a href="{% url 'servico_campo:nova_os' %}" class="btn btn-primary">

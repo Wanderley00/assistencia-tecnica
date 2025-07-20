@@ -4,7 +4,7 @@
 {% block title %}{% trans "Gestão de Categorias de Problemas" %}{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
         <h1 class="mb-0">{% trans "Categorias de Problemas" %}</h1>
         <a href="{% url 'servico_campo:nova_categoria_problema' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> {% trans "Adicionar Categoria" %}
