@@ -1,6 +1,6 @@
 /* =================================================================== */
 /* ===         CÓDIGO CSS CONSOLIDADO E CORRIGIDO PARA O MENU     === */
-/* ===         (Versão FINAL E LIMPA)                             === */
+/* ===         (Versão OTIMIZADA PARA MOBILE)                     === */
 /* =================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -25,26 +25,27 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
-  width: 280px; /* Largura expandida */
+  height: 100vh;
+  width: 280px;
   padding: 10px 14px;
   background: var(--sidebar-color);
   z-index: 1000;
   transition: var(--tran-05);
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  display: flex; /* Adicionado para garantir que o flexbox do menu-bar funcione bem */
-  flex-direction: column; /* Adicionado para garantir que o flexbox do menu-bar funcione bem */
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.close {
-  width: 88px; /* Largura colapsada */
+  width: 88px;
 }
 
 /* --- CABEÇALHO (LOGO E NOME) --- */
 .sidebar header {
   position: relative;
   z-index: 1; 
-  margin-bottom: 20px; /* Espaço entre o cabeçalho e o menu */
+  margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .sidebar header .image-text {
@@ -79,7 +80,7 @@ body {
   position: absolute;
   top: 50%;
   right: -25px;
-  transform: translateY(-50%) rotate(180deg); /* Seta para a esquerda quando expandido */
+  transform: translateY(-50%) rotate(180deg);
   height: 25px;
   width: 25px;
   background-color: var(--primary-color);
@@ -94,35 +95,52 @@ body {
 }
 
 .sidebar.close .toggle {
-  transform: translateY(-50%) rotate(0deg); /* Seta para a direita quando colapsado */
+  transform: translateY(-50%) rotate(0deg);
 }
 
 /* --- CORPO E LINKS DO MENU --- */
 .sidebar .menu-bar {
-  flex-grow: 1; /* Permite que o menu-bar ocupe o espaço restante */
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
 }
 
 .sidebar .menu {
-  flex-grow: 1; 
+  flex: 1;
   display: flex; 
-  flex-direction: column; 
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .sidebar .menu-links {
   padding-left: 0;
   list-style: none;
-  overflow-y: auto; 
-  padding-bottom: 10px; 
-  scrollbar-width: none; 
-  -ms-overflow-style: none;  
-}
-.sidebar .menu-links::-webkit-scrollbar {
-  width: 0; 
+  overflow-y: auto;
+  flex: 1;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
 }
 
+/* Scrollbar personalizada para WebKit */
+.sidebar .menu-links::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
 
 /* Base para todos os itens de navegação (li) */
 .sidebar .nav-link {
@@ -210,7 +228,8 @@ body {
 .sidebar .menu-links .collapse {
     padding-top: 5px; 
     padding-bottom: 5px;
-    margin-left: 0; 
+    margin-left: 0;
+    overflow: hidden;
 }
 
 /* Estilo da lista de links DENTRO do submenu */
@@ -220,11 +239,11 @@ body {
     margin: 0;
 }
 
-/* Estilos para os LINKS individuais dentro do submenu */
+/* ===== ESTILOS PARA OS LINKS DO SUBMENU ===== */
 .sidebar .btn-toggle-nav li a {
-    height: 40px; 
-    padding: 8px 14px 8px 50px; 
-    font-size: 14px;
+    height: 38px;
+    padding: 6px 8px 6px 25px;
+    font-size: 13px;
     border-radius: 4px;
     display: flex;
     align-items: center; 
@@ -232,19 +251,32 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     transition: background-color 0.3s ease, color 0.3s ease;
-    color: var(--text-color); 
+    color: var(--text-color);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Ícones dos sub-itens */
 .sidebar .btn-toggle-nav li a .icon-sub-menu {
-    min-width: 30px; 
-    font-size: 16px;
-    margin-right: 10px; 
+    min-width: 20px;
+    width: 20px;
+    font-size: 14px;
+    margin-right: 8px;
     display: flex;
     justify-content: center; 
     align-items: center; 
     color: inherit; 
     transition: color 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Texto dos sub-itens */
+.sidebar .btn-toggle-nav li a .text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Estado de HOVER para os LINKS individuais do submenu */
@@ -297,12 +329,12 @@ body {
     transition: none !important; 
 }
 
-/* --- ÁREA DE CONTEÚDO PRINCIPAL (move-se com a sidebar) --- */
+/* --- ÁREA DE CONTEÚDO PRINCIPAL --- */
 .home {
   position: relative;
   left: 280px; 
   width: calc(100% - 280px); 
-  height: 100vh;
+  min-height: 100vh;
   padding: 20px 40px;
   background-color: var(--body-color);
   transition: var(--tran-05);
@@ -319,4 +351,276 @@ body {
     justify-content: flex-end;
     align-items: center;
     margin-bottom: 20px;
+}
+
+/* --- RESPONSIVIDADE PARA TABLETS --- */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .sidebar {
+    width: 260px;
+  }
+  
+  .home {
+    left: 260px;
+    width: calc(100% - 260px);
+    padding: 15px 25px;
+  }
+  
+  .sidebar.close ~ .home {
+    left: 88px;
+    width: calc(100% - 88px);
+  }
+  
+  .sidebar .btn-toggle-nav li a {
+    padding: 6px 6px 6px 20px;
+    font-size: 12px;
+  }
+  
+  .sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 18px;
+    width: 18px;
+    font-size: 12px;
+    margin-right: 6px;
+  }
+}
+
+/* --- RESPONSIVIDADE PARA DISPOSITIVOS MÓVEIS --- */
+/* Usando múltiplas estratégias para garantir detecção correta */
+@media screen and (max-width: 768px),
+       screen and (max-device-width: 768px),
+       (orientation: portrait) and (max-width: 896px),
+       (pointer: coarse) and (max-width: 1024px) {
+  
+  /* Reset forçado para garantir que não há interferências */
+  .sidebar {
+    left: -280px !important;
+    width: 280px !important;
+    z-index: 1050;
+    transform: translateX(0);
+    transition: left 0.3s ease, transform 0.3s ease;
+  }
+  
+  .sidebar.active {
+    left: 0 !important;
+    transform: translateX(0);
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding: 60px 20px 15px 20px; /* Mais espaço no topo para o botão hambúrguer */
+    margin: 0 !important;
+  }
+  
+  /* FORÇA ocultação do toggle original */
+  .sidebar header .toggle {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* Overlay para fechar o menu */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-overlay.active {
+    display: block !important;
+    opacity: 1;
+  }
+  
+  /* Botão hambúrguer - SEMPRE visível em mobile */
+  .mobile-menu-toggle {
+    position: fixed !important;
+    top: 15px;
+    left: 15px;
+    z-index: 1051;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    touch-action: manipulation; /* Melhora responsividade ao toque */
+  }
+  
+  /* Ocultar botão quando menu está ativo */
+  .mobile-menu-toggle.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle:focus {
+    background-color: #004494;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .mobile-menu-toggle:active {
+    transform: translateY(0);
+  }
+  
+  /* Botão X para fechar dentro da sidebar */
+  .sidebar.active::before {
+    content: "✕";
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1052;
+    transition: background-color 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.active::before:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Área clicável do botão X */
+  .sidebar .mobile-close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    z-index: 1053;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  /* Ajustes para sub-itens em mobile */
+  .sidebar .btn-toggle-nav li a {
+    padding: 8px 6px 8px 15px;
+    font-size: 13px;
+    height: 40px;
+    min-height: 40px; /* Garante altura mínima para toque */
+  }
+  
+  .sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 18px;
+    width: 18px;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+  
+  /* Melhora a área de toque para todos os links */
+  .sidebar .nav-link > a,
+  .sidebar .dropdown-toggle-sidebar {
+    min-height: 50px;
+    touch-action: manipulation;
+  }
+  
+  /* Previne zoom em inputs (se houver) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Media query adicional para dispositivos com orientação landscape em mobile */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    left: -280px !important;
+    width: 280px !important;
+  }
+  
+  .sidebar.active {
+    left: 0 !important;
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding: 60px 15px 10px 15px;
+  }
+  
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .sidebar header .toggle {
+    display: none !important;
+  }
+}
+
+/* Garante visibilidade correta em desktop */
+@media screen and (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  .sidebar header .toggle {
+    display: flex !important;
+  }
+  
+  .sidebar::before {
+    display: none !important;
+  }
+  
+  .sidebar {
+    left: 0 !important;
+  }
+  
+  .home {
+    left: 280px !important;
+    width: calc(100% - 280px) !important;
+  }
+  
+  .sidebar.close ~ .home {
+    left: 88px !important;
+    width: calc(100% - 88px) !important;
+  }
+}
+
+/* Detecção adicional para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .sidebar header .toggle {
+    display: none !important;
+  }
+  
+  .sidebar {
+    left: -280px !important;
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding-top: 60px;
+  }
 }
