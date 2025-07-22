@@ -1,0 +1,626 @@
+/* =================================================================== */
+/* ===         CÓDIGO CSS CONSOLIDADO E CORRIGIDO PARA O MENU     === */
+/* ===         (Versão OTIMIZADA PARA MOBILE)                     === */
+/* =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --body-color: #f0f2f5;
+  --sidebar-color: #FFF;
+  --primary-color: #0056b3;
+  --primary-color-light: #F6F5FF;
+  --toggle-color: #DDD;
+  --text-color: #707070;
+  --tran-05: all 0.5s ease;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--body-color);
+}
+
+/* --- ESTRUTURA PRINCIPAL DO SIDEBAR --- */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 280px;
+  padding: 10px 14px;
+  background: var(--sidebar-color);
+  z-index: 1000;
+  transition: var(--tran-05);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.close {
+  width: 88px;
+}
+
+/* --- CABEÇALHO (LOGO E NOME) --- */
+.sidebar header {
+  position: relative;
+  z-index: 1; 
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar header .image-text {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar header .image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+
+.sidebar header .logo-text {
+  display: flex;
+  flex-direction: column;
+  color: var(--text-color);
+}
+
+.sidebar header .name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sidebar header .profession {
+  font-size: 16px;
+  margin-top: -2px;
+}
+
+.sidebar header .toggle {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%) rotate(180deg);
+  height: 25px;
+  width: 25px;
+  background-color: var(--primary-color);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--tran-05);
+}
+
+.sidebar.close .toggle {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+/* --- CORPO E LINKS DO MENU --- */
+.sidebar .menu-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.sidebar .menu {
+  flex: 1;
+  display: flex; 
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar .menu-links {
+  padding-left: 0;
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+/* Scrollbar personalizada para WebKit */
+.sidebar .menu-links::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.sidebar .menu-links::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Base para todos os itens de navegação (li) */
+.sidebar .nav-link {
+    margin-top: 5px;
+}
+
+/* Base para todos os links principais e o item "Configurações" */
+.sidebar .nav-link > a,
+.sidebar .dropdown-toggle-sidebar {
+  height: 50px; 
+  width: 100%;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: var(--text-color); 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover para links principais e o item "Configurações" */
+.sidebar .nav-link > a:hover,
+.sidebar .dropdown-toggle-sidebar:hover {
+  background-color: var(--primary-color);
+  color: #fff; 
+}
+
+/* Ícones dos links principais e do item "Configurações" */
+.sidebar .nav-link > a .icon,
+.sidebar .dropdown-toggle-sidebar .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px; 
+  font-size: 20px;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+/* Texto dos links principais e do item "Configurações" */
+.sidebar .nav-link > a .text,
+.sidebar .dropdown-toggle-sidebar .text {
+  color: var(--text-color);
+  font-size: 17px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  opacity: 1;
+}
+
+/* Hover específico para ícones e textos dos links principais */
+.sidebar .nav-link > a:hover .icon,
+.sidebar .nav-link > a:hover .text,
+.sidebar .dropdown-toggle-sidebar:hover .icon,
+.sidebar .dropdown-toggle-sidebar:hover .text {
+  color: #fff;
+}
+
+/* Estilos específicos para o link principal "Configurações" (contém o submenu) */
+.sidebar .dropdown-toggle-sidebar {
+    position: relative;
+    padding-right: 20px; 
+}
+
+/* Ícone de seta (toggle) para o submenu de Configurações */
+.sidebar .dropdown-toggle-sidebar::after {
+    display: inline-block;
+    margin-left: auto;
+    vertical-align: middle;
+    content: "";
+    border: .3em solid transparent;
+    border-top-color: currentColor;
+    border-right: 0;
+    border-bottom: 0;
+    transform: rotate(90deg); 
+    transition: transform .2s ease-in-out;
+}
+
+.sidebar .dropdown-toggle-sidebar[aria-expanded="true"]::after {
+    transform: rotate(180deg); 
+}
+
+/* Estilo para o contêiner do submenu (o div.collapse) */
+.sidebar .menu-links .collapse {
+    padding-top: 5px; 
+    padding-bottom: 5px;
+    margin-left: 0;
+    overflow: hidden;
+}
+
+/* Estilo da lista de links DENTRO do submenu */
+.sidebar .btn-toggle-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* ===== ESTILOS PARA OS LINKS DO SUBMENU ===== */
+.sidebar .btn-toggle-nav li a {
+    height: 38px;
+    padding: 6px 8px 6px 25px;
+    font-size: 13px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: var(--text-color);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ícones dos sub-itens */
+.sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 20px;
+    width: 20px;
+    font-size: 14px;
+    margin-right: 8px;
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    color: inherit; 
+    transition: color 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* Texto dos sub-itens */
+.sidebar .btn-toggle-nav li a .text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Estado de HOVER para os LINKS individuais do submenu */
+.sidebar .btn-toggle-nav li a:hover {
+    background-color: var(--primary-color); 
+    color: #fff !important; 
+}
+
+/* Estado de HOVER para os ÍCONES dentro dos LINKS do submenu */
+.sidebar .btn-toggle-nav li a:hover .icon-sub-menu {
+    color: #fff; 
+}
+
+/* --- ESTADO DO MENU FECHADO (SIDEBAR.CLOSE) --- */
+.sidebar.close .text {
+  opacity: 0;
+  pointer-events: none;
+  width: 0; 
+}
+
+.sidebar.close .toggle {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.sidebar.close .nav-link > a,
+.sidebar.close .dropdown-toggle-sidebar {
+  justify-content: center; 
+  padding: 0; 
+}
+
+/* Ícones dos links principais no modo colapsado */
+.sidebar.close .nav-link > a .icon,
+.sidebar.close .dropdown-toggle-sidebar .icon {
+    min-width: 100%; 
+    margin-right: 0; 
+}
+
+/* Ícone de seta (toggle) para o submenu "Configurações" no modo colapsado */
+.sidebar.close .dropdown-toggle-sidebar::after {
+    display: none; 
+}
+
+/* Oculta completamente o submenu quando a sidebar está fechada */
+.sidebar.close .collapse {
+    display: none !important; 
+    height: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: none !important; 
+}
+
+/* --- ÁREA DE CONTEÚDO PRINCIPAL --- */
+.home {
+  position: relative;
+  left: 280px; 
+  width: calc(100% - 280px); 
+  min-height: 100vh;
+  padding: 20px 40px;
+  background-color: var(--body-color);
+  transition: var(--tran-05);
+  overflow-y: auto; 
+}
+
+.sidebar.close ~ .home {
+  left: 88px; 
+  width: calc(100% - 88px);
+}
+
+.home .header-content {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* --- RESPONSIVIDADE PARA TABLETS --- */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .sidebar {
+    width: 260px;
+  }
+  
+  .home {
+    left: 260px;
+    width: calc(100% - 260px);
+    padding: 15px 25px;
+  }
+  
+  .sidebar.close ~ .home {
+    left: 88px;
+    width: calc(100% - 88px);
+  }
+  
+  .sidebar .btn-toggle-nav li a {
+    padding: 6px 6px 6px 20px;
+    font-size: 12px;
+  }
+  
+  .sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 18px;
+    width: 18px;
+    font-size: 12px;
+    margin-right: 6px;
+  }
+}
+
+/* --- RESPONSIVIDADE PARA DISPOSITIVOS MÓVEIS --- */
+/* Usando múltiplas estratégias para garantir detecção correta */
+@media screen and (max-width: 768px),
+       screen and (max-device-width: 768px),
+       (orientation: portrait) and (max-width: 896px),
+       (pointer: coarse) and (max-width: 1024px) {
+  
+  /* Reset forçado para garantir que não há interferências */
+  .sidebar {
+    left: -280px !important;
+    width: 280px !important;
+    z-index: 1050;
+    transform: translateX(0);
+    transition: left 0.3s ease, transform 0.3s ease;
+  }
+  
+  .sidebar.active {
+    left: 0 !important;
+    transform: translateX(0);
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding: 60px 20px 15px 20px; /* Mais espaço no topo para o botão hambúrguer */
+    margin: 0 !important;
+  }
+  
+  /* FORÇA ocultação do toggle original */
+  .sidebar header .toggle {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* Overlay para fechar o menu */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-overlay.active {
+    display: block !important;
+    opacity: 1;
+  }
+  
+  /* Botão hambúrguer - SEMPRE visível em mobile */
+  .mobile-menu-toggle {
+    position: fixed !important;
+    top: 15px;
+    left: 15px;
+    z-index: 1051;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    touch-action: manipulation; /* Melhora responsividade ao toque */
+  }
+  
+  /* Ocultar botão quando menu está ativo */
+  .mobile-menu-toggle.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle:focus {
+    background-color: #004494;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .mobile-menu-toggle:active {
+    transform: translateY(0);
+  }
+  
+  /* Botão X para fechar dentro da sidebar */
+  .sidebar.active::before {
+    content: "✕";
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1052;
+    transition: background-color 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.active::before:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Área clicável do botão X */
+  .sidebar .mobile-close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    z-index: 1053;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  /* Ajustes para sub-itens em mobile */
+  .sidebar .btn-toggle-nav li a {
+    padding: 8px 6px 8px 15px;
+    font-size: 13px;
+    height: 40px;
+    min-height: 40px; /* Garante altura mínima para toque */
+  }
+  
+  .sidebar .btn-toggle-nav li a .icon-sub-menu {
+    min-width: 18px;
+    width: 18px;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+  
+  /* Melhora a área de toque para todos os links */
+  .sidebar .nav-link > a,
+  .sidebar .dropdown-toggle-sidebar {
+    min-height: 50px;
+    touch-action: manipulation;
+  }
+  
+  /* Previne zoom em inputs (se houver) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Media query adicional para dispositivos com orientação landscape em mobile */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    left: -280px !important;
+    width: 280px !important;
+  }
+  
+  .sidebar.active {
+    left: 0 !important;
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding: 60px 15px 10px 15px;
+  }
+  
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .sidebar header .toggle {
+    display: none !important;
+  }
+}
+
+/* Garante visibilidade correta em desktop */
+@media screen and (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  .sidebar header .toggle {
+    display: flex !important;
+  }
+  
+  .sidebar::before {
+    display: none !important;
+  }
+  
+  .sidebar {
+    left: 0 !important;
+  }
+  
+  .home {
+    left: 280px !important;
+    width: calc(100% - 280px) !important;
+  }
+  
+  .sidebar.close ~ .home {
+    left: 88px !important;
+    width: calc(100% - 88px) !important;
+  }
+}
+
+/* Detecção adicional para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+  
+  .sidebar header .toggle {
+    display: none !important;
+  }
+  
+  .sidebar {
+    left: -280px !important;
+  }
+  
+  .home {
+    left: 0 !important;
+    width: 100% !important;
+    padding-top: 60px;
+  }
+}

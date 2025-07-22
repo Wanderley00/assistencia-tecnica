@@ -1,0 +1,153 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* COR AJUSTADA: Fundo cinza claro, igual ao resto da aplicação */
+  background: #f0f2f5;
+  background-size: cover;
+  background-position: center;
+}
+
+.wrapper {
+  width: 420px;
+  /* COR AJUSTADA: Fundo branco sólido, sem transparência */
+  background-color: #ffffff;
+  /* Sombra para dar profundidade no fundo claro */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  /* COR AJUSTADA: Texto escuro */
+  color: #333;
+  border-radius: 10px;
+  padding: 30px 40px;
+  border: 1px solid #ddd;
+  max-width: 100%;
+}
+
+.wrapper h1 {
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 25px;
+  /* COR AJUSTADA: Cor do título */
+  color: #0056b3; 
+}
+
+.wrapper .input-box {
+  width: 100%;
+  height: 50px;
+  position: relative;
+  margin: 25px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  background: #f8f9fa; /* Fundo do input levemente cinza */
+  border: none;
+  outline: none;
+  border: 1px solid #ced4da; /* Borda padrão */
+  border-radius: 8px; /* Bordas menos arredondadas */
+  font-size: 16px;
+  /* COR AJUSTADA: Texto escuro no input */
+  color: #495057;
+  padding: 20px 45px 20px 20px;
+}
+
+.input-box input:focus {
+    border-color: #80bdff; /* Borda azul ao focar, como no Bootstrap */
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.input-box input::placeholder {
+  color: #6c757d;
+}
+
+.input-box i {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #6c757d;
+}
+
+.wrapper .remember-forgot {
+  display: flex;
+  justify-content: flex-end; /* Alinhando 'Esqueceu a senha?' à direita */
+  font-size: 14.5px;
+  margin: -10px 0 15px;
+}
+
+.remember-forgot a {
+  /* COR AJUSTADA: Link azul */
+  color: #0056b3;
+  text-decoration: none;
+}
+
+.remember-forgot a:hover {
+  text-decoration: underline;
+}
+
+.wrapper .btn {
+  width: 100%;
+  height: 45px;
+  /* COR AJUSTADA: Botão azul */
+  background: #0056b3;
+  border: none;
+  outline: none;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font-size: 16px;
+  /* COR AJUSTADA: Texto branco no botão */
+  color: #fff;
+  font-weight: 600;
+}
+
+.wrapper .btn:hover {
+    background: #004494; /* Tom de azul mais escuro no hover */
+}
+
+.wrapper .register-link {
+  text-align: center;
+  font-size: 14.5px;
+  margin: 20px 0 15px;
+}
+
+.wrapper .register-link p {
+    color: #6c757d;
+}
+
+.wrapper .error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* ADICIONE O BLOCO DE CÓDIGO ABAIXO NO FINAL DO ARQUIVO */
+/* ========================================= */
+/* ===         MEDIA QUERIES             === */
+/* ========================================= */
+@media (max-width: 480px) {
+  .wrapper {
+    width: 90%; /* Ocupa 90% da largura da tela */
+    padding: 20px; /* Reduz o espaçamento interno */
+  }
+
+  .wrapper h1 {
+    font-size: 24px; /* Diminui o tamanho do título */
+  }
+}

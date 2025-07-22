@@ -28,8 +28,7 @@ SECRET_KEY = 'django-insecure-7_c1ij_xocq_f-&%54m+q5zjx4*7xsy_ez%@)%(9x454#$=ds_
 DEBUG = False
 
 ALLOWED_HOSTS = ['assistencia-tecnica-django.onrender.com',
-                 # <--- MUDANÇA AQUI: Adicione seu domínio
-                 '127.0.0.1', '192.168.185.212', 'localhost']
+                 '127.0.0.1', 'localhost', '192.168.209.212']
 
 
 # Application definition
@@ -40,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic',
     'servico_campo',
     'servico_campo.templatetags',
     'configuracoes',
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -147,14 +148,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 #     BASE_DIR / "static",  # Garante que sua pasta 'static' raiz seja incluída
 # ]
 
+# Whitenoise configuration for static files
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# Configuração de arquivos estáticos (CSS, JS, Imagens do seu app)
-# STATIC_URL = 'static/' # Já deve estar lá
 
 # Configuração de arquivos de mídia (uploads do usuário)
 MEDIA_URL = '/media/'
