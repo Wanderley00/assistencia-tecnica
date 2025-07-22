@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from django.contrib.messages import constants as messages
 from pathlib import Path
-import dj_database_url
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -96,26 +95,12 @@ EMAIL_FAIL_SILENTLY = False  # Mantenha como False para depuração, True para p
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-
-# Se estiver rodando no Render (ou se a variável DATABASE_URL estiver definida)
-
-# Configuração do Banco de Dados
-if 'DATABASE_URL' in os.environ:
-    # Se a variável de ambiente DATABASE_URL estiver presente, use-a (produção/Render)
-    DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,  # Tempo máximo de vida da conexão (em segundos)
-            # ssl_require=True # Opcional: Para exigir SSL, geralmente bom para produção
-        )
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Caso contrário, use o SQLite local (desenvolvimento)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation
@@ -190,5 +175,5 @@ MESSAGE_TAGS = {
 }
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# WHITENOISE_AUTOREFRESH = True
+WHITENOISE_AUTOREFRESH = True
 WHITENOISE_MAX_AGE = 31536000
