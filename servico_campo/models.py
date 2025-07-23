@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
@@ -651,3 +653,67 @@ class ConfiguracaoEmail(models.Model):
     class Meta:
         verbose_name = "Configuração de E-mail"
         verbose_name_plural = "Configurações de E-mail"
+
+
+class PerfilUsuario(models.Model):
+    """
+    Armazena informações adicionais do usuário, como dados bancários para reembolso.
+    """
+    TIPO_CONTA_CHOICES = [
+        ('CORRENTE', _('Conta Corrente')),
+        ('POUPANCA', _('Conta Poupança')),
+    ]
+
+    CHAVE_PIX_TIPO_CHOICES = [
+        ('CPF', _('CPF')),
+        ('EMAIL', _('E-mail')),
+        ('CELULAR', _('Celular')),
+        ('ALEATORIA', _('Chave Aleatória')),
+        ('NENHUMA', _('Nenhuma')),
+    ]
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, verbose_name=_("Usuário"))
+
+    # Dados do Titular da Conta
+    cpf_titular_conta = models.CharField(max_length=14, verbose_name=_(
+        "CPF do Titular da Conta"), blank=True, null=True, help_text=_("Formato: XXX.XXX.XXX-XX"))
+    nome_titular_conta = models.CharField(max_length=255, verbose_name=_(
+        "Nome Completo do Titular"), blank=True, null=True)
+
+    # Dados Bancários
+    banco_codigo = models.CharField(max_length=5, verbose_name=_(
+        "Código do Banco"), blank=True, null=True, help_text=_("Ex: 237 para Bradesco, 341 para Itaú"))
+    banco_nome = models.CharField(max_length=100, verbose_name=_(
+        # Opcional, pode ser inferido pelo código
+        "Nome do Banco"), blank=True, null=True)
+    tipo_conta = models.CharField(max_length=10, choices=TIPO_CONTA_CHOICES, verbose_name=_(
+        "Tipo de Conta"), blank=True, null=True)
+    agencia = models.CharField(max_length=10, verbose_name=_(
+        "Número da Agência"), blank=True, null=True, help_text=_("Com dígito, se houver"))
+    numero_conta = models.CharField(max_length=20, verbose_name=_(
+        "Número da Conta"), blank=True, null=True)
+    digito_conta = models.CharField(max_length=2, verbose_name=_(
+        "Dígito Verificador (Conta)"), blank=True, null=True, help_text=_("Se aplicável"))
+
+    # Dados PIX (Opcional)
+    chave_pix_tipo = models.CharField(max_length=10, choices=CHAVE_PIX_TIPO_CHOICES, verbose_name=_(
+        "Tipo de Chave PIX"), default='NENHUMA', blank=True, null=True)
+    chave_pix_valor = models.CharField(max_length=255, verbose_name=_(
+        "Valor da Chave PIX"), blank=True, null=True)
+
+    class Meta:
+        verbose_name = _("Perfil de Usuário")
+        verbose_name_plural = _("Perfis de Usuários")
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+
+# Sinal para criar PerfilUsuario automaticamente quando um novo User é criado
+
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        PerfilUsuario.objects.create(user=instance)
+    instance.perfilusuario.save()

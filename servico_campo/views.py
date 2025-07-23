@@ -53,7 +53,8 @@ from django.contrib.auth import get_user_model
 from .models import (
     OrdemServico, Cliente, Equipamento, DocumentoOS, RegistroPonto,
     RelatorioCampo, FotoRelatorio, Despesa, MembroEquipe, RegraJornadaTrabalho,
-    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar, ConfiguracaoEmail
+    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar, ConfiguracaoEmail,
+    PerfilUsuario
 )
 # NOVO IMPORT
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, PoliticaDespesa, ConfiguracaoEmail
@@ -64,7 +65,7 @@ from .forms import (
     EquipamentoForm, UserCreationFormCustom, UserUpdateFormCustom, GroupForm, OrdemServicoClienteForm,
     OrdemServicoPlanejamentoForm, OrdemServicoCreateForm, MembroEquipeFormSet, OrdemServicoUpdateForm, RegraJornadaTrabalhoForm,
     CategoriaProblemaForm, SubcategoriaProblemaForm, ProblemaRelatorioFormSet, RegistroPontoEntradaForm, RegistroPontoSaidaForm,
-    ContaPagarForm, BulkClientUploadForm, BulkEquipmentUploadForm, LoginFormCustom, ConfiguracaoEmailForm
+    ContaPagarForm, BulkClientUploadForm, BulkEquipmentUploadForm, LoginFormCustom, ConfiguracaoEmailForm, PerfilUsuarioForm
 )
 
 User = get_user_model()
@@ -2698,3 +2699,34 @@ def testar_conexao_email(request):
     except Exception as e:
         # Se qualquer erro ocorrer, retorna o erro
         return JsonResponse({'status': 'error', 'message': f'Falha no teste: {str(e)}'}, status=400)
+
+
+class PerfilUsuarioUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Permite que o usuário logado edite seus próprios dados de perfil e bancários.
+    """
+    model = PerfilUsuario
+    form_class = PerfilUsuarioForm
+    # Um novo template para o perfil
+    template_name = 'servico_campo/perfil_usuario_form.html'
+    context_object_name = 'perfil'
+
+    def get_object(self):
+        # Garante que o usuário só pode editar seu próprio perfil
+        return self.request.user.perfilusuario
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _(
+            'Seus dados bancários foram atualizados com sucesso!'))
+        return response
+
+    def get_success_url(self):
+        # Redireciona para o detalhe do perfil ou para a página inicial
+        # Pode mudar para 'perfil_usuario_detail' se criar uma
+        return reverse_lazy('servico_campo:lista_os')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_action_title'] = _('Meus Dados Bancários')
+        return context

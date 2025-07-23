@@ -29,6 +29,7 @@ from .models import (
     SubcategoriaProblema,
     ProblemaRelatorio,
     ContaPagar,
+    PerfilUsuario
 )
 
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa
@@ -369,23 +370,31 @@ class UserCreationFormCustom(UserCreationForm):
     )
 
     empresas = forms.ModelMultipleChoiceField(
-        queryset=Cliente.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        queryset=Cliente.objects.all().order_by('razao_social'),  # Garante a ordenação
+        # VOLTOU para CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple(),
         required=False,
         label="Empresas Associadas"
     )
 
     class Meta(UserCreationForm.Meta):
         model = User
+        # Adicione 'is_active' aqui para que apareça no formulário de criação
         fields = UserCreationForm.Meta.fields + \
-            ('first_name', 'last_name', 'email', 'groups', 'empresas')
+            ('first_name', 'last_name', 'email', 'groups', 'empresas', 'is_active')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            # Aplica form-control a todos os campos, exceto CheckboxSelectMultiple
-            if not isinstance(field.widget, forms.CheckboxSelectMultiple):
+            # Aplica form-control a campos de texto/seleção, e form-check-input para checkboxes
+            if isinstance(field.widget, (forms.TextInput, forms.EmailInput, forms.Select, forms.PasswordInput)):
                 field.widget.attrs.update({'class': 'form-control'})
+            elif isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+            elif isinstance(field.widget, forms.CheckboxSelectMultiple):
+                # Para CheckboxSelectMultiple (campo 'empresas'), não aplicar form-control diretamente ao widget principal
+                # A estilização dos itens internos é feita pelo template e pelo CSS personalizado
+                pass
 
     def save(self, commit=True):
         # Salva o usuário primeiro, mas não comita ainda
@@ -397,7 +406,6 @@ class UserCreationFormCustom(UserCreationForm):
             group = self.cleaned_data.get('groups')
             if group:
                 # Usa set() com uma LISTA contendo o único grupo
-                # <--- MUDANÇA AQUI: envolver 'group' em uma lista
                 user.groups.set([group])
 
             # Adiciona as empresas associadas
@@ -415,8 +423,9 @@ class UserUpdateFormCustom(forms.ModelForm):
     )
 
     empresas = forms.ModelMultipleChoiceField(
-        queryset=Cliente.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        queryset=Cliente.objects.all().order_by('razao_social'),  # Garante a ordenação
+        # VOLTOU para CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple(),
         required=False,
         label="Empresas Associadas"
     )
@@ -434,8 +443,15 @@ class UserUpdateFormCustom(forms.ModelForm):
             self.fields['empresas'].initial = self.instance.empresas_associadas.all()
 
         for field_name, field in self.fields.items():
-            if not isinstance(field.widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple)):
+            # Aplica form-control a campos de texto/seleção, e form-check-input para checkboxes
+            if isinstance(field.widget, (forms.TextInput, forms.EmailInput, forms.Select)):
                 field.widget.attrs.update({'class': 'form-control'})
+            elif isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+            elif isinstance(field.widget, forms.CheckboxSelectMultiple):
+                # Para CheckboxSelectMultiple (campo 'empresas'), não aplicar form-control diretamente ao widget principal
+                # A estilização dos itens internos é feita pelo template e pelo CSS personalizado
+                pass
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -445,7 +461,6 @@ class UserUpdateFormCustom(forms.ModelForm):
             group = self.cleaned_data.get('groups')
             if group:
                 # Usa set() com uma LISTA contendo o único grupo
-                # <--- MUDANÇA AQUI: envolver 'group' em uma lista
                 user.groups.set([group])
 
             # Adiciona as empresas associadas
@@ -780,3 +795,43 @@ class ConfiguracaoEmailForm(forms.ModelForm):
         widgets = {
             'email_host_password': forms.PasswordInput(render_value=True),
         }
+
+
+class PerfilUsuarioForm(forms.ModelForm):
+    """
+    Formulário para editar os dados do Perfil de Usuário (incluindo dados bancários).
+    """
+    class Meta:
+        model = PerfilUsuario
+        fields = [
+            'cpf_titular_conta', 'nome_titular_conta',
+            'banco_codigo', 'banco_nome', 'tipo_conta', 'agencia',
+            'numero_conta', 'digito_conta',
+            'chave_pix_tipo', 'chave_pix_valor'
+        ]
+        labels = {
+            'cpf_titular_conta': _('CPF do Titular da Conta'),
+            'nome_titular_conta': _('Nome Completo do Titular'),
+            'banco_codigo': _('Código do Banco'),
+            'banco_nome': _('Nome do Banco'),
+            'tipo_conta': _('Tipo de Conta'),
+            'agencia': _('Número da Agência'),
+            'numero_conta': _('Número da Conta'),
+            'digito_conta': _('Dígito Verificador (Conta)'),
+            'chave_pix_tipo': _('Tipo de Chave PIX'),
+            'chave_pix_valor': _('Valor da Chave PIX'),
+        }
+        widgets = {
+            'cpf_titular_conta': forms.TextInput(attrs={'placeholder': _('Ex: 123.456.789-00')}),
+            'banco_codigo': forms.TextInput(attrs={'placeholder': _('Ex: 237')}),
+            'agencia': forms.TextInput(attrs={'placeholder': _('Ex: 0001 ou 0001-0')}),
+            'numero_conta': forms.TextInput(attrs={'placeholder': _('Ex: 12345678')}),
+            'digito_conta': forms.TextInput(attrs={'placeholder': _('Ex: 9')}),
+            'chave_pix_valor': forms.TextInput(attrs={'placeholder': _('Sua chave PIX')}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, (forms.TextInput, forms.Select)):
+                field.widget.attrs.update({'class': 'form-control'})

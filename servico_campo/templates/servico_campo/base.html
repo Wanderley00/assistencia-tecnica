@@ -80,7 +80,13 @@
                     </a>
                 </li>
 
-                {# NOVO LINK: Minhas Despesas #}
+                <li class="nav-link">
+                    <a href="{% url 'servico_campo:editar_dados_bancarios' %}">
+                        <i class='bi bi-credit-card icon'></i> {# Ícone de carteira ou similar #}
+                        <span class="text nav-text">Meus Dados Bancários</span>
+                    </a>
+                </li>
+
                 <li class="nav-link">
                     <a href="{% url 'servico_campo:minhas_despesas' %}">
                         <i class='bi bi-wallet2 icon'></i> {# Ícone de carteira ou similar #}

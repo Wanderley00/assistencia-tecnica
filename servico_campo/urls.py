@@ -4,6 +4,9 @@ from django.urls import path, include
 from . import views
 from django.utils.translation import gettext_lazy as _  # Para internacionalização
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 app_name = 'servico_campo'
 
 urlpatterns = [
@@ -189,4 +192,14 @@ urlpatterns = [
 
     path('configuracoes/testar-email/',
          views.testar_conexao_email, name='testar_conexao_email'),
+
+    # URLs para Perfil de Usuário / Dados Bancários (Adicione esta)
+    path('meu-perfil/dados-bancarios/',
+         views.PerfilUsuarioUpdateView.as_view(), name='editar_dados_bancarios'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)
+    # Se você também estiver servindo arquivos estáticos localmente em dev:
+    # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

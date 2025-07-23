@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from django.contrib.messages import constants as messages
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'servico_campo',
     'servico_campo.templatetags',
     'configuracoes',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -95,13 +97,22 @@ EMAIL_FAIL_SILENTLY = False  # Mantenha como False para depuração, True para p
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Se a variável de ambiente DATABASE_URL existir (geralmente setada pelo Render para Postgres)
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True  # Se o Render exigir SSL para o banco de dados
+        )
     }
-}
-
+else:
+    # Configuração padrão para desenvolvimento local com SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -162,8 +173,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Configuração de arquivos de mídia (uploads do usuário)
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'  # Cria uma pasta 'media' na raiz do seu projeto
+
+# Configurações do AWS S3 para MEDIA FILES
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+# Obter a região da variável de ambiente
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
+
+# Certifique-se de que todas as variáveis de ambiente estão definidas
+if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME]):
+    print("Atenção: Variáveis de ambiente AWS S3 não estão completamente configuradas.")
+    # Se for DEBUG=True e as variáveis não estiverem setadas, pode-se fallback para local.
+    # Caso contrário, isso pode causar erros em produção.
+
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+AWS_S3_FILE_OVERWRITE = False
+# Recomenda-se usar controle de acesso de bucket (Bucket Policy)
+AWS_DEFAULT_ACL = None
+# e não ACLs de objetos, então defina como None.
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
 
 MESSAGE_TAGS = {

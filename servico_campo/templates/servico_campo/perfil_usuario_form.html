@@ -1,0 +1,106 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ form_action_title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Página Inicial" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ form_action_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="card-title mb-0">{{ form_action_title }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <h5 class="mb-3">{% trans "Dados do Titular da Conta" %}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cpf_titular_conta.id_for_label }}" class="form-label">{{ form.cpf_titular_conta.label }}</label>
+                        {{ form.cpf_titular_conta }}
+                        {% if form.cpf_titular_conta.errors %}<div class="text-danger">{{ form.cpf_titular_conta.errors }}</div>{% endif %}
+                        {% if form.cpf_titular_conta.help_text %}<div class="form-text">{{ form.cpf_titular_conta.help_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.nome_titular_conta.id_for_label }}" class="form-label">{{ form.nome_titular_conta.label }}</label>
+                        {{ form.nome_titular_conta }}
+                        {% if form.nome_titular_conta.errors %}<div class="text-danger">{{ form.nome_titular_conta.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4">{% trans "Dados Bancários" %}</h5>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.banco_codigo.id_for_label }}" class="form-label">{{ form.banco_codigo.label }}</label>
+                        {{ form.banco_codigo }}
+                        {% if form.banco_codigo.errors %}<div class="text-danger">{{ form.banco_codigo.errors }}</div>{% endif %}
+                        {% if form.banco_codigo.help_text %}<div class="form-text">{{ form.banco_codigo.help_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="{{ form.banco_nome.id_for_label }}" class="form-label">{{ form.banco_nome.label }}</label>
+                        {{ form.banco_nome }}
+                        {% if form.banco_nome.errors %}<div class="text-danger">{{ form.banco_nome.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.tipo_conta.id_for_label }}" class="form-label">{{ form.tipo_conta.label }}</label>
+                        {{ form.tipo_conta }}
+                        {% if form.tipo_conta.errors %}<div class="text-danger">{{ form.tipo_conta.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.agencia.id_for_label }}" class="form-label">{{ form.agencia.label }}</label>
+                        {{ form.agencia }}
+                        {% if form.agencia.errors %}<div class="text-danger">{{ form.agencia.errors }}</div>{% endif %}
+                        {% if form.agencia.help_text %}<div class="form-text">{{ form.agencia.help_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label for="{{ form.numero_conta.id_for_label }}" class="form-label">{{ form.numero_conta.label }}</label>
+                        {{ form.numero_conta }}
+                        {% if form.numero_conta.errors %}<div class="text-danger">{{ form.numero_conta.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.digito_conta.id_for_label }}" class="form-label">{{ form.digito_conta.label }}</label>
+                        {{ form.digito_conta }}
+                        {% if form.digito_conta.errors %}<div class="text-danger">{{ form.digito_conta.errors }}</div>{% endif %}
+                        {% if form.digito_conta.help_text %}<div class="form-text">{{ form.digito_conta.help_text }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4">{% trans "Dados PIX" %}</h5>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.chave_pix_tipo.id_for_label }}" class="form-label">{{ form.chave_pix_tipo.label }}</label>
+                        {{ form.chave_pix_tipo }}
+                        {% if form.chave_pix_tipo.errors %}<div class="text-danger">{{ form.chave_pix_tipo.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-8 mb-3">
+                        <label for="{{ form.chave_pix_valor.id_for_label }}" class="form-label">{{ form.chave_pix_valor.label }}</label>
+                        {{ form.chave_pix_valor }}
+                        {% if form.chave_pix_valor.errors %}<div class="text-danger">{{ form.chave_pix_valor.errors }}</div>{% endif %}
+                        {% if form.chave_pix_valor.help_text %}<div class="form-text">{{ form.chave_pix_valor.help_text }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success mt-3">{% trans "Salvar Dados Bancários" %}</button>
+                <a href="{% url 'servico_campo:lista_os' %}" class="btn btn-secondary mt-3">{% trans "Voltar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -28,6 +28,30 @@
                 <p><strong>{% trans "Comprovante Despesa:" %}</strong> <a href="{{ conta_a_pagar.despesa.comprovante_anexo.url }}" target="_blank">{% trans "Ver Comprovante" %}</a></p>
             {% endif %}
             <hr>
+            {# NOVO BLOCO: INFORMAÇÕES BANCÁRIAS DO TÉCNICO #}
+                <h5 class="mb-3 mt-4">{% trans "Dados Bancários do Responsável pela Despesa" %}</h5>
+                {% with perfil=conta_a_pagar.despesa.tecnico.perfilusuario %}
+                    {% if perfil %}
+                        <div class="alert alert-info">
+                            <p class="mb-1"><strong>{% trans "Nome do Titular:" %}</strong> {{ perfil.nome_titular_conta|default:perfil.user.get_full_name }}</p>
+                            <p class="mb-1"><strong>{% trans "CPF do Titular:" %}</strong> {{ perfil.cpf_titular_conta|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Banco:" %}</strong> {{ perfil.banco_codigo }} - {{ perfil.banco_nome|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Tipo de Conta:" %}</strong> {{ perfil.get_tipo_conta_display|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Agência:" %}</strong> {{ perfil.agencia|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Número da Conta:" %}</strong> {{ perfil.numero_conta|default:"N/A" }}{% if perfil.digito_conta %}-{{ perfil.digito_conta }}{% endif %}</p>
+                            {% if perfil.chave_pix_valor and perfil.chave_pix_tipo != 'NENHUMA' %}
+                                <p class="mb-0"><strong>{% trans "Chave PIX" %} ({{ perfil.get_chave_pix_tipo_display }}):</strong> {{ perfil.chave_pix_valor }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            {% trans "Dados bancários não cadastrados para este responsável." %}
+                            <a href="{% url 'servico_campo:editar_dados_bancarios' %}" class="alert-link">{% trans "Solicite que o técnico cadastre seus dados bancários." %}</a>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                <hr>
+                {# FIM DO NOVO BLOCO #}
 
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}

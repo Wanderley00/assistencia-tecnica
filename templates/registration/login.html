@@ -8,6 +8,22 @@
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="stylesheet" href="{% static 'servico_campo/css/login.css' %}">
 </head>
+<script>
+function togglePasswordVisibility() {
+    const passwordField = document.querySelector('input[name="password"]');
+    const toggleIcon = document.querySelector('.password-toggle');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.classList.remove('bxs-lock-alt');
+        toggleIcon.classList.add('bxs-lock-open');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.classList.remove('bxs-lock-open');
+        toggleIcon.classList.add('bxs-lock-alt');
+    }
+}
+</script>
 <body>
     <div class="wrapper">
         <form method="post" action="{% url 'login' %}">
@@ -31,7 +47,7 @@
             </div>
             <div class="input-box">
                 {{ form.password }}
-                <i class='bx bxs-lock-alt'></i>
+                <i class='bx bxs-lock-alt password-toggle' onclick="togglePasswordVisibility()"></i>
             </div>
 
             <div class="remember-forgot">
