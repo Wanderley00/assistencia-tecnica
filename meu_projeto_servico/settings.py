@@ -14,6 +14,10 @@ from django.contrib.messages import constants as messages
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()  # Esta linha deve estar ANTES de qualquer os.environ.get()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7_c1ij_xocq_f-&%54m+q5zjx4*7xsy_ez%@)%(9x454#$=ds_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['assistencia-tecnica-django.onrender.com',
                  '127.0.0.1', 'localhost']
@@ -49,7 +53,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -99,12 +102,14 @@ EMAIL_FAIL_SILENTLY = False  # Mantenha como False para depuração, True para p
 
 # Se a variável de ambiente DATABASE_URL existir (geralmente setada pelo Render para Postgres)
 if 'DATABASE_URL' in os.environ:
+    # Usa dj_database_url para parsear a URL do PostgreSQL do Render
     DATABASES = {
         'default': dj_database_url.config(
-            conn_max_age=600,
-            ssl_require=True  # Se o Render exigir SSL para o banco de dados
+            conn_max_age=600,  # Opcional: tempo máximo de vida da conexão em segundos
+            ssl_require=True   # Importante para conexões seguras com o Render Postgres
         )
     }
+    print("Usando PostgreSQL (DATABASE_URL do ambiente).")
 else:
     # Configuração padrão para desenvolvimento local com SQLite
     DATABASES = {
@@ -113,6 +118,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    print("Usando SQLite (ambiente local ou DATABASE_URL não encontrada).")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -161,6 +167,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Whitenoise configuration for static files
 STORAGES = {
+    "default": {  # <--- Adicione esta entrada para o armazenamento de arquivos de mídia (uploads)
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
@@ -169,12 +178,12 @@ STORAGES = {
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Configuração de arquivos de mídia (uploads do usuário)
 # MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'  # Cria uma pasta 'media' na raiz do seu projeto
+# MEDIA_ROOT = BASE_DIR / 'media'  # Cria uma pasta 'media' na raiz do seu projeto
 
 # Configurações do AWS S3 para MEDIA FILES
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
