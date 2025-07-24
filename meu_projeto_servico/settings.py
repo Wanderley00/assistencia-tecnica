@@ -161,9 +161,9 @@ LOCALE_PATHS = [
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# STATICFILES_DIRS = [
-#     BASE_DIR / "static",  # Garante que sua pasta 'static' raiz seja incluída
-# ]
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # Garante que sua pasta 'static' raiz seja incluída
+]
 
 # Whitenoise configuration for static files
 STORAGES = {
