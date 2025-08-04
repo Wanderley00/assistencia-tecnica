@@ -370,6 +370,15 @@ class Despesa(models.Model):
     status_aprovacao = models.CharField(
         max_length=10, choices=STATUS_APROVACAO_CHOICES, default='PENDENTE', verbose_name=_("Status de Aprovação")
     )
+    responsavel_despesa = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        # Renomeei para evitar conflito se você tiver 'despesas_solicitadas' em outro lugar
+        related_name='despesas_atribuidas',
+        verbose_name=_("Responsável pela Despesa")
+    )
+
     aprovado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
                                      blank=True, related_name="despesas_aprovadas", verbose_name=_("Aprovado por"))
     data_aprovacao = models.DateTimeField(

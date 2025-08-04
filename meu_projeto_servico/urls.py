@@ -14,6 +14,13 @@ from servico_campo.views import CustomPasswordResetView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('servico/', include('servico_campo.urls')),
+
+    # URLs do seu site original (app servico_campo)
+    path('', include('servico_campo.urls')),
+
+    # URLs da sua nova API, todas começarão com /api/
+    path('api/', include('api.urls')),
+
     # NOVO: Incluir URLs do app de configurações
     path('configuracoes/', include('configuracoes.urls')),
     # ... (outras URLs de login/logout, etc.)

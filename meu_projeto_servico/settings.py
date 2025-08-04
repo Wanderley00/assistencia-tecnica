@@ -11,9 +11,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 import os
 import dj_database_url
+from django.conf import settings
 from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -49,6 +51,10 @@ INSTALLED_APPS = [
     'servico_campo.templatetags',
     'configuracoes',
     'storages',
+    'api',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'django_rest_passwordreset'
 ]
 
 MIDDLEWARE = [
@@ -162,50 +168,66 @@ LOCALE_PATHS = [
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Garante que sua pasta 'static' raiz seja incluída
+    BASE_DIR / "static",
 ]
 
-# Whitenoise configuration for static files
-STORAGES = {
-    "default": {  # <--- Adicione esta entrada para o armazenamento de arquivos de mídia (uploads)
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Configurações de armazenamento de arquivos (MEDIA e STATIC)
+# Use S3 em produção ou se as variáveis AWS estiverem presentes (para testar S3 localmente)
+# Use FileSystemStorage (pasta local) em desenvolvimento puro (DEBUG=True e sem vars AWS)
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+# Verifica se as variáveis AWS S3 estão configuradas no ambiente
+AWS_S3_CONFIGURED = all([
+    os.environ.get('AWS_ACCESS_KEY_ID'),
+    os.environ.get('AWS_SECRET_ACCESS_KEY'),
+    os.environ.get('AWS_STORAGE_BUCKET_NAME'),
+    os.environ.get('AWS_S3_REGION_NAME')
+])
 
-# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+if not AWS_S3_CONFIGURED and DEBUG:
+    # Usar armazenamento local para mídia em desenvolvimento (se DEBUG=True e S3 não estiver configurado)
+    print("Usando armazenamento de arquivos local (pasta media/).")
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+    # Você pode manter as configurações do S3 no settings.py, mas elas não serão ativas.
+    # Para STORAGES, o "default" pode ser definido aqui também.
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
+elif AWS_S3_CONFIGURED:
+    # Usar AWS S3 para mídia (em produção ou para testes locais com S3 via .env)
+    print("Usando armazenamento de arquivos AWS S3.")
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
 
-# Configuração de arquivos de mídia (uploads do usuário)
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = BASE_DIR / 'media'  # Cria uma pasta 'media' na raiz do seu projeto
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    AWS_S3_FILE_OVERWRITE = False
+    # Recomenda-se usar controle de acesso de bucket (Bucket Policy)
+    AWS_DEFAULT_ACL = None
 
-# Configurações do AWS S3 para MEDIA FILES
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-# Obter a região da variável de ambiente
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 
-# Certifique-se de que todas as variáveis de ambiente estão definidas
-if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME]):
-    print("Atenção: Variáveis de ambiente AWS S3 não estão completamente configuradas.")
-    # Se for DEBUG=True e as variáveis não estiverem setadas, pode-se fallback para local.
-    # Caso contrário, isso pode causar erros em produção.
-
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
-AWS_S3_FILE_OVERWRITE = False
-# Recomenda-se usar controle de acesso de bucket (Bucket Policy)
-AWS_DEFAULT_ACL = None
-# e não ACLs de objetos, então defina como None.
-
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+else:
+    # Caso de DEBUG=False e AWS_S3_CONFIGURED=False (situação de erro em produção)
+    raise ImproperlyConfigured(
+        "As configurações do AWS S3 são obrigatórias em produção.")
 
 
 MESSAGE_TAGS = {
@@ -219,3 +241,10 @@ MESSAGE_TAGS = {
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_AUTOREFRESH = True
 WHITENOISE_MAX_AGE = 31536000
+
+# Adicione este bloco no final do arquivo settings.py
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}

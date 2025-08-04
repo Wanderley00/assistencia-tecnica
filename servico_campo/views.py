@@ -48,6 +48,10 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth import get_user_model
+from django.urls import reverse_lazy, reverse
+from configuracoes.models import ConfiguracaoEmail
+from django.dispatch import receiver
+from django_rest_passwordreset.signals import reset_password_token_created
 
 # Imports Locais (do seu app)
 from .models import (
@@ -470,27 +474,117 @@ class ContaPagarListView(LoginRequiredMixin, ListView):  # Ou LoginRequiredMixin
         return context
 
 
-class ContaPagarUpdateView(GestorRequiredMixin, UpdateView):  # Ou LoginRequiredMixin
-    permission_required = 'servico_campo.change_contapagar'
+class ContaPagarUpdateView(LoginRequiredMixin, UpdateView):
     model = ContaPagar
-    form_class = ContaPagarForm
-    template_name = 'servico_campo/conta_a_pagar_form.html'
+    form_class = ContaPagarForm  # Ou o nome do seu formulário para ContaPagar
+    template_name = 'servico_campo/conta_a_pagar_form.html'  # ou seu template
     context_object_name = 'conta_a_pagar'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form_title'] = _("Atualizar Status de Pagamento")
+        context['form_title'] = _('Editar Conta a Pagar')
         return context
 
     def form_valid(self, form):
-        # Atribui o usuário logado como responsável pelo pagamento
-        form.instance.responsavel_pagamento = self.request.user
+        # Obtém a instância original antes de salvar (se existir e for uma atualização)
+        original_status = self.get_object().status_pagamento if self.object else None
+
+        # Salva o formulário e a instância (self.object)
+        response = super().form_valid(form)
+
+        # Verifica se o status foi alterado para 'Paga'
+        if original_status != 'PAGO' and self.object.status_pagamento == 'PAGO':
+            self.enviar_email_despesa_paga(
+                self.object)  # Chama a função de envio
+
         messages.success(self.request, _(
-            "Status de pagamento atualizado com sucesso!"))
-        return super().form_valid(form)
+            'Conta a Pagar atualizada com sucesso!'))
+        return response
 
     def get_success_url(self):
+        # Redireciona para a lista de contas a pagar ou detalhe da OS
+        # Ajuste conforme sua URL
         return reverse_lazy('servico_campo:lista_contas_a_pagar')
+
+    def enviar_email_despesa_paga(self, conta_a_pagar):
+        # Obtém o responsável pela despesa e o gestor da OS
+        # Ou .aprovador_despesa, dependendo do seu critério
+        # <-- Use o campo 'tecnico' do modelo Despesa
+        responsavel_despesa = conta_a_pagar.despesa.tecnico
+        gestor_os = conta_a_pagar.despesa.ordem_servico.gestor_responsavel
+
+        # Lista de destinatários
+        destinatarios = []
+        if responsavel_despesa and responsavel_despesa.email:
+            destinatarios.append(responsavel_despesa.email)
+        if gestor_os and gestor_os.email:
+            destinatarios.append(gestor_os.email)
+
+        if not destinatarios:
+            print("Nenhum destinatário de e-mail encontrado para a despesa paga.")
+            return  # Não envia se não houver destinatários válidos
+
+        # Contexto para o template de e-mail
+        context = {
+            'conta_a_pagar': conta_a_pagar,
+            'protocol': 'https' if self.request.is_secure() else 'http',
+            'domain': self.request.get_host(),
+        }
+
+        subject = _(
+            f"Notificação: Despesa {conta_a_pagar.despesa.descricao} Paga - OS {conta_a_pagar.despesa.ordem_servico.numero_os}")
+
+        email_backend = get_email_backend()  # Usando seu backend customizado
+
+        # Enviar para o Responsável da Despesa
+        if responsavel_despesa and responsavel_despesa.email:
+            context['destinatario'] = responsavel_despesa.perfilusuario if hasattr(
+                # Adapte para seu modelo de PerfilUsuario ou User
+                responsavel_despesa, 'perfilusuario') else responsavel_despesa
+            html_message = render_to_string(
+                'servico_campo/email/despesa_paga.html', context)
+            plain_message = strip_tags(html_message)
+
+            msg = EmailMultiAlternatives(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [responsavel_despesa.email],
+                connection=email_backend
+            )
+            msg.attach_alternative(html_message, "text/html")
+            try:
+                msg.send()
+                print(
+                    f"E-mail de despesa paga enviado para {responsavel_despesa.email}")
+            except Exception as e:
+                print(
+                    f"Erro ao enviar e-mail para o responsável da despesa ({responsavel_despesa.email}): {e}")
+
+        # Enviar para o Gestor da OS
+        # Evita duplicidade se forem a mesma pessoa
+        if gestor_os and gestor_os.email and gestor_os != responsavel_despesa:
+            context['destinatario'] = gestor_os.perfilusuario if hasattr(
+                gestor_os, 'perfilusuario') else gestor_os
+            html_message = render_to_string(
+                'servico_campo/email/despesa_paga.html', context)
+            plain_message = strip_tags(html_message)
+
+            msg = EmailMultiAlternatives(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [gestor_os.email],
+                connection=email_backend
+            )
+            msg.attach_alternative(html_message, "text/html")
+            try:
+                msg.send()
+                print(
+                    f"E-mail de despesa paga enviado para o gestor ({gestor_os.email})")
+            except Exception as e:
+                print(
+                    f"Erro ao enviar e-mail para o gestor da OS ({gestor_os.email}): {e}")
 
 
 # -------------------------------------------------------------
@@ -2250,7 +2344,7 @@ class BulkClientUploadView(GestorRequiredMixin, FormView):
             # Verifica se houve falhas após o bloco try-except da transação
             if failed_rows:
                 messages.warning(self.request, _(
-                    f"Importação concluída com {successful_imports} clientes importados/atualizados e {len(failed_imports)} falhas."))
+                    f"Importação concluída com {successful_imports} clientes importados/atualizados."))
                 # Armazena na sessão para exibir após o redirect
                 self.request.session['failed_rows_import'] = failed_rows
             else:
@@ -2389,7 +2483,7 @@ class BulkEquipmentUploadView(GestorRequiredMixin, FormView):
 
             if failed_rows:
                 messages.warning(self.request, _(
-                    f"Importação concluída com {successful_imports} equipamentos importados/atualizados e {len(failed_imports)} falhas."))
+                    f"Importação concluída com {successful_imports} equipamentos importados/atualizados."))
                 self.request.session['failed_rows_import'] = failed_rows
             else:
                 messages.success(self.request, _(
@@ -2730,3 +2824,62 @@ class PerfilUsuarioUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['form_action_title'] = _('Meus Dados Bancários')
         return context
+
+
+@receiver(reset_password_token_created)
+def password_reset_token_created_receiver(sender, instance, reset_password_token, *args, **kwargs):
+    """
+    Listener para o sinal reset_password_token_created.
+    Esta função será chamada sempre que um token de redefinição de senha
+    for criado pela API e será responsável por enviar o e-mail.
+    """
+    try:
+        # Tenta obter o backend de e-mail configurado no admin
+        email_backend = get_email_backend()
+        if not email_backend:
+            print(
+                f"Falha ao enviar e-mail para {reset_password_token.user.email}: Nenhuma configuração de e-mail encontrada no banco de dados.")
+            return
+
+        # Monta a URL que o usuário usará para redefinir a senha no app.
+        # ATENÇÃO: Esta URL é um exemplo. Você precisará ajustar no seu app Flutter
+        # para lidar com "deep linking" ou usar uma página web intermediária.
+        # Por enquanto, vamos focar no envio do e-mail.
+        # O token é a parte mais importante: reset_password_token.key
+        reset_url = f"https://seusite.com/reset-password?token={reset_password_token.key}"
+
+        context = {
+            'current_user': reset_password_token.user,
+            'username': reset_password_token.user.username,
+            'email': reset_password_token.user.email,
+            'reset_password_url': reset_url,
+            'token': reset_password_token.key  # Enviando o token para o template
+        }
+
+        # Renderiza o corpo do e-mail a partir de um template HTML
+        # (vamos criar este template a seguir)
+        email_html_message = render_to_string(
+            'servico_campo/email/password_reset_email_api.html', context)
+        email_plaintext_message = render_to_string(
+            'servico_campo/email/password_reset_email_api.txt', context)
+
+        msg = EmailMultiAlternatives(
+            # Assunto do e-mail
+            f"Redefinição de Senha para {reset_password_token.user.username}",
+            # Corpo do e-mail em texto puro
+            email_plaintext_message,
+            # Remetente (pego da configuração do banco)
+            email_backend.username,
+            # Destinatário
+            [reset_password_token.user.email],
+            # Conexão de e-mail
+            connection=email_backend
+        )
+        msg.attach_alternative(email_html_message, "text/html")
+        msg.send()
+        print(
+            f"E-mail de redefinição de senha enviado com sucesso para {reset_password_token.user.email}")
+
+    except Exception as e:
+        print(
+            f"Erro ao enviar e-mail de redefinição de senha para {reset_password_token.user.email}: {e}")
