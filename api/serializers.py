@@ -9,7 +9,6 @@ from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
 import mimetypes
-from .serializers import CategoriaDespesaSerializer, FormaPagamentoSerializer
 
 
 class ClienteSerializer(serializers.ModelSerializer):
