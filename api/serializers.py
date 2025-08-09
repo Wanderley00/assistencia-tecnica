@@ -3,11 +3,13 @@
 from rest_framework import serializers
 from servico_campo.models import (
     OrdemServico, Cliente, Equipamento, RelatorioCampo, Despesa, MembroEquipe,
-    DocumentoOS, Despesa, RegistroPonto
+    DocumentoOS, RegistroPonto
 )
+
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
+
 import mimetypes
 
 
@@ -43,6 +45,24 @@ class RelatorioCampoSerializer(serializers.ModelSerializer):
         read_only_fields = ['ordem_servico']
 
 
+class CategoriaDespesaSerializer(serializers.ModelSerializer):
+    """
+    Serializer para listar as categorias de despesa.
+    """
+    class Meta:
+        model = CategoriaDespesa
+        fields = ['id', 'nome']
+
+
+class FormaPagamentoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para listar as formas de pagamento.
+    """
+    class Meta:
+        model = FormaPagamento
+        fields = ['id', 'nome']
+
+
 class DespesaSerializer(serializers.ModelSerializer):
     # Use os serializers aninhados para pegar os nomes em vez de apenas os IDs
     categoria_despesa = CategoriaDespesaSerializer(read_only=True)
@@ -61,7 +81,6 @@ class DespesaSerializer(serializers.ModelSerializer):
             'local_despesa',
             'is_adiantamento',
             'comprovante_anexo',
-            # Campos adicionados para aprovação e pagamento
             'status_aprovacao',
             'data_aprovacao',
             'comentario_aprovacao',
@@ -69,7 +88,6 @@ class DespesaSerializer(serializers.ModelSerializer):
             'data_pagamento',
             'responsavel_despesa',
             'aprovado_por',
-            # Usando os serializers aninhados para obter o nome
             'categoria_despesa',
             'tipo_pagamento'
         ]
