@@ -178,26 +178,36 @@ class DespesaCreateSerializer(serializers.ModelSerializer):
     Serializer para receber os dados do app e criar uma nova despesa.
     """
     # Permite que o app envie o ID da categoria e da forma de pagamento
-    categoria_despesa = serializers.PrimaryKeyRelatedField(
-        queryset=CategoriaDespesa.objects.filter(ativo=True)
-    )
-    tipo_pagamento = serializers.PrimaryKeyRelatedField(
-        queryset=FormaPagamento.objects.filter(ativo=True)
-    )
+    tecnico = serializers.StringRelatedField(read_only=True)
+    # E o nome da categoria e forma de pagamento também
+    categoria_despesa = serializers.StringRelatedField(read_only=True)
+    tipo_pagamento = serializers.StringRelatedField(read_only=True)
+    aprovado_por = serializers.StringRelatedField(read_only=True)
+    responsavel_despesa = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Despesa
-        # Lista de campos que o app irá enviar
         fields = [
+            'id',
             'data_despesa',
-            'valor',
-            'categoria_despesa',
             'descricao',
-            'local_despesa',
-            'tipo_pagamento',
+            'valor',
             'is_adiantamento',
-            'comprovante_anexo'
+            'comprovante_anexo',
+            'local_despesa',
+            'status_aprovacao',
+            'data_aprovacao',
+            'comentario_aprovacao',
+            'paga',
+            'data_pagamento',
+            'aprovado_por',
+            'categoria_despesa',
+            'tecnico',
+            'tipo_pagamento',
+            'ordem_servico',
+            'responsavel_despesa'
         ]
+        read_only_fields = ['ordem_servico']
 
 # --- NOVOS SERIALIZERS PARA REGISTRO DE PONTO ---
 
