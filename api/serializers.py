@@ -3,7 +3,7 @@
 from rest_framework import serializers
 from servico_campo.models import (
     OrdemServico, Cliente, Equipamento, RelatorioCampo, Despesa, MembroEquipe,
-    DocumentoOS, RegistroPonto
+    DocumentoOS, Despesa, RegistroPonto
 )
 
 from configuracoes.models import (
@@ -45,52 +45,13 @@ class RelatorioCampoSerializer(serializers.ModelSerializer):
         read_only_fields = ['ordem_servico']
 
 
-class CategoriaDespesaSerializer(serializers.ModelSerializer):
-    """
-    Serializer para listar as categorias de despesa.
-    """
-    class Meta:
-        model = CategoriaDespesa
-        fields = ['id', 'nome']
-
-
-class FormaPagamentoSerializer(serializers.ModelSerializer):
-    """
-    Serializer para listar as formas de pagamento.
-    """
-    class Meta:
-        model = FormaPagamento
-        fields = ['id', 'nome']
-
-
 class DespesaSerializer(serializers.ModelSerializer):
-    # Use os serializers aninhados para pegar os nomes em vez de apenas os IDs
-    categoria_despesa = CategoriaDespesaSerializer(read_only=True)
-    tipo_pagamento = FormaPagamentoSerializer(read_only=True)
     tecnico = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Despesa
-        fields = [
-            'id',
-            'ordem_servico',
-            'descricao',
-            'valor',
-            'data_despesa',
-            'tecnico',
-            'local_despesa',
-            'is_adiantamento',
-            'comprovante_anexo',
-            'status_aprovacao',
-            'data_aprovacao',
-            'comentario_aprovacao',
-            'paga',
-            'data_pagamento',
-            'responsavel_despesa',
-            'aprovado_por',
-            'categoria_despesa',
-            'tipo_pagamento'
-        ]
+        fields = ['id', 'ordem_servico', 'descricao',
+                  'valor', 'data_despesa', 'tecnico']
         read_only_fields = ['ordem_servico']
 
 
@@ -216,41 +177,27 @@ class DespesaCreateSerializer(serializers.ModelSerializer):
     """
     Serializer para receber os dados do app e criar uma nova despesa.
     """
-    # Use PrimaryKeyRelatedField para permitir que o app envie apenas o ID
+    # Permite que o app envie o ID da categoria e da forma de pagamento
     categoria_despesa = serializers.PrimaryKeyRelatedField(
-        queryset=CategoriaDespesa.objects.all(),
-        source='categoria_despesa'  # Certifique-se de que o campo 'source' está correto
+        queryset=CategoriaDespesa.objects.filter(ativo=True)
     )
     tipo_pagamento = serializers.PrimaryKeyRelatedField(
-        queryset=FormaPagamento.objects.all(),
-        source='tipo_pagamento'
+        queryset=FormaPagamento.objects.filter(ativo=True)
     )
-
-    # Adicione estes campos apenas para leitura, pois eles são definidos automaticamente
-    tecnico = serializers.StringRelatedField(read_only=True)
-    status_aprovacao = serializers.CharField(read_only=True)
-    paga = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Despesa
-        # Atualize a lista de campos para o que o app envia
-        # Remova campos que são definidos pelo backend ou que não são necessários na criação
+        # Lista de campos que o app irá enviar
         fields = [
-            'id',
             'data_despesa',
-            'descricao',
             'valor',
-            'is_adiantamento',
-            'comprovante_anexo',  # Permite o upload de arquivos
+            'categoria_despesa',
+            'descricao',
             'local_despesa',
-            'categoria_despesa',  # Agora aceita o ID
-            'tipo_pagamento',    # Agora aceita o ID
-            # Campos de leitura
-            'tecnico',
-            'status_aprovacao',
-            'paga',
+            'tipo_pagamento',
+            'is_adiantamento',
+            'comprovante_anexo'
         ]
-        read_only_fields = ['id', 'tecnico', 'status_aprovacao', 'paga']
 
 # --- NOVOS SERIALIZERS PARA REGISTRO DE PONTO ---
 
