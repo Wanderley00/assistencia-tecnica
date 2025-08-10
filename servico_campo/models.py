@@ -20,6 +20,30 @@ User = get_user_model()  # Obtém o modelo de usuário ativo
 # 1. Cliente Model
 
 
+class Gestor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    nome_completo = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nome_completo
+
+
+class Tecnico(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    nome_completo = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    cpf = models.CharField(max_length=14, unique=True)
+    data_nascimento = models.DateField(blank=True, null=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nome_completo
+
+
 class Cliente(models.Model):
     razao_social = models.CharField(
         max_length=200, verbose_name="Razão Social / Nome")

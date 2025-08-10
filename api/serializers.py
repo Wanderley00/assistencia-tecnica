@@ -3,13 +3,11 @@
 from rest_framework import serializers
 from servico_campo.models import (
     OrdemServico, Cliente, Equipamento, RelatorioCampo, Despesa, MembroEquipe,
-    DocumentoOS, Despesa, RegistroPonto
+    DocumentoOS, RegistroPonto, Tecnico, Gestor
 )
-
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
-
 import mimetypes
 
 
@@ -24,15 +22,11 @@ class EquipamentoSerializer(serializers.ModelSerializer):
         model = Equipamento
         fields = ['nome', 'modelo']
 
-# NOVO SERIALIZER PARA LISTAR OS TIPOS DE DOCUMENTO
-
 
 class TipoDocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TipoDocumento
         fields = ['id', 'nome']
-
-# --- NOVOS SERIALIZERS ---
 
 
 class RelatorioCampoSerializer(serializers.ModelSerializer):
@@ -45,14 +39,69 @@ class RelatorioCampoSerializer(serializers.ModelSerializer):
         read_only_fields = ['ordem_servico']
 
 
+class CategoriaDespesaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoriaDespesa
+        fields = ['id', 'nome']
+
+
+class FormaPagamentoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormaPagamento
+        fields = ['id', 'nome']
+
+
+class GestorSerializer(serializers.ModelSerializer):
+    nome_completo = serializers.CharField(
+        source='user.first_name', read_only=True)
+
+    class Meta:
+        model = Gestor
+        fields = ['id', 'nome_completo']
+
+
 class DespesaSerializer(serializers.ModelSerializer):
     tecnico = serializers.StringRelatedField(read_only=True)
+    categoria_despesa = CategoriaDespesaSerializer(read_only=True)
+    tipo_pagamento = FormaPagamentoSerializer(
+        source='forma_pagamento', read_only=True)
+    aprovado_por = GestorSerializer(read_only=True)
 
     class Meta:
         model = Despesa
-        fields = ['id', 'ordem_servico', 'descricao',
-                  'valor', 'data_despesa', 'tecnico']
+        fields = [
+            'id',
+            'ordem_servico',
+            'descricao',
+            'valor',
+            'data_despesa',
+            'tecnico',
+            'categoria_despesa',
+            'tipo_pagamento',  # Adicionado: Forma de pagamento
+            'is_adiantamento',
+            'local_despesa',
+            'status_aprovacao',
+            'data_aprovacao',
+            'comentario_aprovacao',
+            'paga',  # Adicionado: Status do Pagamento
+            'data_pagamento',  # Adicionado: Data do Pagamento
+            'aprovado_por',  # Adicionado: Aprovado por
+            # O campo 'responsável pelo pagamento' não existe no modelo Despesa
+            # Você deve usar o campo 'aprovado_por' para isso, ou criar um novo no seu modelo.
+        ]
         read_only_fields = ['ordem_servico']
+
+
+class DespesaCreateSerializer(serializers.ModelSerializer):
+    categoria_despesa = serializers.PrimaryKeyRelatedField(
+        queryset=CategoriaDespesa.objects.all())
+    tipo_pagamento = serializers.PrimaryKeyRelatedField(
+        queryset=FormaPagamento.objects.all(), source='forma_pagamento')
+
+    class Meta:
+        model = Despesa
+        fields = ['data_despesa', 'valor', 'categoria_despesa', 'descricao',
+                  'local_despesa', 'tipo_pagamento', 'is_adiantamento', 'comprovante_anexo']
 
 
 class MembroEquipeSerializer(serializers.ModelSerializer):
@@ -62,24 +111,21 @@ class MembroEquipeSerializer(serializers.ModelSerializer):
         model = MembroEquipe
         fields = ['usuario', 'funcao']
 
-# NOVO: Serializer para Documentos
 
-
-# Altere o serializer de DocumentoOS para incluir o tipo do arquivo
 class DocumentoOSSerializer(serializers.ModelSerializer):
     tipo_documento = serializers.StringRelatedField()
     uploaded_by = serializers.StringRelatedField()
     arquivo_url = serializers.SerializerMethodField()
-    mime_type = serializers.SerializerMethodField()  # NOVO CAMPO
+    mime_type = serializers.SerializerMethodField()
 
     class Meta:
         model = DocumentoOS
         fields = [
             'id', 'titulo', 'tipo_documento', 'arquivo',
-            'arquivo_url', 'mime_type', 'data_upload', 'uploaded_by'  # ADICIONE 'mime_type'
+            'arquivo_url', 'mime_type', 'data_upload', 'uploaded_by'
         ]
-        read_only_fields = ['arquivo_url', 'mime_type',
-                            'data_upload', 'uploaded_by']  # ADICIONE 'mime_type'
+        read_only_fields = ['arquivo_url',
+                            'mime_type', 'data_upload', 'uploaded_by']
 
     def get_arquivo_url(self, obj):
         request = self.context.get('request')
@@ -87,39 +133,22 @@ class DocumentoOSSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.arquivo.url)
         return None
 
-    # NOVA FUNÇÃO para pegar o tipo do arquivo
     def get_mime_type(self, obj):
         if obj.arquivo:
-            # Tenta adivinhar o tipo do arquivo pelo nome
             mime_type, _ = mimetypes.guess_type(obj.arquivo.name)
             return mime_type
         return None
 
-# NOVO: Serializer para criar/fazer upload de Documentos
 
-
-class DocumentoOSCreateSerializer(serializers.ModelSerializer):
-    # Permite que o app envie o ID do tipo de documento
-    tipo_documento = serializers.PrimaryKeyRelatedField(
-        queryset=TipoDocumento.objects.all())
-
-    class Meta:
-        model = DocumentoOS
-        fields = ['titulo', 'tipo_documento', 'arquivo', 'descricao']
-
-
-# --- SERIALIZER DE DETALHE DA OS (ATUALIZADO) ---
 class OrdemServicoDetailSerializer(serializers.ModelSerializer):
     cliente = ClienteSerializer(read_only=True)
     equipamento = EquipamentoSerializer(read_only=True)
     tecnico_responsavel = serializers.StringRelatedField(read_only=True)
     gestor_responsavel = serializers.StringRelatedField(read_only=True)
     tipo_manutencao = serializers.StringRelatedField(read_only=True)
-
     relatorios_campo = RelatorioCampoSerializer(many=True, read_only=True)
     despesas = DespesaSerializer(many=True, read_only=True)
     equipe = MembroEquipeSerializer(many=True, read_only=True)
-    # ADICIONADO: Usando o related_name 'documentos' do seu models.py
     documentos = DocumentoOSSerializer(many=True, read_only=True)
 
     class Meta:
@@ -128,11 +157,8 @@ class OrdemServicoDetailSerializer(serializers.ModelSerializer):
             'id', 'numero_os', 'titulo_servico', 'descricao_problema', 'cliente',
             'equipamento', 'status', 'data_abertura', 'tecnico_responsavel',
             'gestor_responsavel', 'observacoes_gerais', 'data_inicio_planejado',
-            'data_inicio_real',
-            'data_previsao_conclusao',
-            'data_fechamento',
-            'tipo_manutencao',
-            'relatorios_campo', 'despesas', 'equipe', 'documentos'  # Adicionado 'documentos'
+            'data_inicio_real', 'data_previsao_conclusao', 'data_fechamento',
+            'tipo_manutencao', 'relatorios_campo', 'despesas', 'equipe', 'documentos'
         ]
 
 
@@ -150,97 +176,40 @@ class OrdemServicoListSerializer(serializers.ModelSerializer):
             'gestor_responsavel'
         ]
 
-# --- NOVOS SERIALIZERS PARA OS DROPDOWNS ---
 
-
-class CategoriaDespesaSerializer(serializers.ModelSerializer):
-    """
-    Serializer para listar as categorias de despesa.
-    """
-    class Meta:
-        model = CategoriaDespesa
-        fields = ['id', 'nome']
-
-
-class FormaPagamentoSerializer(serializers.ModelSerializer):
-    """
-    Serializer para listar as formas de pagamento.
-    """
-    class Meta:
-        model = FormaPagamento
-        fields = ['id', 'nome']
-
-
-# --- NOVO SERIALIZER PARA CRIAR DESPESAS ---
-
-class DespesaCreateSerializer(serializers.ModelSerializer):
-    """
-    Serializer para receber os dados do app e criar uma nova despesa.
-    """
-    # Permite que o app envie o ID da categoria e da forma de pagamento
-    categoria_despesa = serializers.PrimaryKeyRelatedField(
-        queryset=CategoriaDespesa.objects.filter(ativo=True)
-    )
-    tipo_pagamento = serializers.PrimaryKeyRelatedField(
-        queryset=FormaPagamento.objects.filter(ativo=True)
-    )
+class DocumentoOSCreateSerializer(serializers.ModelSerializer):
+    tipo_documento = serializers.PrimaryKeyRelatedField(
+        queryset=TipoDocumento.objects.all())
 
     class Meta:
-        model = Despesa
-        # Lista de campos que o app irá enviar
-        fields = [
-            'data_despesa',
-            'valor',
-            'categoria_despesa',
-            'descricao',
-            'local_despesa',
-            'tipo_pagamento',
-            'is_adiantamento',
-            'comprovante_anexo'
-        ]
-
-# --- NOVOS SERIALIZERS PARA REGISTRO DE PONTO ---
+        model = DocumentoOS
+        fields = ['titulo', 'tipo_documento', 'arquivo', 'descricao']
 
 
 class RegistroPontoSerializer(serializers.ModelSerializer):
-    """ Serializer para listar os pontos já registrados. """
     tecnico = serializers.StringRelatedField()
-    # Pega o valor da propriedade 'duracao_formatada' do seu model
     duracao_formatada = serializers.CharField(read_only=True)
 
     class Meta:
         model = RegistroPonto
         fields = [
-            'id',
-            'tecnico',
-            'data',
-            'hora_entrada',
-            'hora_saida',
-            'duracao_formatada',
-            'observacoes',  # Este campo terá as observações de entrada e saída juntas
-            # Usado apenas para exibir a obs. de entrada isoladamente se necessário
-            'observacoes_entrada',
+            'id', 'tecnico', 'data', 'hora_entrada', 'hora_saida',
+            'duracao_formatada', 'observacoes', 'observacoes_entrada',
         ]
 
 
 class RegistroPontoCreateSerializer(serializers.ModelSerializer):
-    """ Serializer para criar um novo ponto (marcar entrada). """
-    # Adicionando campos para receber data e hora do app
     data = serializers.DateField(write_only=True)
     hora_entrada = serializers.TimeField(write_only=True)
 
     class Meta:
         model = RegistroPonto
-        # Atualize os fields para incluir os novos campos
         fields = ['data', 'hora_entrada', 'observacoes_entrada', 'localizacao']
 
 
 class RegistroPontoUpdateSerializer(serializers.ModelSerializer):
-    """ Serializer para atualizar um ponto (marcar saída). """
-    # Adicionando campo para receber a hora de saída do app
     hora_saida = serializers.TimeField(write_only=True)
 
     class Meta:
         model = RegistroPonto
-        # Atualize os fields para incluir o novo campo
         fields = ['hora_saida', 'observacoes', 'localizacao_saida']

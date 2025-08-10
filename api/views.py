@@ -8,23 +8,63 @@ from datetime import datetime
 from rest_framework.exceptions import PermissionDenied
 import pytz
 
-from servico_campo.models import OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+from servico_campo.models import (
+    OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico)
 
 from configuracoes.models import (
-    TipoDocumento, CategoriaDespesa, FormaPagamento
+    TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
 
 from .serializers import (
+    # Remova DespesaCreateSerializer desta linha
+    DespesaCreateSerializer,
     OrdemServicoListSerializer, OrdemServicoDetailSerializer,
-    RelatorioCampoSerializer, DespesaSerializer, TipoDocumentoSerializer,
-    DocumentoOSCreateSerializer, CategoriaDespesaSerializer,
-    FormaPagamentoSerializer, DespesaCreateSerializer, RegistroPontoSerializer,
+    RelatorioCampoSerializer, CategoriaDespesaSerializer,
+    FormaPagamentoSerializer, DespesaSerializer,
+    MembroEquipeSerializer, DocumentoOSSerializer,
+    DocumentoOSCreateSerializer, RegistroPontoSerializer,
     RegistroPontoCreateSerializer, RegistroPontoUpdateSerializer,
+    TipoDocumentoSerializer,
 )
 
 from rest_framework.permissions import IsAuthenticated
 
 # View da lista principal (agora usa o ListSerializer)
+
+
+class DespesaViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    # Sobrescrevemos este método para escolher o serializer correto
+    def get_serializer_class(self):
+        if self.action in ['create']:
+            return DespesaCreateSerializer
+        return DespesaSerializer
+
+    def get_queryset(self):
+        try:
+            tecnico = Tecnico.objects.get(user=self.request.user)
+            return Despesa.objects.filter(tecnico=tecnico).order_by('-data_despesa')
+        except Tecnico.DoesNotExist:
+            return Despesa.objects.none()
+
+    # O método perform_create ainda é necessário para associar o técnico
+    def perform_create(self, serializer):
+        tecnico = Tecnico.objects.get(user=self.request.user)
+        serializer.save(tecnico=tecnico)
+
+
+class DespesaCreateViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = Despesa.objects.all()
+    serializer_class = DespesaCreateSerializer
+
+    def perform_create(self, serializer):
+        tecnico = Tecnico.objects.get(user=self.request.user)
+        serializer.save(tecnico=tecnico)
 
 
 class OrdemServicoListAPIView(generics.ListAPIView):
