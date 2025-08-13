@@ -2,32 +2,27 @@
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from django.utils import timezone
 from datetime import datetime
 from rest_framework.exceptions import PermissionDenied
 import pytz
 
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
-
 from servico_campo.models import (
-    OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico)
-
+    OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico
+)
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
-
 from .serializers import (
-    # Remova DespesaCreateSerializer desta linha
-    DespesaCreateSerializer,
-    OrdemServicoListSerializer, OrdemServicoDetailSerializer,
-    RelatorioCampoSerializer, CategoriaDespesaSerializer,
-    FormaPagamentoSerializer, DespesaSerializer,
-    MembroEquipeSerializer, DocumentoOSSerializer,
+    DespesaCreateSerializer, OrdemServicoListSerializer,
+    OrdemServicoDetailSerializer, RelatorioCampoSerializer,
+    CategoriaDespesaSerializer, DespesaDetailSerializer,
+    FormaPagamentoSerializer, DespesaListSerializer,
     DocumentoOSCreateSerializer, RegistroPontoSerializer,
     RegistroPontoCreateSerializer, RegistroPontoUpdateSerializer,
-    TipoDocumentoSerializer,
+    TipoDocumentoSerializer, DocumentoOSSerializer,
+    DocumentoOSUpdateSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated
@@ -42,7 +37,7 @@ class DespesaViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['create']:
             return DespesaCreateSerializer
-        return DespesaSerializer
+        return DespesaListSerializer
 
     def get_queryset(self):
         try:
@@ -55,6 +50,32 @@ class DespesaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         tecnico = Tecnico.objects.get(user=self.request.user)
         serializer.save(tecnico=tecnico)
+
+
+class DespesaDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Permite ver, atualizar ou deletar uma despesa específica.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DespesaDetailSerializer  # Usando o serializer de detalhe
+
+    def get_queryset(self):
+        """
+        A Lógica de permissão foi movida para cá.
+        Esta função garante que o usuário só pode acessar despesas de Ordens de Serviço
+        às quais ele está associado (como técnico, equipe ou gestor).
+        """
+        user = self.request.user
+
+        # 1. Encontra todas as OS que o usuário logado pode acessar
+        accessible_os_ids = OrdemServico.objects.filter(
+            Q(tecnico_responsavel=user) |
+            Q(equipe__usuario=user) |
+            Q(gestor_responsavel=user)
+        ).values_list('id', flat=True).distinct()
+
+        # 2. Retorna apenas as despesas que pertencem a essas OS acessíveis
+        return Despesa.objects.filter(ordem_servico_id__in=accessible_os_ids)
 
 
 class DespesaCreateViewSet(viewsets.ModelViewSet):
@@ -86,11 +107,35 @@ class OrdemServicoListAPIView(generics.ListAPIView):
 
 
 class OrdemServicoDetailAPIView(generics.RetrieveAPIView):
-    queryset = OrdemServico.objects.all()
+    """
+    View para os detalhes de uma OS específica, com consulta otimizada.
+    """
     serializer_class = OrdemServicoDetailSerializer
     permission_classes = [IsAuthenticated]
 
-# View para criar um novo Relatório de Campo
+    # --- CORREÇÃO DEFINITIVA ---
+    # O método get_queryset nos dá mais controle para otimizar a consulta.
+    def get_queryset(self):
+        """
+        Otimiza a consulta para incluir todos os dados relacionados necessários
+        pelo serializer de uma só vez, evitando múltiplas chamadas ao banco.
+        """
+        return OrdemServico.objects.select_related(
+            'cliente',
+            'equipamento',
+            'tipo_manutencao',
+            'tecnico_responsavel',
+            'gestor_responsavel'
+        ).prefetch_related(
+            'despesas__tecnico',
+            'despesas__categoria_despesa',
+            'despesas__tipo_pagamento',
+            'despesas__aprovado_por',
+            'despesas__conta_a_pagar__responsavel_pagamento',  # A mágica está aqui!
+            'equipe__usuario',
+            'documentos',
+            'relatorios_campo'
+        ).all()
 
 
 class RelatorioCampoCreateAPIView(generics.CreateAPIView):
@@ -103,6 +148,8 @@ class RelatorioCampoCreateAPIView(generics.CreateAPIView):
         ordem_servico = OrdemServico.objects.get(pk=self.kwargs['os_pk'])
         serializer.save(ordem_servico=ordem_servico,
                         usuario_criacao=self.request.user)
+
+    pass
 
 # View para criar uma nova Despesa
 
@@ -123,6 +170,7 @@ class DespesaCreateAPIView(generics.CreateAPIView):
             ordem_servico=ordem_servico,
             tecnico=self.request.user
         )
+    pass
 
 # --- NOVAS VIEWS PARA OS DROPDOWNS ---
 
@@ -135,6 +183,8 @@ class CategoriaDespesaListAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = CategoriaDespesa.objects.filter(ativo=True)
 
+    pass
+
 
 class FormaPagamentoListAPIView(generics.ListAPIView):
     """
@@ -143,6 +193,8 @@ class FormaPagamentoListAPIView(generics.ListAPIView):
     serializer_class = FormaPagamentoSerializer
     permission_classes = [IsAuthenticated]
     queryset = FormaPagamento.objects.filter(ativo=True)
+
+    pass
 
 
 # View para LISTAR os Tipos de Documento para o app (CORRIGE O ERRO 404)
@@ -155,6 +207,8 @@ class TipoDocumentoListAPIView(generics.ListAPIView):
     serializer_class = TipoDocumentoSerializer
     permission_classes = [IsAuthenticated]
     queryset = TipoDocumento.objects.filter(ativo=True)
+
+    pass
 
 
 # View para CRIAR (fazer upload) de um novo DocumentoOS
@@ -173,6 +227,31 @@ class DocumentoOSCreateAPIView(generics.CreateAPIView):
             ordem_servico=ordem_servico,
             uploaded_by=self.request.user
         )
+
+    pass
+
+
+class DocumentoOSDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    # O serializer padrão para GET (visualizar) continua o mesmo
+    serializer_class = DocumentoOSSerializer
+
+    # --- ADICIONE ESTE MÉTODO ---
+    def get_serializer_class(self):
+        # Se a requisição for PUT ou PATCH (edição), usa o novo serializer de update
+        if self.request.method in ['PUT', 'PATCH']:
+            return DocumentoOSUpdateSerializer
+        # Para qualquer outra requisição (GET), usa o serializer padrão
+        return super().get_serializer_class()
+
+    def get_queryset(self):
+        user = self.request.user
+        accessible_os_ids = OrdemServico.objects.filter(
+            Q(tecnico_responsavel=user) |
+            Q(equipe__usuario=user) |
+            Q(gestor_responsavel=user)
+        ).values_list('id', flat=True).distinct()
+        return DocumentoOS.objects.filter(ordem_servico_id__in=accessible_os_ids)
 
 # --- NOVAS VIEWS PARA REGISTRO DE PONTO ---
 
@@ -236,6 +315,8 @@ class RegistroPontoListCreateAPIView(generics.ListCreateAPIView):
             os.data_inicio_real = aware_datetime
             os.save()
 
+    pass
+
 
 class RegistroPontoUpdateAPIView(generics.UpdateAPIView):
     """
@@ -271,3 +352,4 @@ class RegistroPontoUpdateAPIView(generics.UpdateAPIView):
             localizacao_saida=serializer.validated_data.get(
                 'localizacao_saida')
         )
+    pass

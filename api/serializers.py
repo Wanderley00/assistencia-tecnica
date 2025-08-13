@@ -3,12 +3,14 @@
 from rest_framework import serializers
 from servico_campo.models import (
     OrdemServico, Cliente, Equipamento, RelatorioCampo, Despesa, MembroEquipe,
-    DocumentoOS, RegistroPonto, Tecnico, Gestor
+    DocumentoOS, RegistroPonto
 )
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento,
 )
 import mimetypes
+
+# --- SERIALIZERS DE APOIO (sem alterações) ---
 
 
 class ClienteSerializer(serializers.ModelSerializer):
@@ -29,16 +31,6 @@ class TipoDocumentoSerializer(serializers.ModelSerializer):
         fields = ['id', 'nome']
 
 
-class RelatorioCampoSerializer(serializers.ModelSerializer):
-    tecnico = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = RelatorioCampo
-        fields = ['id', 'ordem_servico', 'descricao_atividades',
-                  'solucoes_aplicadas', 'material_utilizado', 'data_relatorio', 'tecnico']
-        read_only_fields = ['ordem_servico']
-
-
 class CategoriaDespesaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoriaDespesa
@@ -51,57 +43,99 @@ class FormaPagamentoSerializer(serializers.ModelSerializer):
         fields = ['id', 'nome']
 
 
-class GestorSerializer(serializers.ModelSerializer):
-    nome_completo = serializers.CharField(
-        source='user.first_name', read_only=True)
+class RelatorioCampoSerializer(serializers.ModelSerializer):
+    tecnico = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        model = Gestor
-        fields = ['id', 'nome_completo']
+        model = RelatorioCampo
+        fields = ['id', 'ordem_servico', 'descricao_atividades',
+                  'solucoes_aplicadas', 'material_utilizado', 'data_relatorio', 'tecnico']
+        read_only_fields = ['ordem_servico']
 
 
-class DespesaSerializer(serializers.ModelSerializer):
+# --- ALTERAÇÃO 1: Renomeando o serializer resumido ---
+# Este será usado apenas para listas onde não precisamos de detalhes.
+class DespesaListSerializer(serializers.ModelSerializer):
+    tecnico = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Despesa
+        fields = ['id', 'ordem_servico', 'descricao',
+                  'valor', 'data_despesa', 'tecnico']
+        read_only_fields = ['ordem_servico']
+
+
+# --- ADIÇÃO: O novo serializer com TODOS os detalhes da despesa ---
+class DespesaDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer completo e definitivo para a tela de detalhes da Despesa.
+    """
+    # Agora podemos buscar os dados de forma mais direta, pois a View já os otimizou.
     tecnico = serializers.StringRelatedField(read_only=True)
     categoria_despesa = CategoriaDespesaSerializer(read_only=True)
-    tipo_pagamento = FormaPagamentoSerializer(
-        source='forma_pagamento', read_only=True)
-    aprovado_por = GestorSerializer(read_only=True)
+    tipo_pagamento = FormaPagamentoSerializer(read_only=True)
+    aprovado_por = serializers.StringRelatedField(read_only=True)
+
+    # --- CORREÇÃO FINAL ---
+    # Usando 'source' para buscar os dados que já foram pré-carregados pela View.
+    status_pagamento = serializers.CharField(
+        source='conta_a_pagar.status_pagamento', read_only=True, allow_null=True)
+    responsavel_pagamento = serializers.StringRelatedField(
+        source='conta_a_pagar.responsavel_pagamento', read_only=True, allow_null=True)
+    comentario_pagamento = serializers.CharField(
+        source='conta_a_pagar.comentario', read_only=True, allow_null=True)
+
+    # O campo data_pagamento já está no modelo Despesa, então não precisa de source.
+    data_pagamento = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Despesa
         fields = [
-            'id',
-            'ordem_servico',
-            'descricao',
-            'valor',
-            'data_despesa',
-            'tecnico',
-            'categoria_despesa',
-            'tipo_pagamento',  # Adicionado: Forma de pagamento
-            'is_adiantamento',
-            'local_despesa',
-            'status_aprovacao',
-            'data_aprovacao',
-            'comentario_aprovacao',
-            'paga',  # Adicionado: Status do Pagamento
-            'data_pagamento',  # Adicionado: Data do Pagamento
-            'aprovado_por',  # Adicionado: Aprovado por
-            # O campo 'responsável pelo pagamento' não existe no modelo Despesa
-            # Você deve usar o campo 'aprovado_por' para isso, ou criar um novo no seu modelo.
+            'id', 'descricao', 'valor', 'data_despesa', 'tecnico',
+            # Adicionado 'comprovante_anexo' para consistência
+            'local_despesa', 'is_adiantamento', 'comprovante_anexo',
+            'categoria_despesa', 'tipo_pagamento', 'status_aprovacao',
+            'aprovado_por', 'data_aprovacao', 'comentario_aprovacao',
+            'status_pagamento', 'responsavel_pagamento', 'data_pagamento',
+            'comentario_pagamento',
         ]
-        read_only_fields = ['ordem_servico']
 
+    def get_tecnico(self, obj):
+        if obj.tecnico:
+            return obj.tecnico.username
+        return None
 
-class DespesaCreateSerializer(serializers.ModelSerializer):
-    categoria_despesa = serializers.PrimaryKeyRelatedField(
-        queryset=CategoriaDespesa.objects.all())
-    tipo_pagamento = serializers.PrimaryKeyRelatedField(
-        queryset=FormaPagamento.objects.all(), source='forma_pagamento')
+    def get_comprovante_url(self, obj):
+        request = self.context.get('request')
+        if obj.comprovante_anexo and hasattr(obj.comprovante_anexo, 'url'):
+            return request.build_absolute_uri(obj.comprovante_anexo.url)
+        return None
 
-    class Meta:
-        model = Despesa
-        fields = ['data_despesa', 'valor', 'categoria_despesa', 'descricao',
-                  'local_despesa', 'tipo_pagamento', 'is_adiantamento', 'comprovante_anexo']
+    # --- LÓGICA CORRIGIDA E FINAL ---
+    # Este bloco tenta acessar 'obj.conta_a_pagar'. Se não encontrar o objeto
+    # relacionado no banco de dados, ele retorna um valor padrão sem quebrar.
+
+    def get_status_pagamento(self, obj):
+        try:
+            return obj.conta_a_pagar.status_pagamento
+        except Despesa.conta_a_pagar.RelatedObjectDoesNotExist:
+            return 'PENDENTE'
+
+    def get_responsavel_pagamento(self, obj):
+        try:
+            if obj.conta_a_pagar.responsavel_pagamento:
+                return obj.conta_a_pagar.responsavel_pagamento.username
+            return None
+        except Despesa.conta_a_pagar.RelatedObjectDoesNotExist:
+            return None
+
+    def get_comentario_pagamento(self, obj):
+        try:
+            return obj.conta_a_pagar.comentario
+        except Despesa.conta_a_pagar.RelatedObjectDoesNotExist:
+            return None
+
+# --------------------------------------------------------------------
 
 
 class MembroEquipeSerializer(serializers.ModelSerializer):
@@ -124,8 +158,8 @@ class DocumentoOSSerializer(serializers.ModelSerializer):
             'id', 'titulo', 'tipo_documento', 'arquivo',
             'arquivo_url', 'mime_type', 'data_upload', 'uploaded_by'
         ]
-        read_only_fields = ['arquivo_url',
-                            'mime_type', 'data_upload', 'uploaded_by']
+        read_only_fields = ['arquivo_url', 'mime_type',
+                            'data_upload', 'uploaded_by']
 
     def get_arquivo_url(self, obj):
         request = self.context.get('request')
@@ -140,14 +174,29 @@ class DocumentoOSSerializer(serializers.ModelSerializer):
         return None
 
 
+class DocumentoOSCreateSerializer(serializers.ModelSerializer):
+    tipo_documento = serializers.PrimaryKeyRelatedField(
+        queryset=TipoDocumento.objects.all())
+
+    class Meta:
+        model = DocumentoOS
+        fields = ['titulo', 'tipo_documento', 'arquivo', 'descricao']
+
+
+# --- SERIALIZER DE DETALHE DA OS (ATUALIZADO) ---
 class OrdemServicoDetailSerializer(serializers.ModelSerializer):
     cliente = ClienteSerializer(read_only=True)
     equipamento = EquipamentoSerializer(read_only=True)
     tecnico_responsavel = serializers.StringRelatedField(read_only=True)
     gestor_responsavel = serializers.StringRelatedField(read_only=True)
     tipo_manutencao = serializers.StringRelatedField(read_only=True)
+
     relatorios_campo = RelatorioCampoSerializer(many=True, read_only=True)
-    despesas = DespesaSerializer(many=True, read_only=True)
+
+    # --- ALTERAÇÃO 2: Usar o novo serializer de DETALHES da despesa ---
+    despesas = DespesaDetailSerializer(many=True, read_only=True)
+    # --------------------------------------------------------------
+
     equipe = MembroEquipeSerializer(many=True, read_only=True)
     documentos = DocumentoOSSerializer(many=True, read_only=True)
 
@@ -157,8 +206,11 @@ class OrdemServicoDetailSerializer(serializers.ModelSerializer):
             'id', 'numero_os', 'titulo_servico', 'descricao_problema', 'cliente',
             'equipamento', 'status', 'data_abertura', 'tecnico_responsavel',
             'gestor_responsavel', 'observacoes_gerais', 'data_inicio_planejado',
-            'data_inicio_real', 'data_previsao_conclusao', 'data_fechamento',
-            'tipo_manutencao', 'relatorios_campo', 'despesas', 'equipe', 'documentos'
+            'data_inicio_real',
+            'data_previsao_conclusao',
+            'data_fechamento',
+            'tipo_manutencao',
+            'relatorios_campo', 'despesas', 'equipe', 'documentos'
         ]
 
 
@@ -176,14 +228,24 @@ class OrdemServicoListSerializer(serializers.ModelSerializer):
             'gestor_responsavel'
         ]
 
+# ... (O resto do arquivo com os serializers de Create e Ponto permanece inalterado)
 
-class DocumentoOSCreateSerializer(serializers.ModelSerializer):
-    tipo_documento = serializers.PrimaryKeyRelatedField(
-        queryset=TipoDocumento.objects.all())
+
+class DespesaCreateSerializer(serializers.ModelSerializer):
+    categoria_despesa = serializers.PrimaryKeyRelatedField(
+        queryset=CategoriaDespesa.objects.filter(ativo=True)
+    )
+    tipo_pagamento = serializers.PrimaryKeyRelatedField(
+        queryset=FormaPagamento.objects.filter(ativo=True)
+    )
 
     class Meta:
-        model = DocumentoOS
-        fields = ['titulo', 'tipo_documento', 'arquivo', 'descricao']
+        model = Despesa
+        fields = [
+            'data_despesa', 'valor', 'categoria_despesa', 'descricao',
+            'local_despesa', 'tipo_pagamento', 'is_adiantamento',
+            'comprovante_anexo'
+        ]
 
 
 class RegistroPontoSerializer(serializers.ModelSerializer):
@@ -193,8 +255,9 @@ class RegistroPontoSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistroPonto
         fields = [
-            'id', 'tecnico', 'data', 'hora_entrada', 'hora_saida',
-            'duracao_formatada', 'observacoes', 'observacoes_entrada',
+            'id', 'tecnico', 'data', 'hora_entrada',
+            'hora_saida', 'duracao_formatada', 'observacoes',
+            'observacoes_entrada',
         ]
 
 
@@ -213,3 +276,17 @@ class RegistroPontoUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistroPonto
         fields = ['hora_saida', 'observacoes', 'localizacao_saida']
+
+
+class DocumentoOSUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer para ATUALIZAR os metadados de um DocumentoOS existente.
+    Não requer o campo 'arquivo'.
+    """
+    tipo_documento = serializers.PrimaryKeyRelatedField(
+        queryset=TipoDocumento.objects.all()
+    )
+
+    class Meta:
+        model = DocumentoOS
+        fields = ['titulo', 'tipo_documento', 'descricao']

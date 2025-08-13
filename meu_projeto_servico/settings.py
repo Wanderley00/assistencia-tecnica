@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
+from datetime import timedelta
 import os
 import dj_database_url
 from django.conf import settings
@@ -247,4 +248,24 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
+}
+
+SIMPLE_JWT = {
+    # Define o tempo de vida do Access Token. 15 a 30 minutos é um valor seguro e comum.
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+
+    # Define o tempo de vida do Refresh Token.
+    # Para o seu caso de uso, 7 dias é um bom ponto de partida.
+    # O técnico não precisará fazer login por uma semana, a menos que saia do app.
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+
+    # Permite que um novo Refresh Token seja enviado junto quando um Access Token é renovado.
+    # Isso aumenta a segurança, pois os refresh tokens podem "rotacionar".
+    "ROTATE_REFRESH_TOKENS": True,
+
+    # Se um refresh token for usado, ele é colocado numa "lista negra".
+    # Isso impede que um refresh token roubado seja usado mais de uma vez.
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    # ... outras configurações que você possa ter ...
 }

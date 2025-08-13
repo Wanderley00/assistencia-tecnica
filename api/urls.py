@@ -8,6 +8,8 @@ from .views import (
     RegistroPontoListCreateAPIView, RegistroPontoUpdateAPIView,
 )
 
+from . import views
+
 # Importações para o JWT
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -55,5 +57,11 @@ urlpatterns = [
          RegistroPontoListCreateAPIView.as_view(), name='api_ponto_list_create'),
     path('pontos/<int:pk>/', RegistroPontoUpdateAPIView.as_view(),
          name='api_ponto_update'),
+
+    path('despesas/<int:pk>/', views.DespesaDetailAPIView.as_view(),
+         name='despesa-detail'),
+
+    path('documentos/<int:pk>/', views.DocumentoOSDetailAPIView.as_view(),
+         name='documento-detail'),
 
 ]
