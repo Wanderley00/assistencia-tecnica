@@ -6,6 +6,7 @@ from .views import (
     TipoDocumentoListAPIView, DocumentoOSCreateAPIView,
     CategoriaDespesaListAPIView, FormaPagamentoListAPIView,
     RegistroPontoListCreateAPIView, RegistroPontoUpdateAPIView,
+    calcular_horas_relatorio_api, CategoriaProblemaListAPIView
 )
 
 from . import views
@@ -63,5 +64,16 @@ urlpatterns = [
 
     path('documentos/<int:pk>/', views.DocumentoOSDetailAPIView.as_view(),
          name='documento-detail'),
+
+    path('ordens-servico/<int:os_pk>/calcular-horas-relatorio/',
+         calcular_horas_relatorio_api,
+         name='api_calcular_horas_relatorio'),
+
+    path('ordens-servico/<int:os_pk>/relatorios/novo/',
+         RelatorioCampoCreateAPIView.as_view(),
+         name='api_relatorio_create_novo'),
+
+    path('problemas/categorias/', CategoriaProblemaListAPIView.as_view(),
+         name='lista_categorias_problema'),
 
 ]

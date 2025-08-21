@@ -29,7 +29,8 @@ from .models import (
     SubcategoriaProblema,
     ProblemaRelatorio,
     ContaPagar,
-    PerfilUsuario
+    PerfilUsuario,
+    HorasRelatorioTecnico,
 )
 
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa
@@ -168,17 +169,6 @@ MembroEquipeFormSet = inlineformset_factory(
 )
 
 
-# O inlineformset_factory continuará usando este formulário MembroEquipeForm
-MembroEquipeFormSet = inlineformset_factory(
-    OrdemServico,
-    MembroEquipe,
-    form=MembroEquipeForm,
-    extra=1,  # Aumentei para 1 para sempre ter um campo vazio para adicionar
-    can_delete=True,
-    can_delete_extra=True  # Permite excluir campos extras não salvos
-)
-
-
 class DocumentoOSForm(forms.ModelForm):
     class Meta:
         model = DocumentoOS
@@ -266,23 +256,29 @@ class RegistroPontoSaidaForm(forms.ModelForm):
 
 
 class RelatorioCampoForm(forms.ModelForm):
+    # ADIÇÃO: Crie campos para receber os dados Base64 do Javascript.
+    # Os nomes 'assinatura_executante_data' e 'assinatura_cliente_data'
+    # correspondem aos IDs dos inputs no seu JavaScript.
+    assinatura_executante_data = forms.CharField(
+        widget=forms.HiddenInput(), required=False)
+    assinatura_cliente_data = forms.CharField(
+        widget=forms.HiddenInput(), required=False)
+
     class Meta:
         model = RelatorioCampo
+        # REMOÇÃO: Tire os campos de assinatura originais da lista de fields.
+        # Eles serão preenchidos na view, não diretamente pelo formulário.
         fields = [
             'tipo_relatorio', 'data_relatorio', 'descricao_atividades',
-            # 'problemas_identificados'
-            'solucoes_aplicadas', 'material_utilizado',
-            'horas_normais', 'horas_extras_60', 'horas_extras_100', 'km_rodado',
-            'local_servico', 'observacoes_adicionais', 'assinatura_executante_data',
+            'material_utilizado',
+            'local_servico', 'observacoes_adicionais',
         ]
         widgets = {
-            'data_relatorio': forms.DateInput(attrs={'type': 'date'}),
+            'data_relatorio': forms.DateInput(
+                format='%Y-%m-%d', attrs={'type': 'date'}),
             'descricao_atividades': forms.Textarea(attrs={'rows': 5}),
-            # 'problemas_identificados': forms.Textarea(attrs={'rows': 3}),
-            'solucoes_aplicadas': forms.Textarea(attrs={'rows': 3}),
             'material_utilizado': forms.Textarea(attrs={'rows': 3}),
             'observacoes_adicionais': forms.Textarea(attrs={'rows': 3}),
-            'assinatura_executante_data': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -334,8 +330,10 @@ class DespesaForm(forms.ModelForm):
 class EncerramentoOSForm(forms.ModelForm):
     class Meta:
         model = OrdemServico
-        fields = ['assinatura_cliente_data']
-        widgets = {'assinatura_cliente_data': forms.HiddenInput()}
+        fields = ['assinatura_cliente', 'assinatura_executante']
+        widgets = {'assinatura_cliente': forms.HiddenInput(),
+                   'assinatura_executante': forms.HiddenInput(),
+                   }
 
 
 class ClienteForm(forms.ModelForm):
@@ -558,18 +556,18 @@ class RegraJornadaTrabalhoForm(forms.ModelForm):
                 "O fim da jornada normal deve ser depois do início."))
         if inicio_extra_60 and fim_extra_60 and inicio_extra_60 >= fim_extra_60:
             self.add_error('fim_extra_60', _(
-                "O fim da hora extra 60% deve ser depois do início."))
+                "O fim da hora extra 50% deve ser depois do início."))
         if inicio_extra_60 and inicio_extra_100 and inicio_extra_60 >= inicio_extra_100:
             self.add_error('inicio_extra_100', _(
-                "O início da hora extra 100% deve ser depois do início da hora extra 60%."))
+                "O início da hora extra 100% deve ser depois do início da hora extra 50%."))
 
         # Validação de sobreposição de faixas de horário (básica)
         if fim_normal and inicio_extra_60 and fim_normal > inicio_extra_60:
             self.add_error('inicio_extra_60', _(
-                "O início da hora extra 60% deve ser após o fim da jornada normal."))
+                "O início da hora extra 50% deve ser após o fim da jornada normal."))
         if fim_extra_60 and inicio_extra_100 and fim_extra_60 > inicio_extra_100:
             self.add_error('inicio_extra_100', _(
-                "O início da hora extra 100% deve ser após o fim da hora extra 60%."))
+                "O início da hora extra 100% deve ser após o fim da hora extra 50%."))
 
         return cleaned_data
 
@@ -608,7 +606,8 @@ class SubcategoriaProblemaForm(forms.ModelForm):
 class ProblemaRelatorioForm(forms.ModelForm):
     class Meta:
         model = ProblemaRelatorio
-        fields = ['categoria', 'subcategoria', 'observacao']
+        fields = ['categoria', 'subcategoria',
+                  'observacao', 'solucao_aplicada']
         widgets = {
             'categoria': forms.Select(attrs={'class': 'form-select problema-categoria-select'}),
             'subcategoria': forms.Select(attrs={'class': 'form-select problema-subcategoria-select'}),
@@ -616,6 +615,12 @@ class ProblemaRelatorioForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 2,
                 'placeholder': _('Detalhes específicos do problema...')
+            }),
+            # ADICIONE O WIDGET PARA O NOVO CAMPO
+            'solucao_aplicada': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': _('Descreva a solução aplicada a este problema...')
             }),
         }
 
@@ -835,3 +840,33 @@ class PerfilUsuarioForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if isinstance(field.widget, (forms.TextInput, forms.Select)):
                 field.widget.attrs.update({'class': 'form-control'})
+
+
+class HorasRelatorioTecnicoForm(forms.ModelForm):
+    class Meta:
+        model = HorasRelatorioTecnico
+        fields = ['tecnico', 'horas_normais',
+                  'horas_extras_60', 'horas_extras_100', 'km_rodado']
+        # --- CORREÇÃO AQUI ---
+        # Define os widgets dos campos de horas como HiddenInput
+        widgets = {
+            'tecnico': forms.HiddenInput(),
+            'horas_normais': forms.HiddenInput(),
+            'horas_extras_60': forms.HiddenInput(),
+            'horas_extras_100': forms.HiddenInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # O campo KM Rodado continua visível e com a classe de estilo
+        self.fields['km_rodado'].widget.attrs.update(
+            {'class': 'form-control form-control-sm'})
+
+
+HorasRelatorioTecnicoFormSet = inlineformset_factory(
+    RelatorioCampo,
+    HorasRelatorioTecnico,
+    form=HorasRelatorioTecnicoForm,
+    extra=0,  # Não adiciona campos extras vazios por padrão
+    can_delete=False,  # Não permite deletar entradas
+)

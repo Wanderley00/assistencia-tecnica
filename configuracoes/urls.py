@@ -61,4 +61,13 @@ urlpatterns = [
 
     path('configuracao-email/', views.configuracao_email_view,
          name='configuracao_email'),
+
+    path('tipos-relatorio/', views.TipoRelatorioListView.as_view(),
+         name='lista_tipos_relatorio'),
+    path('tipos-relatorio/novo/', views.TipoRelatorioCreateView.as_view(),
+         name='novo_tipo_relatorio'),
+    path('tipos-relatorio/<int:pk>/editar/',
+         views.TipoRelatorioUpdateView.as_view(), name='editar_tipo_relatorio'),
+    path('tipos-relatorio/<int:pk>/excluir/',
+         views.TipoRelatorioDeleteView.as_view(), name='excluir_tipo_relatorio'),
 ]

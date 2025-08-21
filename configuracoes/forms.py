@@ -1,6 +1,6 @@
 # configuracoes/forms.py
 from django import forms
-from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa, ConfiguracaoEmail
+from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa, ConfiguracaoEmail, TipoRelatorio
 
 
 class TipoManutencaoForm(forms.ModelForm):
@@ -109,3 +109,17 @@ class ConfiguracaoEmailForm(forms.ModelForm):
         widgets = {
             'email_host_password': forms.PasswordInput(render_value=True),
         }
+
+
+class TipoRelatorioForm(forms.ModelForm):
+    class Meta:
+        model = TipoRelatorio
+        fields = ['nome', 'ativo']
+        widgets = {
+            'nome': forms.TextInput(attrs={'placeholder': 'Ex: Relatório Fotográfico, Medição de Obra'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nome'].widget.attrs.update({'class': 'form-control'})
+        self.fields['ativo'].widget.attrs.update({'class': 'form-check-input'})

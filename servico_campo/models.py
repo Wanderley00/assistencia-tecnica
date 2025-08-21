@@ -9,9 +9,11 @@ from datetime import time, timedelta, datetime
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.urls import reverse
+from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 
-from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa  # NOVO IMPORT
+from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, TipoRelatorio
 
 from django.core.exceptions import ValidationError
 
@@ -146,8 +148,10 @@ class OrdemServico(models.Model):
 
     observacoes_gerais = models.TextField(
         verbose_name="Observações Gerais", null=True, blank=True)
-    assinatura_cliente_data = models.TextField(
+    assinatura_cliente = models.TextField(
         verbose_name="Dados da Assinatura do Cliente", null=True, blank=True)
+    assinatura_executante = models.TextField(
+        verbose_name="Dados da Assinatura do Executante", null=True, blank=True)
 
     def get_absolute_url(self):
         """
@@ -242,27 +246,27 @@ class RegistroPonto(models.Model):
 
     @property
     def duracao_formatada(self):
-        """
-        Calcula a duração entre a entrada e a saída e retorna uma string formatada.
-        """
         if not self.hora_saida:
-            return "N/A"  # Se o ponto ainda está em aberto
+            return "N/A"
 
-        # Combina a data com as horas para criar objetos datetime completos
         start_datetime = datetime.combine(self.data, self.hora_entrada)
-        end_datetime = datetime.combine(self.data, self.hora_saida)
 
-        # Garante que a data de saída é maior que a de entrada
-        if end_datetime < start_datetime:
-            return "Inválido"
+        # --- LÓGICA CORRIGIDA AQUI ---
+        # Se a hora de saída for menor que a de entrada, significa que o turno virou o dia.
+        if self.hora_saida < self.hora_entrada:
+            # Adiciona um dia à data de saída
+            end_datetime = datetime.combine(
+                self.data + timedelta(days=1), self.hora_saida)
+        else:
+            # Mantém a mesma data se o turno foi no mesmo dia
+            end_datetime = datetime.combine(self.data, self.hora_saida)
+        # --- FIM DA CORREÇÃO ---
 
+        # O resto do cálculo agora funciona corretamente
         duration = end_datetime - start_datetime
-
-        # Converte a duração para horas e minutos
         total_seconds = int(duration.total_seconds())
         hours = total_seconds // 3600
         minutes = (total_seconds % 3600) // 60
-
         return f"{hours}h {minutes}min"
 
 # 6. RelatorioCampo Model (para RDO e FAT)
@@ -272,43 +276,48 @@ class RelatorioCampo(models.Model):
     """
     Representa os relatórios de campo (RDO - Registro Diário de Obra e FAT - Ficha de Assistência Técnica).
     """
-    TIPO_RELATORIO_CHOICES = [
-        ('RDO', 'Registro Diário de Obra (RDO)'),
-        ('FAT', 'Ficha de Assistência Técnica (FAT)'),
-    ]
+    tipo_relatorio = models.ForeignKey(
+        TipoRelatorio,
+        on_delete=models.PROTECT,
+        verbose_name=_("Tipo de Relatório")
+    )
 
     ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.CASCADE,
                                       verbose_name="Ordem de Serviço", related_name="relatorios_campo")
     tecnico = models.ForeignKey(
-        User, on_delete=models.PROTECT, verbose_name="Técnico Executante")
-    tipo_relatorio = models.CharField(
-        max_length=10, choices=TIPO_RELATORIO_CHOICES, verbose_name="Tipo de Relatório")
+        User, on_delete=models.PROTECT, verbose_name="Executante")
     data_relatorio = models.DateField(verbose_name="Data do Relatório")
     descricao_atividades = models.TextField(
         verbose_name="Descrição das Atividades Realizadas")
-    # problemas_identificados = models.TextField(
-    #     verbose_name="Problemas Identificados", null=True, blank=True)
+    problemas_identificados = models.TextField(
+        verbose_name="Problemas Identificados", null=True, blank=True)
     solucoes_aplicadas = models.TextField(
         verbose_name="Soluções Aplicadas / Recomendações", null=True, blank=True)
     material_utilizado = models.TextField(
         verbose_name="Materiais/Peças Utilizadas", null=True, blank=True)
 
     # Campos específicos da FAT e RDO
-    horas_normais = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Normais", validators=[MinValueValidator(0)])
-    horas_extras_60 = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Extras (60%)", validators=[MinValueValidator(0)])
-    horas_extras_100 = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Extras (100%)", validators=[MinValueValidator(0)])
-    km_rodado = models.DecimalField(max_digits=7, decimal_places=2, default=0.00,
-                                    verbose_name="KM Rodado", validators=[MinValueValidator(0)])
+    # horas_normais = models.DecimalField(
+    #     max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Normais", validators=[MinValueValidator(0)])
+    # horas_extras_60 = models.DecimalField(
+    #     max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Extras (50%)", validators=[MinValueValidator(0)])
+    # horas_extras_100 = models.DecimalField(
+    #     max_digits=5, decimal_places=2, default=0.00, verbose_name="Horas Extras (100%)", validators=[MinValueValidator(0)])
+    # km_rodado = models.DecimalField(max_digits=7, decimal_places=2, default=0.00,
+    #                                 verbose_name="KM Rodado", validators=[MinValueValidator(0)])
     local_servico = models.CharField(
-        max_length=255, verbose_name="Local do Serviço (Endereço)", null=True, blank=True)
+        max_length=255, verbose_name="Local do Serviço", null=True, blank=True)
 
     observacoes_adicionais = models.TextField(
         verbose_name="Observações Adicionais", null=True, blank=True)
-    assinatura_executante_data = models.TextField(
-        verbose_name="Dados da Assinatura do Executante", null=True, blank=True)
+
+    # ALTERAÇÃO AQUI: Troque ImageField por TextField
+    assinatura_executante = models.ImageField(
+        upload_to='assinaturas/', blank=True, null=True)
+    assinatura_cliente = models.ImageField(
+        upload_to='assinaturas/', blank=True, null=True)
+
+    # Este campo parece não ser mais usado com o Signature Pad, pode ser removido se quiser
     visto_cliente_imagem = models.ImageField(
         upload_to='vistos_clientes_relatorios/', verbose_name="Visto do Cliente", null=True, blank=True)
 
@@ -326,7 +335,7 @@ class RelatorioCampo(models.Model):
         ordering = ['-data_relatorio', '-data_criacao']
 
     def __str__(self):
-        return f"{self.get_tipo_relatorio_display()} da OS {self.ordem_servico.numero_os} - {self.data_relatorio.strftime('%d/%m/%Y')}"
+        return f"{self.tipo_relatorio.nome} da OS {self.ordem_servico.numero_os} - {self.data_relatorio.strftime('%d/%m/%Y')}"
 
 # Modelo para Fotos no Relatório de Campo (se desejar gerenciar fotos separadamente)
 
@@ -530,17 +539,17 @@ class RegraJornadaTrabalho(models.Model):
         default=time(17, 0, 0), verbose_name=_("Fim da Jornada Normal (HH:MM)")
     )
 
-    # Horas Extras 60%
+    # Horas Extras 50%
     # Pode ser uma duração após o fim da jornada normal, ou um horário limite
     # Vamos usar um horário limite para maior flexibilidade
     inicio_extra_60 = models.TimeField(
-        default=time(17, 0, 1), verbose_name=_("Início da Hora Extra 60% (HH:MM)")
+        default=time(17, 0, 1), verbose_name=_("Início da Hora Extra 50% (HH:MM)")
     )
     fim_extra_60 = models.TimeField(
-        default=time(22, 0, 0), verbose_name=_("Fim da Hora Extra 60% (HH:MM)")
+        default=time(22, 0, 0), verbose_name=_("Fim da Hora Extra 50% (HH:MM)")
     )
 
-    # Horas Extras 100% (Geralmente após a faixa de 60% ou em horários específicos)
+    # Horas Extras 100% (Geralmente após a faixa de 50% ou em horários específicos)
     inicio_extra_100 = models.TimeField(
         default=time(22, 0, 1), verbose_name=_("Início da Hora Extra 100% (HH:MM)")
     )
@@ -575,13 +584,77 @@ class RegraJornadaTrabalho(models.Model):
         return self.nome
 
     # Método para calcular horas (será implementado mais tarde)
-    def calcular_horas(self, hora_entrada: time, hora_saida: time, data: datetime.date) -> dict:
-        # Este método será implementado na próxima etapa
-        # Retornará um dicionário com 'normais', 'extra_60', 'extra_100'
+    def calcular_horas(self, registros_ponto: list) -> dict:
+        """
+        Calcula as horas trabalhadas em um dia com base nas regras do banco de dados,
+        garantindo que o resultado seja arredondado para 2 casas decimais e
+        LIDANDO CORRETAMENTE COM TURNOS QUE CRUZAM A MEIA-NOITE.
+        """
+        # Verifique se este import já existe no topo do seu models.py, se não, adicione.
+        from datetime import datetime, timedelta
+
+        if not registros_ponto:
+            return {'horas_normais': Decimal('0.00'), 'horas_extras_60': Decimal('0.00'), 'horas_extras_100': Decimal('0.00')}
+
+        two_places = Decimal('0.01')
+        segundos_normais_acumulados = 0
+        segundos_extra_60 = 0
+        segundos_extra_100 = 0
+        limite_normal_segundos = float(self.horas_normais_diarias) * 3600
+        data_do_ponto = registros_ponto[0].data
+        dia_da_semana = data_do_ponto.weekday()
+        is_weekend_100_extra = (dia_da_semana == 5 and self.considerar_sabado_100_extra) or \
+                               (dia_da_semana == 6 and self.considerar_domingo_100_extra)
+        dt_inicio_normal = datetime.combine(
+            data_do_ponto, self.inicio_jornada_normal)
+        dt_fim_normal = datetime.combine(
+            data_do_ponto, self.fim_jornada_normal)
+        dt_inicio_extra_60 = datetime.combine(
+            data_do_ponto, self.inicio_extra_60)
+        dt_fim_extra_60 = datetime.combine(data_do_ponto, self.fim_extra_60)
+        dt_inicio_extra_100_noturna = datetime.combine(
+            data_do_ponto, self.inicio_extra_100)
+
+        for ponto in registros_ponto:
+            if not ponto.hora_saida:
+                continue
+
+            dt_inicio_ponto = datetime.combine(
+                data_do_ponto, ponto.hora_entrada)
+
+            # --- MESMA LÓGICA DE CORREÇÃO APLICADA AQUI ---
+            if ponto.hora_saida < ponto.hora_entrada:
+                dt_fim_ponto = datetime.combine(
+                    data_do_ponto + timedelta(days=1), ponto.hora_saida)
+            else:
+                dt_fim_ponto = datetime.combine(
+                    data_do_ponto, ponto.hora_saida)
+            # --- FIM DA CORREÇÃO ---
+
+            current_time = dt_inicio_ponto
+            while current_time < dt_fim_ponto:
+                # A lógica de classificação de horas (if/elif/else) permanece a mesma
+                if current_time >= dt_inicio_extra_100_noturna:
+                    segundos_extra_100 += 60
+                elif dt_inicio_extra_60 <= current_time < dt_fim_extra_60:
+                    segundos_extra_60 += 60
+                elif dt_inicio_normal <= current_time < dt_fim_normal:
+                    if is_weekend_100_extra:
+                        segundos_extra_100 += 60
+                    else:
+                        if segundos_normais_acumulados < limite_normal_segundos:
+                            segundos_normais_acumulados += 60
+                        else:
+                            segundos_extra_60 += 60
+                else:
+                    segundos_extra_60 += 60
+
+                current_time += timedelta(minutes=1)
+
         return {
-            'normais': 0,
-            'extra_60': 0,
-            'extra_100': 0
+            'horas_normais': (Decimal(segundos_normais_acumulados) / Decimal(3600)).quantize(two_places, rounding=ROUND_HALF_UP),
+            'horas_extras_60': (Decimal(segundos_extra_60) / Decimal(3600)).quantize(two_places, rounding=ROUND_HALF_UP),
+            'horas_extras_100': (Decimal(segundos_extra_100) / Decimal(3600)).quantize(two_places, rounding=ROUND_HALF_UP)
         }
 
 # 10. Categorias de Problema
@@ -640,6 +713,9 @@ class ProblemaRelatorio(models.Model):
     )
     observacao = models.TextField(
         verbose_name=_("Comentário / Observação do Problema"), null=True, blank=True
+    )
+    solucao_aplicada = models.TextField(
+        verbose_name=_("Solução Aplicada para este Problema"), null=True, blank=True
     )
 
     class Meta:
@@ -747,6 +823,43 @@ class PerfilUsuario(models.Model):
 
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
+    """
+    Cria um PerfilUsuario para um novo usuário ou garante que um usuário
+    existente tenha um perfil.
+    """
     if created:
         PerfilUsuario.objects.create(user=instance)
-    instance.perfilusuario.save()
+
+    # Garante que mesmo em atualizações, o perfil exista.
+    # Isso corrige o erro para usuários antigos que não tinham perfil.
+    try:
+        instance.perfilusuario.save()
+    except PerfilUsuario.DoesNotExist:
+        PerfilUsuario.objects.create(user=instance)
+
+
+class HorasRelatorioTecnico(models.Model):
+    """
+    Armazena as horas e KM de um técnico específico para um Relatório de Campo.
+    """
+    relatorio = models.ForeignKey(
+        RelatorioCampo, on_delete=models.CASCADE, related_name="horas_por_tecnico")
+    tecnico = models.ForeignKey(
+        User, on_delete=models.PROTECT, verbose_name=_("Técnico"))
+    horas_normais = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00, verbose_name=_("Horas Normais"))
+    horas_extras_60 = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00, verbose_name=_("Horas Extras (50%)"))
+    horas_extras_100 = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00, verbose_name=_("Horas Extras (100%)"))
+    km_rodado = models.DecimalField(
+        max_digits=7, decimal_places=2, default=0.00, verbose_name=_("KM Rodado"))
+
+    class Meta:
+        verbose_name = _("Horas por Técnico no Relatório")
+        verbose_name_plural = _("Horas por Técnico nos Relatórios")
+        # Garante uma entrada por técnico por relatório
+        unique_together = ('relatorio', 'tecnico')
+
+    def __str__(self):
+        return f"Horas de {self.tecnico.username} para o Relatório {self.relatorio.id}"

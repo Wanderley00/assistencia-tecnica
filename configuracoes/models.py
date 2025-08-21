@@ -155,3 +155,17 @@ class ConfiguracaoEmail(models.Model):
         # Garante que sempre haja uma instância com PK=1
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class TipoRelatorio(models.Model):
+    nome = models.CharField(max_length=100, unique=True,
+                            verbose_name=_("Nome do Tipo de Relatório"))
+    ativo = models.BooleanField(default=True, verbose_name=_("Ativo"))
+
+    class Meta:
+        verbose_name = _("Tipo de Relatório")
+        verbose_name_plural = _("Tipos de Relatórios")
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome

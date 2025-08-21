@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>{{ relatorio.get_tipo_relatorio_display }} - OS {{ relatorio.ordem_servico.numero_os }}</title>
+    <title>{{ relatorio.tipo_relatorio.nome }} - OS {{ relatorio.ordem_servico.numero_os }}</title>
     <style>
         /* Estilos gerais */
         @page {
@@ -24,7 +24,7 @@
             right: 1.5cm;
             width: auto;
             border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            padding-bottom: 10px; /* Aumenta o espaço geral do cabeçalho */
             text-align: center;
             z-index: 1000;
             background-color: white;
@@ -34,6 +34,8 @@
             color: #0056b3;
             margin: 0;
             padding: 0;
+            /* ADICIONE ESTA LINHA para criar espaço abaixo do título principal */
+            margin-bottom: 15px; 
         }
         .header p {
             font-size: 8pt;
@@ -168,29 +170,45 @@
             margin-top: 45px;
         }
 
+        img {
+            max-width: 100%; /* Garante que a imagem nunca ultrapasse a largura da página */
+            max-height: 250px; /* Impõe uma altura máxima para evitar imagens gigantes */
+            height: auto;      /* Mantém a proporção da imagem */
+            width: auto;       /* Mantém a proporção da imagem */
+            object-fit: contain; /* Garante que a imagem inteira apareça, sem cortar */
+            page-break-inside: avoid; /* Tenta evitar que a imagem seja cortada entre duas páginas */
+        }
 
-        .photo-gallery {
+        .photo-table {
+            width: 100%;
+            border-spacing: 10px; /* Espaçamento entre as células das fotos */
+            border-collapse: separate; /* Necessário para o border-spacing funcionar */
             margin-top: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
+            page-break-inside: auto; /* Permite que a tabela quebre entre as linhas se necessário */
         }
-        .photo-gallery img {
-            max-width: 120px;
-            max-height: 120px;
-            width: auto;
-            height: auto;
-            object-fit: cover;
-            border: 1px solid #ddd;
-            padding: 3px;
-            border-radius: 4px;
+        .photo-cell {
+            width: 48%; /* Cada célula ocupa quase metade da tabela */
+            text-align: center; /* Centraliza todo o conteúdo (imagem e texto) horizontalmente */
+            vertical-align: top;
+            border: 1px solid #ddd; /* Borda cinza clara à volta do contentor */
+            padding: 8px;
+            page-break-inside: avoid; /* Tenta manter a célula inteira (foto + descrição) na mesma página */
         }
-        .photo-gallery div {
-            text-align: center;
-            font-size: 7.5pt;
-            color: #666;
-            width: 130px;
+        .photo-cell img {
+            display: block; /* Essencial para que as margens automáticas funcionem */
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 8px; /* Espaço entre a foto e a descrição */
+            max-width: 100%;    /* A imagem nunca ultrapassará a largura da célula */
+            max-height: 250px;  /* Altura máxima para padronizar as fotos */
+            object-fit: contain;/* Garante que a imagem inteira apareça, sem cortar, mantendo a proporção */
+        }
+        .photo-cell p.photo-description {
+            font-size: 8pt;
+            color: #555;
+            margin: 0;
+            padding: 0;
+            text-align: center; /* Garante que a descrição também está centralizada */
         }
 
         /* Rodapé manual */
@@ -216,7 +234,7 @@
     </div>
 
     <div class="content">
-        <div class="report-title">{{ relatorio.get_tipo_relatorio_display }}</div>
+        <div class="report-title">{{ relatorio.tipo_relatorio.nome }}</div>
         
         <table class="header-info">
             <tr>
@@ -229,7 +247,24 @@
                 <th>Cliente:</th>
                 <td colspan="3">{{ relatorio.ordem_servico.cliente.razao_social }}</td>
             </tr>
-             <tr>
+            
+            <tr>
+                <th>CNPJ/CPF:</th>
+                <td colspan="3">{{ relatorio.ordem_servico.cliente.cnpj_cpf }}</td>
+            </tr>
+            <tr>
+                <th>Endereço do Cliente:</th>
+                <td colspan="3">
+                    {{ relatorio.ordem_servico.cliente.endereco }}, {{ relatorio.ordem_servico.cliente.cidade }} - {{ relatorio.ordem_servico.cliente.estado }}
+                </td>
+            </tr>
+            <tr>
+                <th>Contato Principal:</th>
+                <td>{{ relatorio.ordem_servico.cliente.contato_principal }}</td>
+                <th>Telefone do Contato:</th>
+                <td>{{ relatorio.ordem_servico.cliente.telefone_contato|default:"N/A" }}</td>
+            </tr>
+            <tr>
                 <th>Local do Serviço:</th>
                 <td colspan="3">{{ relatorio.local_servico|default:relatorio.ordem_servico.cliente.endereco }}</td>
             </tr>
@@ -241,6 +276,19 @@
                 <th>Executante:</th>
                 <td colspan="3">{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
             </tr>
+            {% if relatorio.ordem_servico.equipe.all %}
+            <tr>
+                <th>Equipe de Apoio:</th>
+                <td colspan="3">
+                    {% for membro in relatorio.ordem_servico.equipe.all %}
+                        {# Esta condição evita que o nome do executante apareça duas vezes #}
+                        {% if membro.usuario != relatorio.tecnico %}
+                            {{ membro.usuario.get_full_name|default:membro.usuario.username }}<br>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endif %}
             {% if relatorio.ordem_servico.tecnico_responsavel and relatorio.ordem_servico.tecnico_responsavel != relatorio.tecnico %}
             <tr>
                 <th>Responsável OS:</th>
@@ -249,51 +297,65 @@
             {% endif %}
         </table>
 
-        <div class="section-title">Descrição das Atividades Realizadas</div>
-        <p class="section-content">{{ relatorio.descricao_atividades|linebreaksbr }}</p>
-
-        <div class="section-title">Problemas Identificados</div>
+        <div class="section-title">Problemas Identificados e Soluções Aplicadas</div>
         {% if relatorio.problemas_identificados_detalhes.all %}
-        <ul style="list-style-type: disc; margin-left: 20px; padding-left: 0; margin-top: 10px;">
-            {% for problema in relatorio.problemas_identificados_detalhes.all %}
-            <li style="margin-bottom: 5px;">
-                <strong>{{ problema.categoria.nome }}</strong>
-                {% if problema.subcategoria %}
-                    / {{ problema.subcategoria.nome }}
-                {% endif %}
-                {% if problema.observacao %}
-                    : {{ problema.observacao }}
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
+            <div class="section-content">
+                <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                    {% for problema in relatorio.problemas_identificados_detalhes.all %}
+                    <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div>
+                            <strong>Problema:</strong>
+                            {{ problema.categoria.nome }}{% if problema.subcategoria %}/{{ problema.subcategoria.nome }}{% endif %}
+                            {% if problema.observacao %}: {{ problema.observacao }}{% endif %}
+                        </div>
+                        
+                        {# --- INÍCIO DA CORREÇÃO --- #}
+                        {# Agora exibimos a solução específica para este problema #}
+                        <div style="margin-top: 5px; padding-left: 15px; color: #28a745;">
+                            <strong>Solução:</strong>
+                            {{ problema.solucao_aplicada|linebreaksbr|default:"Nenhuma solução específica registrada." }}
+                        </div>
+                        {# --- FIM DA CORREÇÃO --- #}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
         {% else %}
-        <p class="section-content">Nenhum problema detalhado registrado.</p>
+            <p class="section-content">Nenhum problema detalhado registrado.</p>
         {% endif %}
-
-        <div class="section-title">Soluções Aplicadas / Recomendações</div>
-        <p class="section-content">{{ relatorio.solucoes_aplicadas|linebreaksbr|default:"Nenhuma solução aplicada ou recomendação fornecida." }}</p>
 
         {% if relatorio.material_utilizado %}
         <div class="section-title">Materiais/Peças Utilizadas</div>
         <p class="section-content">{{ relatorio.material_utilizado|linebreaksbr }}</p>
         {% endif %}
 
-        <div class="section-title">Horas e Deslocamento</div>
-        <table class="hours-km-info">
-            <tr>
-                <th>Horas Normais:</th>
-                <td>{{ relatorio.horas_normais|floatformat:2 }}</td>
-                <th>Horas Extras (60%):</th>
-                <td>{{ relatorio.horas_extras_60|floatformat:2 }}</td>
-            </tr>
-            <tr>
-                <th>Horas Extras (100%):</th>
-                <td>{{ relatorio.horas_extras_100|floatformat:2 }}</td>
-                <th>KM Rodado:</th>
-                <td>{{ relatorio.km_rodado|floatformat:2 }}</td>
-            </tr>
-        </table>
+        <div class="section-title">Horas e Deslocamento por Técnico</div>
+        {% if horas_por_tecnico_list %}
+            <table class="hours-km-info">
+                <thead>
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td style="width: 40%; text-align: left; border: 1px solid #ccc; padding: 6px 8px;">Técnico</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Normais</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Extras (50%)</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Extras (100%)</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">KM Rodado</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in horas_por_tecnico_list %}
+                        <tr>
+                            <td style="text-align: left;">{{ item.tecnico.get_full_name|default:item.tecnico.username }}</td>
+                            <td>{{ item.horas_normais_hhmm }}</td>
+                            <td>{{ item.horas_extras_60_hhmm }}</td>
+                            <td>{{ item.horas_extras_100_hhmm }}</td>
+                            <td>{{ item.km_rodado|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="section-content">Nenhum registro de horas encontrado para este relatório.</p>
+        {% endif %}
 
         {% if relatorio.observacoes_adicionais %}
         <div class="section-title">Observações Adicionais</div>
@@ -302,55 +364,58 @@
         
         {% if relatorio.fotos.all %}
         <div class="section-title">Fotos do Relatório</div>
-        <div class="photo-gallery">
+        
+        <table class="photo-table">
+            <tr> 
             {% for foto in relatorio.fotos.all %}
-                <div>
+                
+                <td class="photo-cell">
                     <img src="{{ foto.imagem.path }}" alt="{{ foto.descricao|default:'Foto' }}">
-                    {% if foto.descricao %}<p>{{ foto.descricao }}</p>{% endif %}
-                </div>
+                    
+                    {% if foto.descricao %}
+                        <p class="photo-description">{{ foto.descricao }}</p>
+                    {% endif %}
+                </td>
+
+                {# A cada 2 fotos, fecha a linha atual (</tr>) e abre uma nova (<tr>) #}
+                {% if forloop.counter|divisibleby:2 and not forloop.last %}
+                    </tr><tr>
+                {% endif %}
+
             {% endfor %}
-        </div>
+            </tr> 
+        </table>
         {% endif %}
 
+        <div class="section-title">Assinaturas</div>
+        
         <div class="signature-area">
-            {% if relatorio.assinatura_executante_data %}
             <div class="signature-box">
-                {% if "data:image" in relatorio.assinatura_executante_data %}
-                    <img src="{{ relatorio.assinatura_executante_data }}" alt="Assinatura do Executante">
+                {% comment %} 
+                Verificamos diretamente o campo 'assinatura_executante' do objeto 'relatorio'.
+                Se ele tiver conteúdo (o texto Base64), usamos como 'src' da imagem.
+                {% endcomment %}
+                {% if relatorio.assinatura_executante %}
+                    <img src="{{ relatorio.assinatura_executante }}" alt="Assinatura do Executante">
                 {% else %}
-                    <p class="error-sig-load">Assinatura digital não disponível ou inválida.</p>
+                    <p style="margin-top: 45px;">______________________________</p>
                 {% endif %}
                 <div class="signature-line"></div>
                 <p style="margin-top: 5px;"><strong>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</strong></p>
-                <p>Técnico Executante</p>
+                <p>Executante</p>
             </div>
-            {% endif %}
 
             <div class="signature-box">
-                {% if relatorio.ordem_servico.assinatura_cliente_data %}
-                    {% if "data:image" in relatorio.ordem_servico.assinatura_cliente_data %}
-                        <img src="{{ relatorio.ordem_servico.assinatura_cliente_data }}" 
-                             alt="Assinatura do Cliente"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                             style="max-width: 150px; max-height: 60px; object-fit: contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">
-                        <p class="error-sig-load" style="display: none; color: red; font-size: 8pt;">Erro ao carregar assinatura.</p>
-                    {% else %}
-                        <p class="error-sig-load">Assinatura digital do Cliente não disponível ou inválida.</p>
-                    {% endif %}
-                {% elif relatorio.visto_cliente_imagem %}
-                    <img src="{{ relatorio.visto_cliente_imagem.path }}" 
-                         alt="Visto do Cliente"
-                         style="max-width: 150px; max-height: 60px; object-fit: contain; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto;">
+                {% if relatorio.assinatura_cliente %}
+                    <img src="{{ relatorio.assinatura_cliente }}" alt="Assinatura do Cliente">
                 {% else %}
                     <p style="margin-top: 45px;">______________________________</p>
                 {% endif %}
                 <div class="signature-line"></div>
                 <p style="margin-top: 5px;"><strong>Assinatura do Cliente</strong></p>
-                {% if not relatorio.ordem_servico.assinatura_cliente_data and not relatorio.visto_cliente_imagem %}
-                    <p>(Nome Legível: __________________)</p>
-                {% endif %}
+                <p>Nome Legível: ___________________________________________________________</p>
             </div>
         </div>
-    </div>
+
 </body>
 </html>

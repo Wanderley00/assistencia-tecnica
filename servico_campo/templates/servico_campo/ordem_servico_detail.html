@@ -193,22 +193,33 @@
             </div>
 
             {# Exibição estruturada de Problemas Identificados dos RELATÓRIOS (AGORA PROCESSADO NA VIEW) #}
-            {% if problemas_detalhados_os %} {# Use a nova variável aqui #}
+            {% if problemas_detalhados_os %}
                 <hr>
                 <div class="row mt-2 mb-3">
                     <div class="col-12">
-                        <strong>{% trans "Problemas Identificados (Detalhes de Relatórios):" %}</strong>
+                        <strong>{% trans "Problemas Identificados e Soluções (Relatórios):" %}</strong>
                         <ul class="list-group list-group-flush">
                             {% for problema_data in problemas_detalhados_os %}
-                                <li class="list-group-item py-1 ps-0">
-                                    <strong>{{ problema_data.categoria }}</strong>
-                                    {% if problema_data.subcategoria %}
-                                        / {{ problema_data.subcategoria }}
+                                <li class="list-group-item py-2 ps-0">
+                                    <div>
+                                        <strong>Problema:</strong> 
+                                        {{ problema_data.categoria }}
+                                        {% if problema_data.subcategoria %}/ {{ problema_data.subcategoria }}{% endif %}
+                                        {% if problema_data.observacao %}: {{ problema_data.observacao }}{% endif %}
+                                    </div>
+                                    
+                                    {% if problema_data.solucao_aplicada %}
+                                        <div class="mt-1 ps-3 text-success"> <i class="bi bi-wrench-adjustable-circle-fill me-1"></i>
+                                            <strong>Solução:</strong>
+                                            {{ problema_data.solucao_aplicada|linebreaksbr }}
+                                        </div>
+                                    {% else %}
+                                        <div class="mt-1 ps-3 text-muted">
+                                            <i class="bi bi-hourglass-split me-1"></i>
+                                            <em>Nenhuma solução específica registrada para este problema.</em>
+                                        </div>
                                     {% endif %}
-                                    {% if problema_data.observacao %}
-                                        : {{ problema_data.observacao }}
-                                    {% endif %}
-                                </li>
+                                    </li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -320,9 +331,15 @@
     <div class="card mb-4">
         <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">{% trans "Relatórios de Campo" %}</h5>
+            
+            {# --- CORREÇÃO APLICADA AQUI --- #}
+            {% if is_team_member %}
             <a href="{% url 'servico_campo:novo_relatorio_campo' os.pk %}" class="btn btn-sm btn-light">
-                <i class="bi bi-journal-check"></i> {% trans "Novo Relatório (RDO/FAT)" %}
+                <i class="bi bi-journal-check"></i> {% trans "Novo Relatório" %}
             </a>
+            {% endif %}
+            {# --- FIM DA CORREÇÃO --- #}
+
         </div>
         <div class="card-body">
             {% if relatorios_campo %}
@@ -340,7 +357,7 @@
                         <tbody>
                             {% for relatorio in relatorios_campo %}
                                 <tr>
-                                    <td>{{ relatorio.get_tipo_relatorio_display }}</td>
+                                    <td>{{ relatorio.tipo_relatorio.nome }}</td>
                                     <td>{{ relatorio.data_relatorio|date:"d/m/Y" }}</td>
                                     <td>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
                                     <td>
@@ -692,9 +709,9 @@
                             function(error) {
                                 let errorMessage = "{% trans 'Erro ao obter localização.' %}";
                                 switch(error.code) {
-                                    case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'PERMISSION_DENIED'; break;
-                                    case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'POSITION_UNAVAILABLE'; break;
-                                    case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. O ponto será registrado sem GPS.' %}"; gpsCoordsInput.value = 'TIMEOUT'; break;
+                                    case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'PERMISSION_DENIED'; break;
+                                    case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'POSITION_UNAVAILABLE'; break;
+                                    case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'TIMEOUT'; break;
                                     default: gpsCoordsInput.value = `ERROR:${error.code}`;
                                 }
                                 localizacaoInput.value = errorMessage;

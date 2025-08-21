@@ -196,6 +196,9 @@ urlpatterns = [
     # URLs para Perfil de Usuário / Dados Bancários (Adicione esta)
     path('meu-perfil/dados-bancarios/',
          views.PerfilUsuarioUpdateView.as_view(), name='editar_dados_bancarios'),
+
+    path('api/calcular-horas/', views.calcular_horas_api,
+         name='api_calcular_horas'),
 ]
 
 if settings.DEBUG:

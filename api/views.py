@@ -7,12 +7,23 @@ from django.utils import timezone
 from datetime import datetime
 from rest_framework.exceptions import PermissionDenied
 import pytz
+from django.contrib.auth.models import User
+
+from rest_framework import status
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from decimal import Decimal
+from .serializers import TipoRelatorioSerializer, HorasRelatorioTecnicoSerializer
+from configuracoes.models import TipoRelatorio
+from servico_campo.models import RegraJornadaTrabalho
 
 from servico_campo.models import (
-    OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico
+    OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico,
+    HorasRelatorioTecnico, RegraJornadaTrabalho, ProblemaRelatorio, CategoriaProblema
 )
 from configuracoes.models import (
-    TipoDocumento, CategoriaDespesa, FormaPagamento,
+    TipoDocumento, CategoriaDespesa, FormaPagamento, TipoRelatorio
 )
 from .serializers import (
     DespesaCreateSerializer, OrdemServicoListSerializer,
@@ -22,7 +33,9 @@ from .serializers import (
     DocumentoOSCreateSerializer, RegistroPontoSerializer,
     RegistroPontoCreateSerializer, RegistroPontoUpdateSerializer,
     TipoDocumentoSerializer, DocumentoOSSerializer,
-    DocumentoOSUpdateSerializer
+    DocumentoOSUpdateSerializer, TipoRelatorioSerializer,
+    HorasRelatorioTecnicoSerializer, RelatorioCampoCreateSerializer,
+    CategoriaProblemaSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated
@@ -108,18 +121,14 @@ class OrdemServicoListAPIView(generics.ListAPIView):
 
 class OrdemServicoDetailAPIView(generics.RetrieveAPIView):
     """
-    View para os detalhes de uma OS específica, com consulta otimizada.
+    View para os detalhes de uma OS específica (COM DEBUG).
     """
+    # FORÇA O USO DO SERIALIZER DE DETALHES
     serializer_class = OrdemServicoDetailSerializer
     permission_classes = [IsAuthenticated]
 
-    # --- CORREÇÃO DEFINITIVA ---
-    # O método get_queryset nos dá mais controle para otimizar a consulta.
     def get_queryset(self):
-        """
-        Otimiza a consulta para incluir todos os dados relacionados necessários
-        pelo serializer de uma só vez, evitando múltiplas chamadas ao banco.
-        """
+        # A otimização de consulta que você já tem é ótima e pode permanecer
         return OrdemServico.objects.select_related(
             'cliente',
             'equipamento',
@@ -131,27 +140,50 @@ class OrdemServicoDetailAPIView(generics.RetrieveAPIView):
             'despesas__categoria_despesa',
             'despesas__tipo_pagamento',
             'despesas__aprovado_por',
-            'despesas__conta_a_pagar__responsavel_pagamento',  # A mágica está aqui!
+            'despesas__conta_a_pagar__responsavel_pagamento',
             'equipe__usuario',
             'documentos',
-            'relatorios_campo'
+            # Garante que os relacionamentos dos relatórios também sejam pré-carregados
+            'relatorios_campo__tipo_relatorio',
+            'relatorios_campo__problemas_identificados_detalhes',
+            'relatorios_campo__horas_por_tecnico',
+            'registros_ponto'
         ).all()
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Sobrescreve o método que busca os dados para adicionar um print de debug.
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+
+        # --- PASSO DE DEBUG MAIS IMPORTANTE ---
+        # Printa o JSON final que será enviado para o Flutter no console do Django
+        # import json
+        # print("\n--- DEBUG: JSON ENVIADO PARA O APP ---")
+        # print(json.dumps(serializer.data, indent=2))
+        # print("--- FIM DO DEBUG ---\n")
+        # --- FIM DO DEBUG ---
+
+        return super().retrieve(request, *args, **kwargs)
 
 
 class RelatorioCampoCreateAPIView(generics.CreateAPIView):
-    queryset = RelatorioCampo.objects.all()
-    serializer_class = RelatorioCampoSerializer
+    """
+    Cria um novo Relatório de Campo a partir dos dados do app Flutter.
+    """
+    serializer_class = RelatorioCampoCreateSerializer
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        # Associa a OS e o usuário automaticamente
-        ordem_servico = OrdemServico.objects.get(pk=self.kwargs['os_pk'])
-        serializer.save(ordem_servico=ordem_servico,
-                        usuario_criacao=self.request.user)
-
-    pass
-
-# View para criar uma nova Despesa
+    def get_serializer_context(self):
+        """
+        Passa informações extras (OS e usuário) para o serializer poder usá-las.
+        """
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['ordem_servico'] = get_object_or_404(
+            OrdemServico, pk=self.kwargs['os_pk'])
+        return context
 
 
 class DespesaCreateAPIView(generics.CreateAPIView):
@@ -353,3 +385,89 @@ class RegistroPontoUpdateAPIView(generics.UpdateAPIView):
                 'localizacao_saida')
         )
     pass
+
+
+@api_view(['GET'])
+def calcular_horas_relatorio_api(request, os_pk):
+    """
+    API para buscar dados iniciais para a tela de criação de relatório.
+    Recebe uma data via query param (ex: ?data=2025-08-19) e retorna:
+    1. A lista de Tipos de Relatório ativos.
+    2. As horas calculadas para a data informada para cada técnico da OS.
+    """
+    # Pega a Ordem de Serviço ou retorna erro 404
+    ordem_servico = get_object_or_404(OrdemServico, pk=os_pk)
+
+    # Pega a data dos parâmetros da URL, se não houver, usa a data de hoje
+    data_str = request.query_params.get('data')
+    if data_str:
+        try:
+            data_selecionada = datetime.strptime(data_str, '%Y-%m-%d').date()
+        except ValueError:
+            data_selecionada = timezone.localdate()
+    else:
+        data_selecionada = timezone.localdate()
+
+    # 1. Busca os Tipos de Relatório ativos
+    tipos_relatorio_qs = TipoRelatorio.objects.filter(ativo=True)
+    tipos_relatorio_serializer = TipoRelatorioSerializer(
+        tipos_relatorio_qs, many=True)
+
+    # 2. Calcula as horas para a data selecionada
+    horas_calculadas_data = []
+    regra_jornada = RegraJornadaTrabalho.objects.filter(
+        is_default=True).first()
+
+    if regra_jornada:
+        # Coleta todos os técnicos da OS (responsável + equipe)
+        tecnicos = {
+            ordem_servico.tecnico_responsavel} if ordem_servico.tecnico_responsavel else set()
+        for membro in ordem_servico.equipe.all():
+            tecnicos.add(membro.usuario)
+
+        for tecnico in tecnicos:
+            if tecnico is None:
+                continue
+
+            pontos_do_dia = RegistroPonto.objects.filter(
+                ordem_servico=ordem_servico,
+                tecnico=tecnico,
+                data=data_selecionada,
+                hora_saida__isnull=False
+            )
+
+            horas_calculadas = {'horas_normais': Decimal('0.00'), 'horas_extras_60': Decimal(
+                '0.00'), 'horas_extras_100': Decimal('0.00')}
+            if pontos_do_dia.exists():
+                horas_calculadas = regra_jornada.calcular_horas(
+                    list(pontos_do_dia))
+
+            # Cria uma instância em memória para usar o serializer
+            # Isso garante que o formato do JSON seja o mesmo da tela de detalhes
+            horas_obj = HorasRelatorioTecnico(
+                tecnico=tecnico,
+                km_rodado=0,  # KM é preenchido no app
+                **horas_calculadas
+            )
+
+            serializer = HorasRelatorioTecnicoSerializer(horas_obj)
+            horas_calculadas_data.append(serializer.data)
+
+    # 3. Monta a resposta final
+    response_data = {
+        'tipos_relatorio': tipos_relatorio_serializer.data,
+        'horas_calculadas': horas_calculadas_data,
+    }
+
+    return Response(response_data)
+
+
+class CategoriaProblemaListAPIView(generics.ListAPIView):
+    """
+    Lista todas as Categorias de Problema ativas e suas subcategorias aninhadas.
+    """
+    serializer_class = CategoriaProblemaSerializer
+    permission_classes = [IsAuthenticated]
+    # prefetch_related é usado para otimizar a busca das subcategorias
+    queryset = CategoriaProblema.objects.filter(
+        ativo=True).prefetch_related('subcategorias')

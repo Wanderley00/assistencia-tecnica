@@ -8,8 +8,8 @@ from django.db import models
 from django.db.models import ProtectedError
 from . import models
 
-from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa, ConfiguracaoEmail
-from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm, CategoriaDespesaForm, PoliticaDespesaForm, ConfiguracaoEmailForm
+from .models import TipoManutencao, TipoDocumento, FormaPagamento, CategoriaDespesa, PoliticaDespesa, ConfiguracaoEmail, TipoRelatorio
+from .forms import TipoManutencaoForm, TipoDocumentoForm, FormaPagamentoForm, CategoriaDespesaForm, PoliticaDespesaForm, ConfiguracaoEmailForm, TipoRelatorioForm
 
 # Mixin de permissão para todas as views de configuração
 
@@ -379,3 +379,57 @@ def configuracao_email_view(request):
     }
     # Opcional: Mover o template para a pasta do app 'configuracoes' também seria uma boa prática
     return render(request, 'configuracoes/configuracao_email.html', context)
+
+# 2. ADICIONE O CRUD COMPLETO PARA TIPORELATORIO
+# --- CRUD para TipoRelatorio ---
+
+
+class TipoRelatorioListView(ConfiguracaoPermissionMixin, ListView):
+    model = TipoRelatorio
+    template_name = 'configuracoes/tipo_relatorio_list.html'  # << NOVO TEMPLATE
+    context_object_name = 'tipos_relatorio'
+    permission_required = 'configuracoes.view_tiporelatorio'
+
+
+class TipoRelatorioCreateView(ConfiguracaoPermissionMixin, CreateView):
+    model = TipoRelatorio
+    form_class = TipoRelatorioForm
+    template_name = 'configuracoes/tipo_relatorio_form.html'  # << NOVO TEMPLATE
+    success_url = reverse_lazy(
+        'configuracoes:lista_tipos_relatorio')  # << NOVA URL
+    permission_required = 'configuracoes.add_tiporelatorio'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Adicionar Novo Tipo de Relatório")
+        return context
+
+
+class TipoRelatorioUpdateView(ConfiguracaoPermissionMixin, UpdateView):
+    model = TipoRelatorio
+    form_class = TipoRelatorioForm
+    template_name = 'configuracoes/tipo_relatorio_form.html'  # << NOVO TEMPLATE
+    success_url = reverse_lazy(
+        'configuracoes:lista_tipos_relatorio')  # << NOVA URL
+    permission_required = 'configuracoes.change_tiporelatorio'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_title'] = _("Editar Tipo de Relatório")
+        return context
+
+
+class TipoRelatorioDeleteView(ConfiguracaoPermissionMixin, DeleteView):
+    model = TipoRelatorio
+    template_name = 'configuracoes/tipo_relatorio_confirm_delete.html'  # << NOVO TEMPLATE
+    success_url = reverse_lazy(
+        'configuracoes:lista_tipos_relatorio')  # << NOVA URL
+    permission_required = 'configuracoes.delete_tiporelatorio'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except ProtectedError:
+            messages.error(request, _(
+                "Não foi possível excluir este tipo de relatório pois ele está associado a relatórios existentes."))
+            return self.get(request, *args, **kwargs)
