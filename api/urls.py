@@ -76,4 +76,10 @@ urlpatterns = [
     path('problemas/categorias/', CategoriaProblemaListAPIView.as_view(),
          name='lista_categorias_problema'),
 
+    path('relatorios-campo/<int:relatorio_pk>/fotos/',
+         views.FotoRelatorioCreateAPIView.as_view(), name='api_foto_relatorio_create'),
+
+    path('relatorios-campo/<int:pk>/',
+         views.RelatorioCampoDetailAPIView.as_view(), name='api_relatorio_detail'),
+
 ]

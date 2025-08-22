@@ -4,6 +4,7 @@ from django.core.files.base import ContentFile
 import base64
 import uuid
 from django.contrib.auth.models import User
+from servico_campo.models import FotoRelatorio
 
 from rest_framework import serializers
 from servico_campo.models import (
@@ -122,35 +123,6 @@ class HorasRelatorioTecnicoSerializer(serializers.ModelSerializer):
 
     def get_horas_extras_100_hhmm(self, obj):
         return self._decimal_to_hhmm(obj.horas_extras_100)
-
-
-# api/serializers.py
-
-class RelatorioCampoSerializer(serializers.ModelSerializer):
-    # Relacionamentos que agora serão enviados como objetos completos
-    tipo_relatorio = TipoRelatorioSerializer(read_only=True)
-    problemas = ProblemaRelatorioSerializer(
-        source='problemas_identificados_detalhes', many=True, read_only=True)
-    horas = HorasRelatorioTecnicoSerializer(
-        source='horas_por_tecnico', many=True, read_only=True)
-
-    # Campos que continuarão como texto simples
-    tecnico = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = RelatorioCampo
-        # Lista de campos completa para o Flutter
-        fields = [
-            'id',
-            'tipo_relatorio',
-            'data_relatorio',
-            'tecnico',
-            'descricao_atividades',
-            'material_utilizado',
-            'observacoes_adicionais',
-            'problemas',
-            'horas'
-        ]
 
 
 class DespesaListSerializer(serializers.ModelSerializer):
@@ -292,31 +264,6 @@ class RegistroPontoSerializer(serializers.ModelSerializer):
             'hora_saida', 'duracao_formatada', 'observacoes',
             'observacoes_entrada',
         ]
-
-
-# --- SERIALIZER DE DETALHE DA OS (ATUALIZADO) ---
-class OrdemServicoDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer completo para a tela de detalhes da Ordem de Serviço.
-    """
-    # Relacionamentos que precisam de detalhes (objetos)
-    cliente = ClienteSerializer(read_only=True)
-    equipamento = EquipamentoSerializer(read_only=True)
-    relatorios_campo = RelatorioCampoSerializer(many=True, read_only=True)
-    despesas = DespesaDetailSerializer(many=True, read_only=True)
-    equipe = MembroEquipeSerializer(many=True, read_only=True)
-    documentos = DocumentoOSSerializer(many=True, read_only=True)
-    pontos = RegistroPontoSerializer(
-        many=True, read_only=True, source='registros_ponto')
-
-    # Relacionamentos que podem ser apenas texto (String)
-    tecnico_responsavel = serializers.StringRelatedField(read_only=True)
-    gestor_responsavel = serializers.StringRelatedField(read_only=True)
-    tipo_manutencao = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = OrdemServico
-        fields = '__all__'
 
 
 # --- SERIALIZER DE LISTA DA OS ---
@@ -496,3 +443,101 @@ class CategoriaProblemaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoriaProblema
         fields = ['id', 'nome', 'subcategorias']
+
+
+class FotoRelatorioSerializer(serializers.ModelSerializer):
+    """ Serializer para exibir os detalhes de uma foto, agora com a URL completa. """
+
+    # 1. Novo campo para a URL completa da imagem.
+    imagem_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FotoRelatorio
+        # 2. 'imagem' é o campo do ficheiro, 'imagem_url' é o que o app irá usar.
+        fields = ['id', 'imagem', 'imagem_url', 'descricao']
+        # 'imagem' não precisa de ser read_only
+        read_only_fields = ['id', 'imagem_url']
+
+    # 3. Método que constrói a URL completa.
+    def get_imagem_url(self, obj):
+        request = self.context.get('request')
+        if obj.imagem and request:
+            return request.build_absolute_uri(obj.imagem.url)
+        return None
+
+
+class RelatorioCampoSerializer(serializers.ModelSerializer):
+    tipo_relatorio = TipoRelatorioSerializer(read_only=True)
+    problemas = ProblemaRelatorioSerializer(
+        source='problemas_identificados_detalhes', many=True, read_only=True)
+    horas = HorasRelatorioTecnicoSerializer(
+        source='horas_por_tecnico', many=True, read_only=True)
+    tecnico = serializers.StringRelatedField(read_only=True)
+
+    # --- INÍCIO DA CORREÇÃO ---
+    # 1. Adiciona o campo para serializar a lista de fotos.
+    #    O 'source' usa o 'related_name' do seu modelo FotoRelatorio.
+    fotos = FotoRelatorioSerializer(many=True, read_only=True)
+    # --- FIM DA CORREÇÃO ---
+
+    class Meta:
+        model = RelatorioCampo
+        # 2. Adiciona 'fotos' à lista de campos a serem incluídos.
+        fields = [
+            'id',
+            'tipo_relatorio',
+            'data_relatorio',
+            'tecnico',
+            'descricao_atividades',
+            'material_utilizado',
+            'observacoes_adicionais',
+            'problemas',
+            'horas',
+            'fotos'  # <-- Campo adicionado
+        ]
+
+# --- SERIALIZER DE DETALHE DA OS (ATUALIZADO) ---
+
+
+class OrdemServicoDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer completo para a tela de detalhes da Ordem de Serviço.
+    """
+    # Relacionamentos que precisam de detalhes (objetos)
+    cliente = ClienteSerializer(read_only=True)
+    equipamento = EquipamentoSerializer(read_only=True)
+    relatorios_campo = RelatorioCampoSerializer(many=True, read_only=True)
+    despesas = DespesaDetailSerializer(many=True, read_only=True)
+    equipe = MembroEquipeSerializer(many=True, read_only=True)
+    documentos = DocumentoOSSerializer(many=True, read_only=True)
+    pontos = RegistroPontoSerializer(
+        many=True, read_only=True, source='registros_ponto')
+
+    # Relacionamentos que podem ser apenas texto (String)
+    tecnico_responsavel = serializers.StringRelatedField(read_only=True)
+    gestor_responsavel = serializers.StringRelatedField(read_only=True)
+    tipo_manutencao = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = OrdemServico
+        fields = '__all__'
+
+
+class RelatorioCampoDetailSerializer(serializers.ModelSerializer):
+    """ Serializer para exibir todos os detalhes de um Relatório de Campo. """
+    tipo_relatorio = TipoRelatorioSerializer(read_only=True)
+    tecnico = serializers.StringRelatedField(read_only=True)
+    problemas = ProblemaRelatorioSerializer(
+        source='problemas_identificados_detalhes', many=True, read_only=True)
+    horas = HorasRelatorioTecnicoSerializer(
+        source='horas_por_tecnico', many=True, read_only=True)
+    # Usa o novo FotoRelatorioSerializer para a lista de fotos
+    fotos = FotoRelatorioSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RelatorioCampo
+        fields = [
+            'id', 'tipo_relatorio', 'data_relatorio', 'tecnico',
+            'descricao_atividades', 'material_utilizado', 'observacoes_adicionais',
+            'problemas', 'horas', 'fotos'  # Adiciona o campo 'fotos'
+        ]

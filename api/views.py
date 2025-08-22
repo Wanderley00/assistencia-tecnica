@@ -20,7 +20,8 @@ from servico_campo.models import RegraJornadaTrabalho
 
 from servico_campo.models import (
     OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico,
-    HorasRelatorioTecnico, RegraJornadaTrabalho, ProblemaRelatorio, CategoriaProblema
+    HorasRelatorioTecnico, RegraJornadaTrabalho, ProblemaRelatorio, CategoriaProblema,
+    FotoRelatorio
 )
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento, TipoRelatorio
@@ -35,7 +36,8 @@ from .serializers import (
     TipoDocumentoSerializer, DocumentoOSSerializer,
     DocumentoOSUpdateSerializer, TipoRelatorioSerializer,
     HorasRelatorioTecnicoSerializer, RelatorioCampoCreateSerializer,
-    CategoriaProblemaSerializer
+    CategoriaProblemaSerializer, FotoRelatorioSerializer,
+    RelatorioCampoDetailSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated
@@ -471,3 +473,32 @@ class CategoriaProblemaListAPIView(generics.ListAPIView):
     # prefetch_related é usado para otimizar a busca das subcategorias
     queryset = CategoriaProblema.objects.filter(
         ativo=True).prefetch_related('subcategorias')
+
+
+class FotoRelatorioCreateAPIView(generics.CreateAPIView):
+    """
+    Endpoint da API para adicionar uma nova foto a um RelatorioCampo existente.
+    """
+    queryset = FotoRelatorio.objects.all()
+    serializer_class = FotoRelatorioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """
+        Este método é chamado antes de guardar a nova foto.
+        Usamo-lo para associar a foto ao relatório correto,
+        pegando o ID do relatório a partir da URL.
+        """
+        # Pega o 'relatorio_pk' da URL (ex: /api/relatorios-campo/27/fotos/)
+        relatorio_pk = self.kwargs.get('relatorio_pk')
+        relatorio = get_object_or_404(RelatorioCampo, pk=relatorio_pk)
+
+        # Guarda a nova foto, associando-a ao relatório encontrado.
+        serializer.save(relatorio=relatorio)
+
+
+class RelatorioCampoDetailAPIView(generics.RetrieveAPIView):
+    """ Endpoint da API para buscar os detalhes de um único Relatório de Campo. """
+    queryset = RelatorioCampo.objects.all()
+    serializer_class = RelatorioCampoDetailSerializer
+    permission_classes = [IsAuthenticated]
