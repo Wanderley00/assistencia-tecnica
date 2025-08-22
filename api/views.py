@@ -502,3 +502,12 @@ class RelatorioCampoDetailAPIView(generics.RetrieveAPIView):
     queryset = RelatorioCampo.objects.all()
     serializer_class = RelatorioCampoDetailSerializer
     permission_classes = [IsAuthenticated]
+
+
+class TipoRelatorioListView(generics.ListAPIView):
+    """
+    Endpoint que retorna uma lista de todos os Tipos de Relatório ativos.
+    """
+    queryset = TipoRelatorio.objects.filter(ativo=True).order_by('nome')
+    serializer_class = TipoRelatorioSerializer
+    permission_classes = [IsAuthenticated]

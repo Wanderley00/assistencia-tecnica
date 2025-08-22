@@ -82,4 +82,7 @@ urlpatterns = [
     path('relatorios-campo/<int:pk>/',
          views.RelatorioCampoDetailAPIView.as_view(), name='api_relatorio_detail'),
 
+    path('tipos-relatorio/', views.TipoRelatorioListView.as_view(),
+         name='api_tipos_relatorio_list'),
+
 ]
