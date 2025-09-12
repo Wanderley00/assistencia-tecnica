@@ -102,7 +102,8 @@ class Equipamento(models.Model):
 
 class OrdemServico(models.Model):
     STATUS_CHOICES = [('PLANEJADA', _('Planejada')), ('AGUARDANDO_PLANEJAMENTO', _('Aguardando Planejamento')), ('EM_EXECUCAO', _(
-        'Em Execução')), ('CONCLUIDA', _('Concluída')), ('CANCELADA', _('Cancelada')), ('PENDENTE_APROVACAO', _('Pendente de Aprovação'))]
+        'Em Execução')), ('CONCLUIDA', _('Concluída')), ('CANCELADA', _('Cancelada')), ('PENDENTE_APROVACAO', _('Pendente de Aprovação')),
+        ("REPROVADA", _("Reprovada"))]
     # REMOVA: TIPO_MANUTENCAO_CHOICES = [('CORRETIVA', 'Manutenção Corretiva'), ('PREVENTIVA', 'Manutenção Preventiva'), ('INSPECAO', 'Inspeção'), ('OUTRO', 'Outro')]
     numero_os = models.CharField(
         max_length=50, unique=True, verbose_name="Número da OS", help_text="Ex: OS-YYYYMMDD-XXX")
@@ -164,6 +165,12 @@ class OrdemServico(models.Model):
         null=True,
         blank=True,
         verbose_name="Assinatura do Cliente (Conclusão)"
+    )
+    motivo_reprovacao = models.TextField(
+        verbose_name="Motivo da Reprovação",
+        null=True,
+        blank=True,
+        help_text="Detalhes sobre o porquê da ordem de serviço ter sido reprovada."
     )
 
     def get_absolute_url(self):

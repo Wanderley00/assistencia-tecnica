@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aprovação Pendente de Ordem de Serviço</title>
+</head>
+<body>
+    <p>Prezado(a) Gestor(a) {{ ordem.gestor_responsavel.first_name }},</p>
+    <p>Uma Ordem de Serviço aguarda sua aprovação:</p>
+    <ul>
+        <li><strong>Número da OS:</strong> {{ ordem.numero_os }}</li>
+        <li><strong>Título do Serviço:</strong> {{ ordem.titulo_servico }}</li>
+        <li><strong>Técnico Responsável:</strong> {{ ordem.tecnico_responsavel.get_full_name }}</li>
+        <li><strong>Cliente:</strong> {{ ordem.cliente.razao_social }}</li>
+    </ul>
+    <p>Por favor, acesse o sistema para revisar e aprovar ou reprovar a OS:</p>
+    <p><a href="{{ link_aprovacao }}">Acessar Ordem de Serviço</a></p>
+    <p>Atenciosamente,</p>
+    <p>Sua Equipe de Gestão de Serviços</p>
+</body>
+</html>

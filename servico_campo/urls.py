@@ -206,3 +206,9 @@ if settings.DEBUG:
                           document_root=settings.MEDIA_ROOT)
     # Se você também estiver servindo arquivos estáticos localmente em dev:
     # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+    path("ordem/<int:pk>/aprovar/", views.aprovar_ordem_servico, name="aprovar_os"),
+    path("ordem/<int:pk>/reprovar/",
+         views.reprovar_ordem_servico, name="reprovar_os"),
+    path("aprovacao-ordens-concluidas/", views.AprovacaoOrdensConcluidasListView.as_view(),
+         name="aprovacao_ordens_concluidas"),

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ordem de Serviço Reprovada</title>
+</head>
+<body>
+    <p>Prezado(a) Técnico(a) {{ ordem.tecnico_responsavel.first_name }},</p>
+    <p>A Ordem de Serviço **{{ ordem.numero_os }} - {{ ordem.titulo_servico }}** foi reprovada pelo gestor.</p>
+    <p><strong>Motivo da Reprovação:</strong></p>
+    <p>{{ motivo }}</p>
+    <p>Por favor, revise a ordem de serviço e realize as correções necessárias. O status da OS foi retornado para 'Em Execução'.</p>
+    <p><a href="{{ link_os }}">Acessar Ordem de Serviço</a></p>
+    <p>Atenciosamente,</p>
+    <p>Sua Equipe de Gestão de Serviços</p>
+</body>
+</html>
+

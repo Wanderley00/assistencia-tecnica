@@ -3283,3 +3283,62 @@ def password_reset_token_created_receiver(sender, instance, reset_password_token
     except Exception as e:
         print(
             f"Erro ao enviar e-mail de redefinição de senha para {reset_password_token.user.email}: {e}")
+
+
+@login_required
+def aprovar_ordem_servico(request, pk):
+    ordem = get_object_or_404(OrdemServico, pk=pk)
+    # Verifica se o usuário é o gestor responsável
+    if request.user == ordem.gestor_responsavel and ordem.status == 'PENDENTE_APROVACAO':
+        ordem.status = 'CONCLUIDA'
+        ordem.data_fechamento = timezone.now()
+        ordem.save()
+        messages.success(
+            request, f"Ordem de Serviço {ordem.numero_os} aprovada com sucesso.")
+    else:
+        messages.error(
+            request, "Você não tem permissão para aprovar esta Ordem de Serviço ou ela não está no status correto.")
+    return redirect('servico_campo:detalhe_os', pk=ordem.pk)
+
+
+@login_required
+def reprovar_ordem_servico(request, pk):
+    ordem = get_object_or_404(OrdemServico, pk=pk)
+    if request.method == 'POST':
+        # Verifica se o usuário é o gestor responsável
+        if request.user == ordem.gestor_responsavel and ordem.status == 'PENDENTE_APROVACAO':
+            motivo = request.POST.get('motivo_reprovacao')
+            if motivo:
+                ordem.status = 'REPROVADA'
+                ordem.motivo_reprovacao = motivo
+                ordem.save()
+                messages.warning(
+                    request, f"Ordem de Serviço {ordem.numero_os} reprovada. O técnico foi notificado.")
+            else:
+                messages.error(
+                    request, "O motivo da reprovação é obrigatório.")
+        else:
+            messages.error(
+                request, "Você não tem permissão para reprovar esta Ordem de Serviço ou ela não está no status correto.")
+    return redirect('servico_campo:detalhe_os', pk=ordem.pk)
+
+
+class AprovacaoOrdensConcluidasListView(LoginRequiredMixin, ListView):
+    model = OrdemServico
+    template_name = 'servico_campo/aprovacao_ordens_concluidas.html'
+    context_object_name = 'ordens_pendentes'
+    paginate_by = 10
+
+    def get_queryset(self):
+        # Filtra as ordens de serviço onde o usuário logado é o gestor responsável
+        # e o status é PENDENTE_APROVACAO
+        return OrdemServico.objects.filter(
+            gestor_responsavel=self.request.user,
+            status='PENDENTE_APROVACAO'
+        ).order_by('-data_abertura')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form_reprovacao'] = forms.CharField(widget=forms.Textarea(
+            attrs={'rows': 3, 'class': 'form-control'}), required=False, label=_("Motivo da Reprovação"))
+        return context
