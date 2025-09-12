@@ -1,0 +1,22 @@
+{% extends 'servico_campo/base.html' %}
+{% block title %}Confirmar Exclusão de Documento{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h1 class="mb-0">Confirmar Exclusão</h1>
+    </div>
+    <div class="card-body">
+        <p>Você tem certeza que deseja excluir permanentemente o documento:</p>
+        <h4 class="text-center my-3">"{{ object.titulo }}"</h4>
+        <p>da Ordem de Serviço <strong>{{ os.numero_os }}</strong>?</p>
+        <p class="text-danger">Atenção: Esta ação não pode ser desfeita.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Sim, excluir</button>
+            <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

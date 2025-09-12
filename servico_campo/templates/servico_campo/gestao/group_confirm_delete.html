@@ -1,0 +1,15 @@
+{% extends 'servico_campo/base.html' %}
+{% block title %}Confirmar Exclusão{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white"><h1 class="mb-0">Confirmar Exclusão</h1></div>
+    <div class="card-body">
+        <p>Você tem certeza que deseja excluir o grupo <strong>"{{ group.name }}"</strong>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Sim, tenho certeza</button>
+            <a href="{% url 'servico_campo:lista_grupos' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

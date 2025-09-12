@@ -1,0 +1,94 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_action_title }} - {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h1 class="card-title mb-0">{{ form_action_title }}: {{ os.numero_os }}</h1>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Resumo do Serviço</h5>
+            <p><strong>Cliente:</strong> {{ os.cliente.razao_social }}</p>
+            <p><strong>Serviço:</strong> {{ os.titulo_servico }}</p>
+            <p><strong>Responsável:</strong> {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
+            <hr>
+
+
+            <form method="post" id="encerramento-os-form">
+                {% csrf_token %}
+                {{ form.media }}
+
+                <h5 class="mb-3">{% trans "Assinatura do Executante" %}</h5>
+                <p><small>{% trans "Confirmando a finalização das atividades." %}</small></p>
+                <div id="signature-pad-executante" class="signature-pad-container" style="border: 1px solid #ccc; border-radius: 0.25rem; background-color: #f8f9fa;">
+                    <canvas id="canvas-executante" style="width: 100%; height: 200px;"></canvas>
+                </div>
+                <button type="button" id="clear-signature-executante" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Assinatura" %}</button>
+                {{ form.assinatura_executante }}
+                <hr>
+                <h5 class="mb-3">{% trans "Assinatura do Cliente" %}</h5>
+                <p>Ao assinar abaixo, o cliente declara estar ciente e de acordo com a conclusão dos serviços prestados nesta Ordem de Serviço.</p>
+                <div id="signature-pad" class="signature-pad-container" style="border: 1px solid #ccc; border-radius: 0.25rem; background-color: #f8f9fa;">
+                    <canvas id="canvas-cliente" style="width: 100%; height: 200px;"></canvas> </div>
+                <button type="button" id="clear-signature-cliente" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Assinatura" %}</button> {{ form.assinatura_cliente }}
+
+                <div class="mt-4">
+                    <button type="button" id="submit-signature" class="btn btn-success btn-lg">{% trans "Confirmar e Encerrar OS" %}</button>
+                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary btn-lg">{% trans "Cancelar" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Função auxiliar para configurar um pad de assinatura
+        function setupSignaturePad(canvasId, clearButtonId, hiddenInputId) {
+            const canvas = document.getElementById(canvasId);
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(248, 249, 250)'
+            });
+
+            const clearButton = document.getElementById(clearButtonId);
+            clearButton.addEventListener('click', () => signaturePad.clear());
+
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear();
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            return signaturePad;
+        }
+
+        // Configura os dois pads de assinatura
+        const signaturePadExecutante = setupSignaturePad('canvas-executante', 'clear-signature-executante', 'id_assinatura_executante');
+        const signaturePadCliente = setupSignaturePad('canvas-cliente', 'clear-signature-cliente', 'id_assinatura_cliente');
+
+        // Lógica do botão de submissão
+        const submitButton = document.getElementById('submit-signature');
+        const form = document.getElementById('encerramento-os-form');
+        const hiddenInputExecutante = document.getElementById('id_assinatura_executante');
+        const hiddenInputCliente = document.getElementById('id_assinatura_cliente');
+
+        submitButton.addEventListener('click', function(event) {
+            if (signaturePadExecutante.isEmpty() || signaturePadCliente.isEmpty()) {
+                alert("{% trans 'Por favor, forneça a assinatura do executante e do cliente.' %}");
+            } else {
+                hiddenInputExecutante.value = signaturePadExecutante.toDataURL('image/png');
+                hiddenInputCliente.value = signaturePadCliente.toDataURL('image/png');
+                form.submit();
+            }
+        });
+    });
+</script>
+{% endblock %}

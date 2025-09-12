@@ -1,0 +1,221 @@
+{% extends 'servico_campo/base.html' %}
+{% load form_utils %} {# Carrega o template tag #}
+
+{% block extra_head %}
+    {# Remova o CSS do Select2, pois não será mais usado para 'empresas' #}
+    <style>
+        /* Estilos básicos para a caixa de pesquisa e o contêiner de checkboxes */
+        .checkbox-list-container {
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 10px;
+            max-height: 250px; /* Altura máxima para a lista rolável */
+            overflow-y: auto; /* Adiciona barra de rolagem se a lista for muito longa */
+            background-color: #fff; /* Fundo branco para a lista */
+        }
+        .checkbox-item {
+            display: flex; /* Para alinhar checkbox e label */
+            align-items: center;
+            margin-bottom: 5px; /* Espaçamento entre os itens */
+        }
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px; /* Espaçamento entre o checkbox e o label */
+        }
+        .search-input-container {
+            display: flex;
+            gap: 10px; /* Espaçamento entre a barra de pesquisa e o botão */
+            margin-bottom: 10px;
+        }
+        .search-input-container .form-control {
+            flex-grow: 1; /* Faz a barra de pesquisa ocupar o espaço disponível */
+        }
+        
+        /* Estilos para o campo de senha com botão de visualizar */
+        .password-field-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-field-container input {
+            padding-right: 45px; /* Espaço para o botão */
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 18px;
+            padding: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .password-toggle-btn:hover {
+            color: #495057;
+            background-color: #f8f9fa;
+        }
+        .password-toggle-btn:focus {
+            outline: none;
+            color: #0d6efd;
+            background-color: #e7f3ff;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
+        
+        /* Ícones SVG personalizados */
+        .eye-icon, .eye-slash-icon {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+    </style>
+{% endblock extra_head %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h1 class="mb-0">{{ form_title }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            <p class="mb-0">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        
+                        {# Customiza o campo 'empresas' com pesquisa e "Selecionar Todas" #}
+                        {% if field.name == 'empresas' %}
+                            <div class="search-input-container">
+                                <input type="text" id="empresas-search-input" class="form-control" placeholder="Pesquisar empresas...">
+                                <button type="button" id="select-all-empresas" class="btn btn-sm btn-outline-secondary">Selecionar Todas</button>
+                            </div>
+                            <div class="checkbox-list-container">
+                                {# Renderiza os checkboxes aqui. Certifique-se de que cada checkbox e seu label estão envolvidos para que o JS possa manipulá-los #}
+                                {% for checkbox in field %}
+                                    <div class="form-check checkbox-item">
+                                        {{ checkbox.tag }} {# Isso renderiza o input type="checkbox" #}
+                                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {# Customiza campos de senha com botão de visualizar #}
+                        {% elif field.field.widget.input_type == 'password' %}
+                            <div class="password-field-container">
+                                {{ field|add_css_class:field.name }}
+                                <button type="button" class="password-toggle-btn" data-target="{{ field.id_for_label }}" title="Mostrar senha">
+                                    <!-- SVG para mostrar senha (olho aberto) -->
+                                    <svg class="eye-icon" viewBox="0 0 24 24" style="display: block;">
+                                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                    </svg>
+                                    <!-- SVG para ocultar senha (olho riscado) -->
+                                    <svg class="eye-slash-icon" viewBox="0 0 24 24" style="display: none;">
+                                        <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        {% else %}
+                            {# Aplica a classe form-control para os outros campos #}
+                            {{ field|add_css_class:field.name }}
+                        {% endif %}
+                        
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-success">Salvar</button>
+                <a href="{% url 'servico_campo:lista_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    {# Mantenha o jQuery #}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {# Remova a inclusão do JS do Select2, pois não será mais usado para este campo #}
+
+    <script>
+        $(document).ready(function() {
+            var $checkboxContainer = $('.checkbox-list-container');
+            var $checkboxes = $checkboxContainer.find('input[type="checkbox"]');
+            var $search_input = $('#empresas-search-input');
+            var $selectAllButton = $('#select-all-empresas');
+
+            // 1. Funcionalidade de Pesquisa
+            $search_input.on('keyup', function() {
+                var searchText = $(this).val().toLowerCase();
+                $checkboxes.each(function() {
+                    var $this = $(this);
+                    var labelText = $this.next('label').text().toLowerCase();
+                    var $parentItem = $this.closest('.checkbox-item');
+
+                    if (labelText.includes(searchText)) {
+                        $parentItem.show(); // Mostra o item se corresponder à pesquisa
+                    } else {
+                        $parentItem.hide(); // Esconde o item se não corresponder
+                    }
+                });
+            });
+
+            // 2. Funcionalidade do Botão "Selecionar Todas"
+            $selectAllButton.on('click', function() {
+                // Seleciona apenas os checkboxes VISÍVEIS
+                var $visibleCheckboxes = $checkboxes.filter(function() {
+                    return $(this).closest('.checkbox-item').is(':visible');
+                });
+
+                // Verifica se todos os visíveis já estão marcados
+                var allVisibleChecked = $visibleCheckboxes.length > 0 && $visibleCheckboxes.not(':checked').length === 0;
+
+                $visibleCheckboxes.prop('checked', !allVisibleChecked); // Inverte o estado de todos os visíveis
+            });
+
+            // 3. Funcionalidade de Mostrar/Ocultar Senha
+            $('.password-toggle-btn').on('click', function() {
+                var $button = $(this);
+                var targetId = $button.data('target');
+                var $passwordField = $('#' + targetId);
+                var $eyeIcon = $button.find('.eye-icon');
+                var $eyeSlashIcon = $button.find('.eye-slash-icon');
+                
+                if ($passwordField.attr('type') === 'password') {
+                    // Mostrar senha
+                    $passwordField.attr('type', 'text');
+                    $eyeIcon.hide();
+                    $eyeSlashIcon.show();
+                    $button.attr('title', 'Ocultar senha');
+                } else {
+                    // Ocultar senha
+                    $passwordField.attr('type', 'password');
+                    $eyeIcon.show();
+                    $eyeSlashIcon.hide();
+                    $button.attr('title', 'Mostrar senha');
+                }
+            });
+        });
+    </script>
+{% endblock extra_js %}

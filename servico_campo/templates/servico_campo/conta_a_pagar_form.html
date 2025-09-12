@@ -1,0 +1,93 @@
+{# servico_campo/templates/servico_campo/conta_a_pagar_form.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_title }} - {{ conta_a_pagar.despesa.descricao }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_contas_a_pagar' %}">{% trans "Contas a Pagar" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ form_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="card-title mb-0">{{ form_title }}</h1>
+        </div>
+        <div class="card-body">
+            <h5 class="mb-3">{% trans "Detalhes da Despesa" %}</h5>
+            <p><strong>{% trans "OS:" %}</strong> <a href="{% url 'servico_campo:detalhe_os' conta_a_pagar.despesa.ordem_servico.pk %}">{{ conta_a_pagar.despesa.ordem_servico.numero_os }}</a></p>
+            <p><strong>{% trans "Descrição:" %}</strong> {{ conta_a_pagar.despesa.descricao }}</p>
+            <p><strong>{% trans "Valor:" %}</strong> R$ {{ conta_a_pagar.despesa.valor|floatformat:2 }}</p>
+            <p><strong>{% trans "Responsável:" %}</strong> {{ conta_a_pagar.despesa.tecnico.get_full_name|default:conta_a_pagar.despesa.tecnico.username }}</p>
+            <p><strong>{% trans "Status Aprovação:" %}</strong> {{ conta_a_pagar.despesa.get_status_aprovacao_display }}</p>
+            {% if conta_a_pagar.despesa.comprovante_anexo %}
+                <p><strong>{% trans "Comprovante Despesa:" %}</strong> <a href="{{ conta_a_pagar.despesa.comprovante_anexo.url }}" target="_blank">{% trans "Ver Comprovante" %}</a></p>
+            {% endif %}
+            <hr>
+            {# NOVO BLOCO: INFORMAÇÕES BANCÁRIAS DO TÉCNICO #}
+                <h5 class="mb-3 mt-4">{% trans "Dados Bancários do Responsável pela Despesa" %}</h5>
+                {% with perfil=conta_a_pagar.despesa.tecnico.perfilusuario %}
+                    {% if perfil %}
+                        <div class="alert alert-info">
+                            <p class="mb-1"><strong>{% trans "Nome do Titular:" %}</strong> {{ perfil.nome_titular_conta|default:perfil.user.get_full_name }}</p>
+                            <p class="mb-1"><strong>{% trans "CPF do Titular:" %}</strong> {{ perfil.cpf_titular_conta|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Banco:" %}</strong> {{ perfil.banco_codigo }} - {{ perfil.banco_nome|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Tipo de Conta:" %}</strong> {{ perfil.get_tipo_conta_display|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Agência:" %}</strong> {{ perfil.agencia|default:"N/A" }}</p>
+                            <p class="mb-1"><strong>{% trans "Número da Conta:" %}</strong> {{ perfil.numero_conta|default:"N/A" }}{% if perfil.digito_conta %}-{{ perfil.digito_conta }}{% endif %}</p>
+                            {% if perfil.chave_pix_valor and perfil.chave_pix_tipo != 'NENHUMA' %}
+                                <p class="mb-0"><strong>{% trans "Chave PIX" %} ({{ perfil.get_chave_pix_tipo_display }}):</strong> {{ perfil.chave_pix_valor }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            {% trans "Dados bancários não cadastrados para este responsável." %}
+                            <a href="{% url 'servico_campo:editar_dados_bancarios' %}" class="alert-link">{% trans "Solicite que o técnico cadastre seus dados bancários." %}</a>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                <hr>
+                {# FIM DO NOVO BLOCO #}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.status_pagamento.id_for_label }}" class="form-label">{{ form.status_pagamento.label }}</label>
+                    {{ form.status_pagamento }}
+                    {% if form.status_pagamento.errors %}<div class="text-danger">{{ form.status_pagamento.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.comentario.id_for_label }}" class="form-label">{{ form.comentario.label }}</label>
+                    {{ form.comentario }}
+                    {% if form.comentario.errors %}<div class="text-danger">{{ form.comentario.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.comprovante_pagamento.id_for_label }}" class="form-label">{{ form.comprovante_pagamento.label }}</label>
+                    {{ form.comprovante_pagamento }}
+                    {% if conta_a_pagar.comprovante_pagamento %}
+                        <p class="mt-2">{% trans "Comprovante atual:" %} <a href="{{ conta_a_pagar.comprovante_pagamento.url }}" target="_blank">{% trans "Ver" %}</a></p>
+                    {% endif %}
+                    {% if form.comprovante_pagamento.errors %}<div class="text-danger">{{ form.comprovante_pagamento.errors }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-success mt-3">{% trans "Salvar Alterações" %}</button>
+                <a href="{% url 'servico_campo:lista_contas_a_pagar' %}" class="btn btn-secondary mt-3">{% trans "Cancelar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

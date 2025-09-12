@@ -1,0 +1,679 @@
+{# servico_campo/templates/servico_campo/minhas_despesas_list.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Minhas Despesas" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Minhas Despesas" %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .page-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .page-header {
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-modern {
+            padding: 12px 24px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            font-weight: 400; /* Garante que o texto não fique em negrito */
+        }
+
+        /* --- FILTROS MODERNIZADOS --- */
+        .filters-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 4px solid #009AD1;
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .filter-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            background: linear-gradient(135deg, #009AD1, #00628A);
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control,
+        .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #009AD1;
+            box-shadow: 0 0 0 0.2rem rgba(0, 154, 209, 0.15);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .btn-info-modern {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-secondary-modern {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        /* --- TABELA MODERNIZADA --- */
+        .table-section {
+            background: white;
+            border-radius: 20px;
+            margin: 30px;
+            margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border-top: 4px solid #28a745;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            padding: 20px 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .table-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .table-responsive {
+            padding: 0;
+        }
+
+        .table {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            border: none;
+            padding: 15px 12px;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 15px 12px;
+            border: none;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: linear-gradient(135deg, #f8f9ff, #f0f8ff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- BADGES MODERNIZADOS --- */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge.bg-success {
+            background: linear-gradient(135deg, #28a745, #20c997) !important;
+        }
+
+        .badge.bg-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333) !important;
+        }
+
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+        }
+
+        .badge.bg-info {
+            background: linear-gradient(135deg, #17a2b8, #138496) !important;
+        }
+
+        .badge.bg-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057) !important;
+        }
+
+        .badge.bg-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3) !important;
+        }
+
+        /* --- BOTÕES DE AÇÃO --- */
+        .btn-group-sm .btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .btn-group-sm .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- COMENTÁRIOS --- */
+        .table-info-row td {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.1));
+            border-left: 4px solid #17a2b8;
+            font-style: italic;
+            color: #495057;
+        }
+
+        /* --- PAGINAÇÃO --- */
+        .pagination-section {
+            padding: 20px 30px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .page-container {
+                margin: 20px;
+                border-radius: 15px;
+            }
+
+            .page-header {
+                padding: 20px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+                justify-content: center;
+            }
+
+            .filters-section,
+            .table-section {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            .table th,
+            .table td {
+                padding: 10px 8px;
+                font-size: 0.85rem;
+            }
+
+            .btn-group-modern {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+        }
+
+        /* --- EMPTY STATE --- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="page-container">
+            <!-- Header Modernizado -->
+            <div class="page-header">
+                <div class="header-content">
+                    <div>
+                        <h1 class="page-title">
+                            <i class="bi bi-receipt"></i>
+                            {% trans "Minhas Despesas" %}
+                        </h1>
+                        <p class="page-subtitle">
+                            Visualize e gerencie todas as suas despesas de serviço
+                        </p>
+                    </div>
+
+                    {% if perms.servico_campo.add_despesa %}
+                        <a href="{% url 'servico_campo:lista_os' %}" class="btn-modern">
+                            <i class="bi bi-plus-circle"></i> 
+                            {% trans "Registrar Nova Despesa" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Seção de Filtros -->
+            <div class="filters-section fade-in-up delay-2">
+                <div class="filters-header">
+                    <div class="filter-icon">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                    <h5 class="filter-title">{% trans "Filtros de Busca" %}</h5>
+                </div>
+                
+                <form method="get" action="{% url 'servico_campo:minhas_despesas' %}" id="filter-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="id_status_aprovacao_filter" class="form-label">
+                                <i class="bi bi-check-circle me-1"></i>
+                                {% trans "Status Aprovação" %}
+                            </label>
+                            <select class="form-select" id="id_status_aprovacao_filter" name="status_aprovacao">
+                                <option value="TODOS" {% if filters.status_aprovacao == 'TODOS' %}selected{% endif %}>{% trans "Todos" %}</option>
+                                {% for value, display in status_aprovacao_choices %}
+                                    <option value="{{ value }}" {% if filters.status_aprovacao == value %}selected{% endif %}>{{ display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_status_pagamento_filter" class="form-label">
+                                <i class="bi bi-credit-card me-1"></i>
+                                {% trans "Status Pagamento" %}
+                            </label>
+                            <select class="form-select" id="id_status_pagamento_filter" name="status_pagamento">
+                                <option value="TODOS" {% if filters.status_pagamento == 'TODOS' %}selected{% endif %}>{% trans "Todos" %}</option>
+                                {% for value, display in status_pagamento_choices %}
+                                    <option value="{{ value }}" {% if filters.status_pagamento == value %}selected{% endif %}>{{ display }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_data_despesa_filter" class="form-label">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                {% trans "Data da Despesa" %}
+                            </label>
+                            <input type="date" class="form-control" id="id_data_despesa_filter" name="data_despesa" value="{{ filters.data_despesa }}">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="btn-filter-group">
+                                <button type="submit" class="btn-modern btn-info-modern">
+                                    <i class="bi bi-search"></i>
+                                    {% trans "Filtrar" %}
+                                </button>
+                                <a href="{% url 'servico_campo:minhas_despesas' %}" class="btn-modern btn-secondary-modern">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    {% trans "Limpar" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Seção da Tabela -->
+            <div class="table-section fade-in-up delay-3">
+                <div class="table-header">
+                    <div class="table-icon">
+                        <i class="bi bi-table"></i>
+                    </div>
+                    <h5 class="table-title">{% trans "Lista de Despesas" %}</h5>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-calendar3 me-1"></i>{% trans "Data" %}</th>
+                                <th><i class="bi bi-file-earmark me-1"></i>{% trans "OS" %}</th>
+                                <th><i class="bi bi-card-text me-1"></i>{% trans "Descrição" %}</th>
+                                <th><i class="bi bi-currency-dollar me-1"></i>{% trans "Valor" %}</th>
+                                <th><i class="bi bi-wallet2 me-1"></i>{% trans "Adiantamento" %}</th>
+                                <th><i class="bi bi-check-circle me-1"></i>{% trans "Aprovação" %}</th>
+                                <th><i class="bi bi-credit-card me-1"></i>{% trans "Pagamento" %}</th>
+                                <th><i class="bi bi-gear me-1"></i>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despesa in minhas_despesas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ despesa.data_despesa|date:"d/m/Y" }}</strong>
+                                </td>
+                                <td>
+                                    <a href="{% url 'servico_campo:detalhe_os' despesa.ordem_servico.pk %}" class="text-decoration-none fw-bold text-primary">
+                                        {{ despesa.ordem_servico.numero_os }}
+                                    </a>
+                                </td>
+                                <td>{{ despesa.descricao }}</td>
+                                <td>
+                                    <span class="fw-bold text-success">R$ {{ despesa.valor|floatformat:2 }}</span>
+                                </td>
+                                <td>
+                                    {% if despesa.is_adiantamento %}
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-wallet-fill"></i> {% trans "Sim" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{% trans "Não" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if despesa.status_aprovacao == 'APROVADA' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            {{ despesa.get_status_aprovacao_display }}
+                                        </span>
+                                    {% elif despesa.status_aprovacao == 'REJEITADA' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle-fill"></i>
+                                            {{ despesa.get_status_aprovacao_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-clock-fill"></i>
+                                            {{ despesa.get_status_aprovacao_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if despesa.paga %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check2-all"></i>
+                                            {% trans "Pago" %}
+                                        </span>
+                                    {% elif despesa.status_aprovacao == 'APROVADA' and despesa.conta_a_pagar %}
+                                        {% if despesa.conta_a_pagar.status_pagamento == 'PENDENTE' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-hourglass-split"></i>
+                                                {% trans "Aguardando" %}
+                                            </span>
+                                        {% elif despesa.conta_a_pagar.status_pagamento == 'EM_ANALISE' %}
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-search"></i>
+                                                {% trans "Em Análise" %}
+                                            </span>
+                                        {% elif despesa.conta_a_pagar.status_pagamento == 'CANCELADO' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i>
+                                                {% trans "Cancelado" %}
+                                            </span>
+                                        {% endif %}
+                                    {% elif despesa.status_aprovacao == 'APROVADA' and not despesa.conta_a_pagar %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-gear"></i>
+                                            {% trans "Processando" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{% trans "N/A" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'servico_campo:detalhe_despesa' despesa.pk %}" 
+                                           class="btn btn-info" title="{% trans 'Ver Detalhes' %}">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if despesa.status_aprovacao == 'PENDENTE' %}
+                                            <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" 
+                                               class="btn btn-warning" title="{% trans 'Editar' %}">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if perms.servico_campo.delete_despesa %}
+                                            <a href="{% url 'servico_campo:excluir_despesa' despesa.pk %}" 
+                                               class="btn btn-danger" title="{% trans 'Excluir' %}">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% if despesa.comentario_aprovacao %}
+                            <tr class="table-info-row">
+                                <td colspan="8">
+                                    <small>
+                                        <i class="bi bi-chat-left-text me-1"></i>
+                                        <strong>{% trans "Comentário Aprovação" %}:</strong> {{ despesa.comentario_aprovacao }}
+                                        {% if despesa.aprovado_por %}
+                                            ({% trans "por" %} {{ despesa.aprovado_por.get_full_name|default:despesa.aprovado_por.username }}
+                                            {% if despesa.data_aprovacao %}{% trans "em" %} {{ despesa.data_aprovacao|date:"d/m/Y H:i" }}{% endif %})
+                                        {% endif %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% if despesa.conta_a_pagar and despesa.conta_a_pagar.comentario %}
+                            <tr class="table-info-row">
+                                <td colspan="8">
+                                    <small>
+                                        <i class="bi bi-credit-card me-1"></i>
+                                        <strong>{% trans "Comentário Pagamento" %}:</strong> {{ despesa.conta_a_pagar.comentario }}
+                                        {% if despesa.conta_a_pagar.responsavel_pagamento %}
+                                            ({% trans "por" %} {{ despesa.conta_a_pagar.responsavel_pagamento.get_full_name|default:despesa.conta_a_pagar.responsavel_pagamento.username }}
+                                            {% if despesa.conta_a_pagar.data_atualizacao %}{% trans "em" %} {{ despesa.conta_a_pagar.data_atualizacao|date:"d/m/Y H:i" }}{% endif %})
+                                        {% endif %}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h3>{% trans "Nenhuma despesa encontrada" %}</h3>
+                                            <p>{% trans "Não há despesas que correspondam aos filtros selecionados." %}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if page_obj %}
+                <div class="pagination-section">
+                    {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        // Efeitos interativos nos filtros
+        const formInputs = document.querySelectorAll('.form-control, .form-select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 5px 15px rgba(0,154,209,0.2)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Animação suave nos botões
+        document.querySelectorAll('.btn-modern, .btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+{% endblock %}

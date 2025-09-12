@@ -1,0 +1,49 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gestão de Formas de Pagamento" %}{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">{% trans "Formas de Pagamento" %}</h1>
+        <a href="{% url 'configuracoes:nova_forma_pagamento' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> {% trans "Adicionar Forma" %}
+        </a>
+    </div>
+
+    <div class="card card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "Nome" %}</th>
+                        <th>{% trans "Ativo" %}</th>
+                        <th>{% trans "Ações" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for forma in formas_pagamento %} {# MUDANÇA AQUI: formas_pagamento #}
+                    <tr>
+                        <td>{{ forma.nome }}</td>
+                        <td>
+                            {% if forma.ativo %}
+                                <span class="badge bg-success">{% trans "Sim" %}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{% trans "Não" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'configuracoes:editar_forma_pagamento' forma.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar' %}"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'configuracoes:excluir_forma_pagamento' forma.pk %}" class="btn btn-sm btn-danger" title="{% trans 'Excluir' %}"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">{% trans "Nenhuma forma de pagamento cadastrada." %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

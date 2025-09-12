@@ -1,0 +1,799 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %} {# Para internacionalização #}
+
+{% block title %}{% trans "Detalhes da Ordem de Serviço" %} {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        /* --- NOVAS REGRAS PARA O LAYOUT COM SIDEBAR --- */
+
+        /* 1. Esconde o menu lateral (sidebar) */
+        nav.sidebar {
+            display: none !important;
+        }
+
+        /* 2. Faz a área de conteúdo principal ('home') ocupar 100% da página */
+        section.home {
+            position: static !important; /* Remove o posicionamento absoluto */
+            left: 0 !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: auto !important;
+        }
+        
+        /* 3. Esconde o cabeçalho da área de conteúdo (onde fica o menu do usuário) */
+        .home .header-content {
+            display: none !important;
+        }
+
+
+        /* --- REGRAS ANTIGAS QUE AINDA SÃO ÚTEIS --- */
+
+        /* Esconde botões de ação, modais, etc. */
+        .btn-group, .modal, .breadcrumb, .alert, td a, td form, .card-footer {
+            display: none !important;
+        }
+
+        /* Garante que o conteúdo ocupe todo o espaço */
+        .container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Remove sombras e bordas desnecessárias para economizar tinta */
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+            margin-bottom: 1cm; /* Adiciona um espaço para não cortar entre as páginas */
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Detalhes da OS" %}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">{% trans "OS" %} {{ os.numero_os }} - {{ os.titulo_servico }}</h1>
+        <div class="btn-group" role="group" aria-label="Ações da OS">
+            {% if perms.servico_campo.change_ordemservico and os.status == 'AGUARDANDO_PLANEJAMENTO' %}
+        <a href="{% url 'servico_campo:planejar_os' os.pk %}" class="btn btn-info btn-sm" title="Planejar OS">
+            <i class="bi bi-people"></i> Planejar Equipe
+        </a>
+    {# Botão "Editar Planejamento" - Aparece se JÁ FOI PLANEJADA (ou em execução, etc.) e tem permissão #}
+    {% elif perms.servico_campo.change_ordemservico and os.status != 'AGUARDANDO_PLANEJAMENTO' and os.status not in "CONCLUIDA,CANCELADA" %}
+        {# Condição mais explícita para "planejamento realizado": se possui tecnico, inicio planejado ou previsao de conclusao #}
+        {% if os.tecnico_responsavel or os.data_inicio_planejado or os.data_previsao_conclusao %}
+            <a href="{% url 'servico_campo:planejar_os' os.pk %}" class="btn btn-primary btn-sm" title="Editar Planejamento">
+                <i class="bi bi-calendar-range"></i> {% trans "Editar Planejamento" %}
+            </a>
+        {% endif %}
+    {% endif %}
+            <a href="{% url 'servico_campo:editar_os' os.pk %}" class="btn btn-warning btn-sm" title="{% trans 'Editar OS' %}"><i class="bi bi-pencil"></i> {% trans "Editar OS" %}</a>
+            <button id="print-button" class="btn btn-secondary btn-sm" title="{% trans 'Imprimir OS' %}"><i class="bi bi-printer"></i> {% trans "Imprimir" %}</button>
+            {% if os.status not in "CONCLUIDA,CANCELADA" %}
+                {% if pode_concluir %}
+                    {# Botão Ativo #}
+                    <a href="{% url 'servico_campo:encerrar_os' os.pk %}" class="btn btn-success btn-sm" title="Concluir e Encerrar OS">
+                        <i class="bi bi-check-circle"></i> Concluir OS
+                    </a>
+                {% else %}
+                    {# Botão Desabilitado com Dica #}
+                    <a href="#" class="btn btn-success btn-sm disabled" 
+                    title="Para concluir, é necessário: definir um técnico, registrar um relatório de campo e marcar um ponto." 
+                    aria-disabled="true" style="pointer-events: all !important;">
+                        <i class="bi bi-check-circle"></i> Concluir OS
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">{% trans "Informações da Ordem de Serviço" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>{% trans "Número da OS" %}:</strong>
+                    <p class="mb-0">{{ os.numero_os }}</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Status" %}:</strong>
+                    <div>
+                        {% if perms.servico_campo.change_ordemservico %}
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-sm badge bg-{{ os.status|lower }} dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {{ os.get_status_display }}
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    {% for status_value, status_display in status_choices_disponiveis %}
+                                        {% if os.status != status_value %}
+                                        <li>
+                                            <form action="{% url 'servico_campo:mudar_status_os' os.pk %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="novo_status" value="{{ status_value }}">
+                                                <button type="submit" class="dropdown-item">{{ status_display }}</button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% else %}
+                            <span class="badge bg-{{ os.status|lower }}">{{ os.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Data de Abertura" %}:</strong>
+                    <p class="mb-0">{{ os.data_abertura|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>Tipo de Serviço:</strong>
+                    <p class="mb-0">{{ os.tipo_manutencao.nome }}</p> {# ALTERADO AQUI #}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>{% trans "Cliente" %}:</strong>
+                    <p class="mb-0">{{ os.cliente.razao_social }}</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>{% trans "Equipamento" %}:</strong>
+                    <p class="mb-0">{{ os.equipamento.nome }} ({{ os.equipamento.modelo }})</p>
+                </div>
+                <div class="col-md-4">
+                    <strong>Responsável pela Obra:</strong>
+                    {% if os.tecnico_responsavel %}
+                        <p class="mb-0">{{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}</p>
+                    {% else %}
+                        <p class="mb-0 text-muted">Aguardando planejamento</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# NOVO: Linha para o Gestor Responsável #}
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>Gestor Responsável:</strong>
+                    {% if os.gestor_responsavel %}
+                        <p class="mb-0">{{ os.gestor_responsavel.get_full_name|default:os.gestor_responsavel.username }}</p>
+                    {% else %}
+                        <p class="mb-0 text-muted">Não atribuído</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>{% trans "Título do Serviço" %}:</strong>
+                    <p class="mb-0">{{ os.titulo_servico }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>{% trans "Descrição do Problema (Original da OS):" %}</strong> {# Renomeado o label #}
+                    <p class="mb-0">{{ os.descricao_problema|linebreaksbr }}</p>
+                </div>
+            </div>
+
+            {# Exibição estruturada de Problemas Identificados dos RELATÓRIOS (AGORA PROCESSADO NA VIEW) #}
+            {% if problemas_detalhados_os %}
+                <hr>
+                <div class="row mt-2 mb-3">
+                    <div class="col-12">
+                        <strong>{% trans "Problemas Identificados e Soluções (Relatórios):" %}</strong>
+                        <ul class="list-group list-group-flush">
+                            {% for problema_data in problemas_detalhados_os %}
+                                <li class="list-group-item py-2 ps-0">
+                                    <div>
+                                        <strong>Problema:</strong> 
+                                        {{ problema_data.categoria }}
+                                        {% if problema_data.subcategoria %}/ {{ problema_data.subcategoria }}{% endif %}
+                                        {% if problema_data.observacao %}: {{ problema_data.observacao }}{% endif %}
+                                    </div>
+                                    
+                                    {% if problema_data.solucao_aplicada %}
+                                        <div class="mt-1 ps-3 text-success"> <i class="bi bi-wrench-adjustable-circle-fill me-1"></i>
+                                            <strong>Solução:</strong>
+                                            {{ problema_data.solucao_aplicada|linebreaksbr }}
+                                        </div>
+                                    {% else %}
+                                        <div class="mt-1 ps-3 text-muted">
+                                            <i class="bi bi-hourglass-split me-1"></i>
+                                            <em>Nenhuma solução específica registrada para este problema.</em>
+                                        </div>
+                                    {% endif %}
+                                    </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong>{% trans "Problemas Identificados (Detalhes de Relatórios):" %}</strong>
+                        <p class="mb-0 text-muted">Nenhum problema detalhado registrado em nenhum relatório de campo.</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Bloco de Datas de Planejamento e Execução #}
+            <hr> {# Adicione uma linha horizontal para separar visualmente #}
+            <h5 class="card-title mb-3">{% trans "Planejamento e Execução" %}</h5>
+            <div class="row mb-3">
+                {# Coluna para Início Planejado #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Início Planejado" %}:</strong>
+                    <p class="mb-0">{% if os.data_inicio_planejado %}{{ os.data_inicio_planejado|date:"d/m/Y" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Início Real #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Início Real" %}:</strong>
+                    <p class="mb-0">{% if os.data_inicio_real %}{{ os.data_inicio_real|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Previsão de Conclusão #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Previsão de Conclusão" %}:</strong>
+                    <p class="mb-0">{% if os.data_previsao_conclusao %}{{ os.data_previsao_conclusao|date:"d/m/Y" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                {# Coluna para Conclusão Real #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Conclusão Real" %}:</strong>
+                    <p class="mb-0">{% if os.data_fechamento %}{{ os.data_fechamento|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+            </div>
+
+            {# Bloco para Observações Gerais (em uma linha separada para clareza) #}
+            <div class="row mb-3">
+                <div class="col-12 d-flex flex-column">
+                    <strong>{% trans "Observações Gerais" %}:</strong>
+                    <p class="mb-0">{{ os.observacoes_gerais|linebreaksbr|default:"Nenhuma." }}</p>
+                </div>
+            </div>
+
+            {% if os.equipe.all %}
+                <hr>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <strong>Equipe de Apoio:</strong>
+                        <ul class="list-group list-group-flush">
+                            {% for membro in os.equipe.all %}
+                                <li class="list-group-item py-1 ps-0">
+                                    {{ membro.usuario.get_full_name|default:membro.usuario.username }}
+                                    {% if membro.funcao %}
+                                        - {{ membro.funcao }} {# Exibe a função se ela existir #}
+                                    {% endif %}
+                                </li> 
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    {# Seção para Documentos #}
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Documentos Anexados" %}</h5>
+            <a href="{% url 'servico_campo:upload_documento_os' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-cloud-upload"></i> {% trans "Novo Documento" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if documentos_os %}
+                <ul class="list-group list-group-flush">
+                    {% for doc in documentos_os %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                <strong>{{ doc.titulo }}</strong> (<small>{{ doc.tipo_documento.nome }}</small>) {# ALTERADO AQUI #}
+                                <br>
+                                <small class="text-muted">Upload em {{ doc.data_upload|date:"d/m/Y H:i" }} por {{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}</small>
+                            </div>
+
+                            <div class="btn-group" role="group">
+                                <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-info" title="Ver Documento">Ver</a>
+                                
+                                <a href="{{ doc.arquivo.url }}" download class="btn btn-sm btn-outline-secondary" title="Baixar Documento">Baixar</a>
+                                
+                                {% if perms.servico_campo.delete_documentoos %}
+                                    <a href="{% url 'servico_campo:excluir_documento_os' doc.pk %}" class="btn btn-sm btn-outline-danger" title="Remover Documento">Remover</a>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    Nenhum documento anexado a esta Ordem de Serviço.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Relatórios de Campo #}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Relatórios de Campo" %}</h5>
+            
+            {# --- CORREÇÃO APLICADA AQUI --- #}
+            {% if is_team_member %}
+            <a href="{% url 'servico_campo:novo_relatorio_campo' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-journal-check"></i> {% trans "Novo Relatório" %}
+            </a>
+            {% endif %}
+            {# --- FIM DA CORREÇÃO --- #}
+
+        </div>
+        <div class="card-body">
+            {% if relatorios_campo %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Tipo" %}</th>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Responsável" %}</th>
+                                <th>{% trans "Atividades Principais" %}</th>
+                                <th>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for relatorio in relatorios_campo %}
+                                <tr>
+                                    <td>{{ relatorio.tipo_relatorio.nome }}</td>
+                                    <td>{{ relatorio.data_relatorio|date:"d/m/Y" }}</td>
+                                    <td>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
+                                    <td>
+                                        {{ relatorio.descricao_atividades|truncatechars:100 }}
+                                        {# Bloco de exibição das fotos do relatório #}
+                                        {% if relatorio.fotos.all %}
+                                            <div class="mt-2">
+                                                <strong>{% trans "Fotos" %}:</strong>
+                                                <div class="d-flex flex-wrap"> {# Flexbox para as miniaturas ficarem lado a lado #}
+                                                    {% for foto in relatorio.fotos.all %}
+                                                        <a href="{{ foto.imagem.url }}" target="_blank" class="me-2 mb-2" title="{{ foto.descricao|default:'Foto' }}">
+                                                            <img src="{{ foto.imagem.url }}" 
+                                                                alt="{{ foto.descricao|default:'Miniatura' }}" 
+                                                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                                        </a>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'servico_campo:editar_relatorio_campo' os.pk relatorio.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar Relatório' %}" style="border: 1px solid red;"><i class="bi bi-pencil"></i></a>
+                                        <a href="{% url 'servico_campo:upload_foto_relatorio' relatorio.pk %}" class="btn btn-sm btn-info" title="{% trans 'Anexar Foto' %}" style="border: 1px solid blue;"><i class="bi bi-image"></i></a>
+                                        <a href="{% url 'servico_campo:download_relatorio_pdf' relatorio.pk %}" class="btn btn-sm btn-dark" title="{% trans 'Baixar PDF' %}" style="border: 1px solid green;"><i class="bi bi-file-earmark-pdf"></i></a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhum relatório de campo registrado para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Registro de Ponto #}
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Registro de Ponto" %}</h5>
+            {% if is_team_member %} {# APENAS MOSTRA OS BOTÕES SE O USUÁRIO FOR MEMBRO DA EQUIPE #}
+                {% if not ponto_aberto %}
+                    <button type="button" class="btn btn-sm btn-light" id="btnMarcarPonto" data-bs-toggle="modal" data-bs-target="#confirmMarcarPontoModal">
+                        <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-sm btn-warning" id="btnEncerrarPonto" data-bs-toggle="modal" data-bs-target="#confirmEncerrarPontoModal" data-ponto-id="{{ ponto_aberto.pk }}">
+                        <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
+                    </button>
+                {% endif %}
+            {% else %}
+                {# Opcional: Mensagem para usuários que não são da equipe #}
+                <span class="text-muted small">{% trans "Você não faz parte da equipe desta OS para registrar ponto." %}</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if registros_ponto %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Responsável" %}</th>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Entrada" %}</th>
+                                <th>{% trans "Saída" %}</th>
+                                <th>{% trans "Duração" %}</th>
+                                <th>{% trans "Observações" %}</th>
+                                <th>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registro in registros_ponto %}
+                                <tr>
+                                    <td>{{ registro.tecnico.get_full_name|default:registro.tecnico.username }}</td>
+                                    <td>{{ registro.data|date:"d/m/Y" }}</td>
+                                    <td>{{ registro.hora_entrada|time:"H:i" }}</td>
+                                    <td>{% if registro.hora_saida %}{{ registro.hora_saida|time:"H:i" }}{% else %}<span class="badge bg-warning">{% trans "Em Aberto" %}</span>{% endif %}</td>
+                                    <td>{{ registro.duracao_formatada }}</td>
+                                    <td> {# NOVO CONTEÚDO PARA COLUNA "Observações" #}
+                                        {% if registro.observacoes_entrada %}
+                                            <small class="d-block">Entrada: {{ registro.observacoes_entrada|truncatechars:30 }}</small>
+                                        {% else %}
+                                            <small class="d-block">Entrada: N/A</small>
+                                        {% endif %}
+                                        {% if registro.hora_saida %} {# Só mostra observação de saída se o ponto foi encerrado #}
+                                            {% if registro.observacoes %}
+                                                <small class="d-block">Saída: {{ registro.observacoes|truncatechars:30 }}</small>
+                                            {% else %}
+                                                <small class="d-block">Saída: N/A</small>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td> {# Botões de Ação para Registro de Ponto #}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if registro.hora_saida %} {# Se o ponto já foi encerrado #}
+                                                <a href="{% url 'servico_campo:detalhe_registro_ponto' registro.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes do Ponto' %}">{% trans "Ver Detalhes" %}</a>
+                                                {# NOVO BOTÃO: Editar Registro de Ponto #}
+                                                {% if perms.servico_campo.change_registroponto %}
+                                                    <a href="{% url 'servico_campo:editar_registro_ponto' registro.pk %}" class="btn btn-warning" title="{% trans 'Editar Registro de Ponto' %}"><i class="bi bi-pencil"></i></a>
+                                                {% endif %}
+                                            {% else %} {# Se o ponto ainda está em aberto, apenas o botão de exclusão ou nenhum #}
+                                                {# Você pode manter um botão desabilitado ou simplesmente não exibir nada #}
+                                                <a href="#" class="btn btn-info disabled" title="{% trans 'Ponto em aberto, detalhes e edição disponíveis após encerramento' %}" style="pointer-events: none;"><i class="bi bi-eye"></i> {% trans "Ver/Editar" %}</a>
+                                            {% endif %}
+                                            {% if perms.servico_campo.delete_registroponto %}
+                                                <a href="{% url 'servico_campo:excluir_registro_ponto' registro.pk %}" class="btn btn-danger" title="{% trans 'Excluir Registro de Ponto' %}"><i class="bi bi-trash"></i></a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhum registro de ponto para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Seção para Despesas #}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{% trans "Relatório de Reembolso de Despesas" %}</h5>
+            <a href="{% url 'servico_campo:nova_despesa' os.pk %}" class="btn btn-sm btn-light">
+                <i class="bi bi-cash-coin"></i> {% trans "Registrar Nova Despesa" %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if os.despesas.all %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Data" %}</th>
+                                <th>{% trans "Descrição" %}</th>
+                                <th>{% trans "Categoria" %}</th>
+                                <th>{% trans "Local" %}</th>
+                                <th>{% trans "Valor (R$)" %}</th>
+                                <th>{% trans "Adiantamento?" %}</th>
+                                <th>{% trans "Comprovante" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Pago?" %}</th>
+                                <th>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despesa in os.despesas.all %}
+                                <tr>
+                                    <td>{{ despesa.data_despesa|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <p class="mb-0">{{ despesa.descricao }}</p> {# Descrição principal #}
+                                    </td>
+                                    <td>{{ despesa.categoria_despesa.nome|default:"N/A" }}</td>
+                                    <td>{{ despesa.local_despesa|default:"N/A" }}</td>
+                                    <td>{{ despesa.valor|floatformat:2 }}</td>
+                                    <td>
+                                        {% if despesa.is_adiantamento %}
+                                            <span class="badge bg-primary"><i class="bi bi-wallet-fill"></i> {% trans "Sim" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if despesa.comprovante_anexo %}
+                                            <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info">{% trans "Ver" %}</a>
+                                        {% else %}
+                                            {% trans "Nenhum" %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if despesa.status_aprovacao == 'APROVADA' %}
+                                            <span class="badge bg-success">{{ despesa.get_status_aprovacao_display }}</span>
+                                        {% elif despesa.status_aprovacao == 'REJEITADA' %}
+                                            <span class="badge bg-danger">{{ despesa.get_status_aprovacao_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ despesa.get_status_aprovacao_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td> {# NOVA CÉLULA PARA O STATUS DE PAGAMENTO #}
+                                        {% if despesa.paga %}
+                                            <span class="badge bg-success">{% trans "Sim" %}</span>
+                                            {% if despesa.data_pagamento %}
+                                                <br><small class="text-muted fst-italic">{{ despesa.data_pagamento|date:"d/m/Y" }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Não" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td> {# Botões de Ação para Despesa #}
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'servico_campo:detalhe_despesa' despesa.pk %}" class="btn btn-info" title="{% trans 'Ver Detalhes da Despesa' %}"><i class="bi bi-eye"></i></a>
+                                            <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn btn-warning" title="{% trans 'Editar Despesa' %}"><i class="bi bi-pencil"></i></a>
+                                            {% if perms.servico_campo.delete_despesa %}
+                                                <a href="{% url 'servico_campo:excluir_despesa' despesa.pk %}" class="btn btn-danger" title="{% trans 'Excluir Despesa' %}"><i class="bi bi-trash"></i></a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {# NOVA LINHA PARA O COMENTÁRIO #}
+                                {% if despesa.comentario_aprovacao %}
+                                <tr class="table-info-row">
+                                    <td colspan="10" class="pt-0 pb-1">
+                                        <small class="text-muted fst-italic ms-0">
+                                            {% trans "Comentário" %}: {{ despesa.comentario_aprovacao }}
+                                            {% if despesa.aprovado_por %} {# Adiciona o nome do aprovador/rejeitador #}
+                                                ({% trans "por" %} {{ despesa.aprovado_por.get_full_name|default:despesa.aprovado_por.username }}
+                                                {% if despesa.data_aprovacao %}{% trans "em" %} {{ despesa.data_aprovacao|date:"d/m/Y H:i" }}{% endif %})
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% trans "Nenhuma despesa registrada para esta Ordem de Serviço." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Modais para Marcar/Encerrar Ponto #}
+    {# servico_campo/ordem_servico_detail.html #}
+
+    <div class="modal fade" id="confirmMarcarPontoModal" tabindex="-1" aria-labelledby="confirmMarcarPontoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmMarcarPontoModalLabel">{% trans "Confirmar Marcação de Ponto de Entrada" %}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% trans "Deseja marcar seu ponto de entrada agora para esta Ordem de Serviço?" %}
+                    <form id="formMarcarPonto" method="post" action="{% url 'servico_campo:registrar_ponto' os.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3 mt-3" style="display: none;">
+                            <label for="id_localizacao_entrada" class="form-label">{% trans "Localização" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_entrada" name="localizacao" placeholder="{% trans 'Ex: Cliente A, Centro' %}"readonly>
+                            
+                            {# NOVO: Campo oculto para as coordenadas GPS #}
+                            <input type="hidden" id="id_gps_coords" name="gps_coords">
+                            <small class="form-text text-muted" id="locationStatus">{% trans "Aguardando localização..." %}</small>
+                        </div>
+                        {# NOVO CAMPO: Observações para a entrada #}
+                        <div class="mb-3">
+                            <label for="id_observacoes_entrada" class="form-label">{% trans "Observações (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_observacoes_entrada" name="observacoes_entrada" placeholder="{% trans 'Ex: Início do turno' %}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancelar" %}</button>
+                    <button type="submit" form="formMarcarPonto" class="btn btn-success">{% trans "Marcar Entrada" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmEncerrarPontoModal" tabindex="-1" aria-labelledby="confirmEncerrarPontoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="confirmEncerrarPontoModalLabel">{% trans "Confirmar Encerramento de Ponto de Saída" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% trans "Deseja encerrar seu ponto de saída agora para esta Ordem de Serviço?" %}
+                    <form id="formEncerrarPonto" method="post"> {# Action será definida via JS #}
+                        {% csrf_token %}
+                        <div class="mb-3 mt-3" style="display: none;">
+                            <label for="id_localizacao_saida_modal" class="form-label">{% trans "Localização de Saída (Opcional)" %}:</label>
+                            <input type="text" class="form-control" id="id_localizacao_saida_modal" name="localizacao_saida" placeholder="{% trans 'Ex: Saída do Cliente' %}"readonly>
+                            {# NOVO CAMPO OCULTO PARA COORDENADAS GPS DE SAÍDA #}
+                            <input type="hidden" id="id_gps_coords_saida" name="gps_coords_saida">
+                            <small class="form-text text-muted" id="locationStatusSaida">{% trans "Aguardando localização..." %}</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_observacoes_saida" class="form-label">{% trans "Observações (Opcional)" %}:</label>
+                            {# Certifique-se de que o name seja 'observacoes' para o RegistroPontoSaidaForm #}
+                            <input type="text" class="form-control" id="id_observacoes_saida" name="observacoes" placeholder="{% trans 'Ex: Término do dia' %}">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancelar" %}</button>
+                    <button type="submit" form="formEncerrarPonto" class="btn btn-warning">{% trans "Encerrar Saída" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Script para preencher a URL de encerramento do ponto no modal
+            const confirmEncerrarPontoModal = document.getElementById('confirmEncerrarPontoModal');
+            confirmEncerrarPontoModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget; // Botão que acionou o modal
+                const pontoId = button.getAttribute('data-ponto-id');
+                const formEncerrarPonto = document.getElementById('formEncerrarPonto');
+                // A URL para encerrar o ponto precisa do pk da OS e do pk do RegistroPonto
+                formEncerrarPonto.action = `/servico/ordens-servico/{{ os.pk }}/ponto/${pontoId}/encerrar/`;
+            });
+        });
+    </script>
+    <script>
+        // Script para o botão de Imprimir
+        document.getElementById('print-button').addEventListener('click', function() {
+            window.print();
+        });
+    </script>
+    {# NOVO SCRIPT PARA GEOLOCALIZAÇÃO DE ENTRADA (MANTIDO DO ANTERIOR) #}
+    <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const confirmMarcarPontoModal = document.getElementById('confirmMarcarPontoModal');
+                const gpsCoordsInput = document.getElementById('id_gps_coords');
+                const localizacaoInput = document.getElementById('id_localizacao_entrada');
+                const locationStatus = document.getElementById('locationStatus');
+
+                confirmMarcarPontoModal.addEventListener('show.bs.modal', function () {
+                    locationStatus.textContent = "{% trans 'Aguardando localização...' %}";
+                    gpsCoordsInput.value = '';
+                    localizacaoInput.value = '';
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            function(position) {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                const accuracy = position.coords.accuracy;
+                                gpsCoordsInput.value = `${lat},${lon},${accuracy}`;
+                                localizacaoInput.value = `GPS: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                                locationStatus.textContent = "{% trans 'Localização obtida com sucesso.' %}";
+                                locationStatus.classList.remove('text-danger', 'text-warning');
+                                locationStatus.classList.add('text-success');
+                            },
+                            function(error) {
+                                let errorMessage = "{% trans 'Erro ao obter localização.' %}";
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'PERMISSION_DENIED'; break;
+                                    case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'POSITION_UNAVAILABLE'; break;
+                                    case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. Ponto registrado sem GPS.' %}"; gpsCoordsInput.value = 'TIMEOUT'; break;
+                                    default: gpsCoordsInput.value = `ERROR:${error.code}`;
+                                }
+                                localizacaoInput.value = errorMessage;
+                                locationStatus.textContent = errorMessage;
+                                locationStatus.classList.remove('text-success', 'text-warning');
+                                locationStatus.classList.add('text-danger');
+                            },
+                            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                        );
+                    } else {
+                        locationStatus.textContent = "{% trans 'Geolocalização não suportada pelo seu navegador.' %}";
+                        locationStatus.classList.add('text-danger');
+                        gpsCoordsInput.value = 'NOT_SUPPORTED';
+                        localizacaoInput.value = "{% trans 'Geolocalização não suportada.' %}";
+                    }
+                });
+
+                confirmMarcarPontoModal.addEventListener('hidden.bs.modal', function () {
+                    gpsCoordsInput.value = '';
+                    localizacaoInput.value = '';
+                    locationStatus.textContent = "{% trans 'Aguardando localização...' %}";
+                    locationStatus.classList.remove('text-success', 'text-danger');
+                    locationStatus.classList.add('text-muted');
+                });
+            });
+        </script>
+
+    {# NOVO SCRIPT PARA GEOLOCALIZAÇÃO DE SAÍDA #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmEncerrarPontoModal = document.getElementById('confirmEncerrarPontoModal');
+            const gpsCoordsInputSaida = document.getElementById('id_gps_coords_saida');
+            const localizacaoSaidaInput = document.getElementById('id_localizacao_saida_modal');
+            const locationStatusSaida = document.getElementById('locationStatusSaida');
+
+            confirmEncerrarPontoModal.addEventListener('show.bs.modal', function () {
+                locationStatusSaida.textContent = "{% trans 'Aguardando localização...' %}";
+                gpsCoordsInputSaida.value = '';
+                localizacaoSaidaInput.value = '';
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const accuracy = position.coords.accuracy;
+                            gpsCoordsInputSaida.value = `${lat},${lon},${accuracy}`;
+                            localizacaoSaidaInput.value = `GPS: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                            locationStatusSaida.textContent = "{% trans 'Localização obtida com sucesso.' %}";
+                            locationStatusSaida.classList.remove('text-danger', 'text-warning');
+                            locationStatusSaida.classList.add('text-success');
+                        },
+                        function(error) {
+                            let errorMessage = "{% trans 'Erro ao obter localização.' %}";
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED: errorMessage = "{% trans 'Permissão de localização negada. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'PERMISSION_DENIED'; break;
+                                case error.POSITION_UNAVAILABLE: errorMessage = "{% trans 'Localização indisponível. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'POSITION_UNAVAILABLE'; break;
+                                case error.TIMEOUT: errorMessage = "{% trans 'Tempo esgotado para obter localização. O ponto será encerrado sem GPS.' %}"; gpsCoordsInputSaida.value = 'TIMEOUT'; break;
+                                default: gpsCoordsInputSaida.value = `ERROR:${error.code}`;
+                            }
+                            localizacaoSaidaInput.value = errorMessage;
+                            locationStatusSaida.textContent = errorMessage;
+                            locationStatusSaida.classList.remove('text-success', 'text-warning');
+                            locationStatusSaida.classList.add('text-danger');
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                } else {
+                    locationStatusSaida.textContent = "{% trans 'Geolocalização não suportada pelo seu navegador.' %}";
+                    locationStatusSaida.classList.add('text-danger');
+                    gpsCoordsInputSaida.value = 'NOT_SUPPORTED';
+                    localizacaoSaidaInput.value = "{% trans 'Geolocalização não suportada.' %}";
+                }
+            });
+
+            confirmEncerrarPontoModal.addEventListener('hidden.bs.modal', function () {
+                gpsCoordsInputSaida.value = '';
+                localizacaoSaidaInput.value = '';
+                locationStatusSaida.textContent = "{% trans 'Aguardando localização...' %}";
+                locationStatusSaida.classList.remove('text-success', 'text-danger');
+                locationStatusSaida.classList.add('text-muted');
+            });
+        });
+    </script>
+{% endblock %}

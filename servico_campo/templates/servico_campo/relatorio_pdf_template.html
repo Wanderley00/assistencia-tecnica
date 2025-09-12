@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ relatorio.tipo_relatorio.nome }} - OS {{ relatorio.ordem_servico.numero_os }}</title>
+    <style>
+        /* Estilos gerais */
+        @page {
+            size: A4;
+            margin: 2.0cm 1.5cm 2.5cm 1.5cm; /* Top, Right, Bottom, Left */
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+            color: #333;
+            -webkit-print-color-adjust: exact;
+        }
+        /* Cabeçalho fixo no topo de cada página */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 1.5cm;
+            right: 1.5cm;
+            width: auto;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px; /* Aumenta o espaço geral do cabeçalho */
+            text-align: center;
+            z-index: 1000;
+            background-color: white;
+        }
+        .header h1 {
+            font-size: 14pt;
+            color: #0056b3;
+            margin: 0;
+            padding: 0;
+            /* ADICIONE ESTA LINHA para criar espaço abaixo do título principal */
+            margin-bottom: 15px; 
+        }
+        .header p {
+            font-size: 8pt;
+            color: #777;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Conteúdo principal - precisa de padding-top para não ser coberto pelo header fixo */
+        .content {
+            padding-top: 2.0cm;
+        }
+        
+        .report-title {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #0056b3;
+            background-color: #e6f2ff;
+            padding: 10px 0;
+            border-radius: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            color: #555;
+            width: 25%;
+        }
+        /* Centraliza o texto nas células de dados, mas apenas em tabelas de dados */
+        td {
+            text-align: left; /* Padrão para texto */
+            width: 75%;
+        }
+        /* Ajuste para as tabelas do cabeçalho principal */
+        table.header-info th {
+            width: 20%;
+        }
+        table.header-info td {
+            width: 30%;
+            text-align: center; /* Centraliza informações do cabeçalho */
+        }
+        table.header-info th:nth-child(3), table.header-info td:nth-child(4) {
+             width: 20%;
+        }
+
+        /* Centraliza os dados numéricos na tabela de Horas e Deslocamento */
+        table.hours-km-info td {
+            text-align: center;
+        }
+
+        .section-title {
+        background-color: #e0e0e0;
+        padding: 8px 10px; /* <<< Mantenha padding-top e padding-right */
+        padding-left: 15px; /* <<< ADICIONE/ALTERE ESTA LINHA para um valor maior */
+        font-size: 11pt;
+        font-weight: bold;
+        margin-top: 25px;
+        margin-bottom: 0px;
+        border-left: 5px solid #0056b3;
+        }
+        
+        /* Regra geral para parágrafos - ajuste para o que for necessário globalmente */
+        /* NOVA CLASSE: Para o conteúdo de texto após os títulos de seção */
+        .section-content {
+            margin: 0; /* Zera todas as margens */
+            padding: 10px 10px 10px 10px; /* <<< ALTEREI AQUI: top, right, bottom, left */
+            /* Padding top de 5px para descolar do título da seção.
+            Padding left de 10px para dar um respiro lateral ao texto.
+            Padding bottom de 10px para manter o espaço abaixo do conteúdo. */
+            text-align: left; /* Garante que o texto esteja alinhado à esquerda */
+        }
+
+        /* Regra geral para parágrafos, se não houver outra regra mais específica */
+        p {
+            margin: 0; /* Zera margens padrão */
+            padding: 0; /* Zera padding padrão */
+            text-align: left;
+        }
+        .signature-area {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        .signature-box {
+            width: 45%;
+            text-align: center;
+            padding-top: 5px;
+            margin: 0 5px;
+            position: relative;
+        }
+        .signature-line {
+            border-top: 1px dashed #777;
+            margin-top: 40px;
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
+        .signature-box img {
+            max-width: 150px;
+            max-height: 60px;
+            object-fit: contain;
+            margin-bottom: 5px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .signature-box p {
+            font-size: 8.5pt;
+            margin: 0;
+            padding: 0;
+            position: relative;
+            z-index: 1;
+            margin-top: 5px;
+        }
+        /* Ajuste específico para o texto "Assinatura digital não disponível ou inválida." */
+        .signature-box p.error-sig-load {
+            margin-top: 45px;
+        }
+
+        img {
+            max-width: 100%; /* Garante que a imagem nunca ultrapasse a largura da página */
+            max-height: 250px; /* Impõe uma altura máxima para evitar imagens gigantes */
+            height: auto;      /* Mantém a proporção da imagem */
+            width: auto;       /* Mantém a proporção da imagem */
+            object-fit: contain; /* Garante que a imagem inteira apareça, sem cortar */
+            page-break-inside: avoid; /* Tenta evitar que a imagem seja cortada entre duas páginas */
+        }
+
+        .photo-table {
+            width: 100%;
+            border-spacing: 10px; /* Espaçamento entre as células das fotos */
+            border-collapse: separate; /* Necessário para o border-spacing funcionar */
+            margin-top: 15px;
+            page-break-inside: auto; /* Permite que a tabela quebre entre as linhas se necessário */
+        }
+        .photo-cell {
+            width: 48%; /* Cada célula ocupa quase metade da tabela */
+            text-align: center; /* Centraliza todo o conteúdo (imagem e texto) horizontalmente */
+            vertical-align: top;
+            border: 1px solid #ddd; /* Borda cinza clara à volta do contentor */
+            padding: 8px;
+            page-break-inside: avoid; /* Tenta manter a célula inteira (foto + descrição) na mesma página */
+        }
+        .photo-cell img {
+            display: block; /* Essencial para que as margens automáticas funcionem */
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 8px; /* Espaço entre a foto e a descrição */
+            max-width: 100%;    /* A imagem nunca ultrapassará a largura da célula */
+            max-height: 250px;  /* Altura máxima para padronizar as fotos */
+            object-fit: contain;/* Garante que a imagem inteira apareça, sem cortar, mantendo a proporção */
+        }
+        .photo-cell p.photo-description {
+            font-size: 8pt;
+            color: #555;
+            margin: 0;
+            padding: 0;
+            text-align: center; /* Garante que a descrição também está centralizada */
+        }
+
+        /* Rodapé manual */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 1.5cm;
+            right: 1.5cm;
+            width: auto;
+            text-align: center;
+            font-size: 8pt;
+            color: #555;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>P3 SMART SOLUTIONS</h1>
+        <p>Relatórios de Serviço de Campo e Assistência Técnica</p>
+    </div>
+
+    <div class="content">
+        <div class="report-title">{{ relatorio.tipo_relatorio.nome }}</div>
+        
+        <table class="header-info">
+            <tr>
+                <th>Ordem de Serviço Nº:</th>
+                <td>{{ relatorio.ordem_servico.numero_os }}</td>
+                <th>Data do Relatório:</th>
+                <td>{{ relatorio.data_relatorio|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Cliente:</th>
+                <td colspan="3">{{ relatorio.ordem_servico.cliente.razao_social }}</td>
+            </tr>
+            
+            <tr>
+                <th>CNPJ/CPF:</th>
+                <td colspan="3">{{ relatorio.ordem_servico.cliente.cnpj_cpf }}</td>
+            </tr>
+            <tr>
+                <th>Endereço do Cliente:</th>
+                <td colspan="3">
+                    {{ relatorio.ordem_servico.cliente.endereco }}, {{ relatorio.ordem_servico.cliente.cidade }} - {{ relatorio.ordem_servico.cliente.estado }}
+                </td>
+            </tr>
+            <tr>
+                <th>Contato Principal:</th>
+                <td>{{ relatorio.ordem_servico.cliente.contato_principal }}</td>
+                <th>Telefone do Contato:</th>
+                <td>{{ relatorio.ordem_servico.cliente.telefone_contato|default:"N/A" }}</td>
+            </tr>
+            <tr>
+                <th>Local do Serviço:</th>
+                <td colspan="3">{{ relatorio.local_servico|default:relatorio.ordem_servico.cliente.endereco }}</td>
+            </tr>
+            <tr>
+                <th>Equipamento:</th>
+                <td colspan="3">{{ relatorio.ordem_servico.equipamento.nome }} ({{ relatorio.ordem_servico.equipamento.modelo }})</td>
+            </tr>
+            <tr>
+                <th>Executante:</th>
+                <td colspan="3">{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</td>
+            </tr>
+            {% if relatorio.ordem_servico.equipe.all %}
+            <tr>
+                <th>Equipe de Apoio:</th>
+                <td colspan="3">
+                    {% for membro in relatorio.ordem_servico.equipe.all %}
+                        {# Esta condição evita que o nome do executante apareça duas vezes #}
+                        {% if membro.usuario != relatorio.tecnico %}
+                            {{ membro.usuario.get_full_name|default:membro.usuario.username }}<br>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endif %}
+            {% if relatorio.ordem_servico.tecnico_responsavel and relatorio.ordem_servico.tecnico_responsavel != relatorio.tecnico %}
+            <tr>
+                <th>Responsável OS:</th>
+                <td colspan="3">{{ relatorio.ordem_servico.tecnico_responsavel.get_full_name|default:relatorio.ordem_servico.tecnico_responsavel.username }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <div class="section-title">Problemas Identificados e Soluções Aplicadas</div>
+        {% if relatorio.problemas_identificados_detalhes.all %}
+            <div class="section-content">
+                <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+                    {% for problema in relatorio.problemas_identificados_detalhes.all %}
+                    <li style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <div>
+                            <strong>Problema:</strong>
+                            {{ problema.categoria.nome }}{% if problema.subcategoria %}/{{ problema.subcategoria.nome }}{% endif %}
+                            {% if problema.observacao %}: {{ problema.observacao }}{% endif %}
+                        </div>
+                        
+                        {# --- INÍCIO DA CORREÇÃO --- #}
+                        {# Agora exibimos a solução específica para este problema #}
+                        <div style="margin-top: 5px; padding-left: 15px; color: #28a745;">
+                            <strong>Solução:</strong>
+                            {{ problema.solucao_aplicada|linebreaksbr|default:"Nenhuma solução específica registrada." }}
+                        </div>
+                        {# --- FIM DA CORREÇÃO --- #}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p class="section-content">Nenhum problema detalhado registrado.</p>
+        {% endif %}
+
+        {% if relatorio.material_utilizado %}
+        <div class="section-title">Materiais/Peças Utilizadas</div>
+        <p class="section-content">{{ relatorio.material_utilizado|linebreaksbr }}</p>
+        {% endif %}
+
+        <div class="section-title">Horas e Deslocamento por Técnico</div>
+        {% if horas_por_tecnico_list %}
+            <table class="hours-km-info">
+                <thead>
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td style="width: 40%; text-align: left; border: 1px solid #ccc; padding: 6px 8px;">Técnico</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Normais</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Extras (50%)</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">Horas Extras (100%)</td>
+                        <td style="text-align: center; border: 1px solid #ccc; padding: 6px 8px;">KM Rodado</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in horas_por_tecnico_list %}
+                        <tr>
+                            <td style="text-align: left;">{{ item.tecnico.get_full_name|default:item.tecnico.username }}</td>
+                            <td>{{ item.horas_normais_hhmm }}</td>
+                            <td>{{ item.horas_extras_60_hhmm }}</td>
+                            <td>{{ item.horas_extras_100_hhmm }}</td>
+                            <td>{{ item.km_rodado|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="section-content">Nenhum registro de horas encontrado para este relatório.</p>
+        {% endif %}
+
+        {% if relatorio.observacoes_adicionais %}
+        <div class="section-title">Observações Adicionais</div>
+        <p class="section-content">{{ relatorio.observacoes_adicionais|linebreaksbr }}</p>
+        {% endif %}
+        
+        {% if relatorio.fotos.all %}
+        <div class="section-title">Fotos do Relatório</div>
+        
+        <table class="photo-table">
+            <tr> 
+            {% for foto in relatorio.fotos.all %}
+                
+                <td class="photo-cell">
+                    <img src="{{ foto.imagem.url }}" alt="{{ foto.descricao|default:'Foto' }}">
+                    
+                    {% if foto.descricao %}
+                        <p class="photo-description">{{ foto.descricao }}</p>
+                    {% endif %}
+                </td>
+
+                {# A cada 2 fotos, fecha a linha atual (</tr>) e abre uma nova (<tr>) #}
+                {% if forloop.counter|divisibleby:2 and not forloop.last %}
+                    </tr><tr>
+                {% endif %}
+
+            {% endfor %}
+            </tr> 
+        </table>
+        {% endif %}
+
+        <div class="section-title">Assinaturas</div>
+        
+        <div class="signature-area">
+            <div class="signature-box">
+                {% comment %} 
+                Verificamos diretamente o campo 'assinatura_executante' do objeto 'relatorio'.
+                Se ele tiver conteúdo (o texto Base64), usamos como 'src' da imagem.
+                {% endcomment %}
+                <div class="signature-box">
+                    {% if relatorio.assinatura_executante %}
+                        <img src="{{ relatorio.assinatura_executante.url }}" alt="Assinatura do Executante">
+                    {% else %}
+                        <p style="margin-top: 45px;">______________________________</p>
+                {% endif %}
+                <div class="signature-line"></div>
+                <p style="margin-top: 5px;"><strong>{{ relatorio.tecnico.get_full_name|default:relatorio.tecnico.username }}</strong></p>
+                <p>Executante</p>
+            </div>
+
+            <div class="signature-box">
+                {% if relatorio.assinatura_cliente %}
+                    <img src="{{ relatorio.assinatura_cliente.url }}" alt="Assinatura do Cliente">
+                {% else %}
+                    <p style="margin-top: 45px;">______________________________</p>
+                {% endif %}
+                <div class="signature-line"></div>
+                <p style="margin-top: 5px;"><strong>Assinatura do Cliente</strong></p>
+                <p>Nome Legível: ___________________________________________________________</p>
+            </div>
+        </div>
+
+</body>
+</html>

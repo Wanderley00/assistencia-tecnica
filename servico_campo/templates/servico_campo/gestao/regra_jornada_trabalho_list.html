@@ -1,0 +1,75 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">{{ form_title }}</h1>
+        <a href="{% url 'servico_campo:nova_regra_jornada' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> {% trans "Adicionar Regra" %}
+        </a>
+    </div>
+
+    <div class="card card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "Nome da Regra" %}</th>
+                        <th>{% trans "Horas Normais Diárias" %}</th>
+                        <th>{% trans "Jornada Normal" %}</th>
+                        <th>{% trans "Início Extra 50%" %}</th>
+                        <th>{% trans "Fim Extra 50%" %}</th>
+                        <th>{% trans "Início Extra 100%" %}</th>
+                        <th>{% trans "Sábado 100%?" %}</th>
+                        <th>{% trans "Domingo 100%?" %}</th>
+                        <th>{% trans "Padrão?" %}</th>
+                        <th>{% trans "Ações" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for regra in regras %}
+                    <tr>
+                        <td>{{ regra.nome }}</td>
+                        <td>{{ regra.horas_normais_diarias|floatformat:2 }}h</td>
+                        <td>{{ regra.inicio_jornada_normal|time:"H:i" }} - {{ regra.fim_jornada_normal|time:"H:i" }}</td>
+                        <td>{{ regra.inicio_extra_60|time:"H:i" }}</td>
+                        <td>{{ regra.fim_extra_60|time:"H:i" }}</td>
+                        <td>{{ regra.inicio_extra_100|time:"H:i" }}</td>
+                        <td>
+                            {% if regra.considerar_sabado_100_extra %}
+                                <span class="badge bg-success">{% trans "Sim" %}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{% trans "Não" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if regra.considerar_domingo_100_extra %}
+                                <span class="badge bg-success">{% trans "Sim" %}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{% trans "Não" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if regra.is_default %}
+                                <span class="badge bg-primary">{% trans "Sim" %}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{% trans "Não" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'servico_campo:editar_regra_jornada' regra.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar' %}"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'servico_campo:excluir_regra_jornada' regra.pk %}" class="btn btn-sm btn-danger" title="{% trans 'Excluir' %}"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center">{% trans "Nenhuma regra de jornada de trabalho cadastrada." %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

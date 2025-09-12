@@ -1,0 +1,49 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+{% block title %}Gestão de Equipamentos{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">Gestão de Equipamentos</h1>
+        <div class="d-flex flex-column flex-sm-row gap-2">
+            {% if perms.servico_campo.add_equipamento %}
+            <a href="{% url 'servico_campo:cadastro_massa_equipamentos' %}" class="btn btn-secondary me-2">
+                <i class="bi bi-cloud-arrow-up"></i> {% trans "Cadastro em Massa" %}
+            </a>
+            <a href="{% url 'servico_campo:novo_equipamento' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> {% trans "Adicionar Equipamento" %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Nome do Equipamento</th>
+                        <th>Modelo</th>
+                        <th>Nº de Série</th>
+                        <th>Cliente Associado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipamento in equipamentos %}
+                    <tr>
+                        <td>{{ equipamento.nome }}</td>
+                        <td>{{ equipamento.modelo|default:"N/A" }}</td>
+                        <td>{{ equipamento.numero_serie|default:"N/A" }}</td>
+                        <td><a href="{% url 'servico_campo:detalhe_cliente' equipamento.cliente.pk %}">{{ equipamento.cliente.razao_social }}</a></td>
+                        <td>
+                            <a href="{% url 'servico_campo:editar_equipamento' equipamento.pk %}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'servico_campo:excluir_equipamento' equipamento.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

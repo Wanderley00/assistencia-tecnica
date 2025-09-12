@@ -1,0 +1,618 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ form_action_title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ form_action_title }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .form-header {
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .form-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .form-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- BREADCRUMB MODERNIZADO --- */
+        .modern-breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .modern-breadcrumb .breadcrumb {
+            margin: 0;
+            background: none;
+            font-size: 0.9rem;
+        }
+
+        .modern-breadcrumb .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .modern-breadcrumb .breadcrumb-item a:hover {
+            color: white;
+        }
+
+        .modern-breadcrumb .breadcrumb-item.active {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* --- SEÇÕES DO FORMULÁRIO --- */
+        .form-body {
+            padding: 40px;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--section-accent, linear-gradient(135deg, #009AD1, #00628A));
+            border-radius: 20px 20px 0 0;
+        }
+
+        .form-section.titular { --section-accent: linear-gradient(135deg, #28a745, #20c997); }
+        .form-section.bancarios { --section-accent: linear-gradient(135deg, #009AD1, #00628A); }
+        .form-section.pix { --section-accent: linear-gradient(135deg, #ffc107, #fd7e14); }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            background: var(--section-accent, linear-gradient(135deg, #009AD1, #00628A));
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+        }
+
+        /* --- CAMPOS DO FORMULÁRIO --- */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control,
+        .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #009AD1;
+            box-shadow: 0 0 0 0.2rem rgba(0, 154, 209, 0.15);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control:hover:not(:focus),
+        .form-select:hover:not(:focus) {
+            border-color: #009AD1;
+            background: white;
+        }
+
+        /* --- MENSAGENS DE ERRO E AJUDA --- */
+        .text-danger {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .form-text {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .alert {
+            border-radius: 15px;
+            border: none;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* --- BOTÕES MODERNIZADOS --- */
+        .btn-group-modern {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .btn-modern {
+            padding: 14px 28px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            min-width: 140px;
+            justify-content: center;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .btn-success-modern {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-secondary-modern {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        /* --- GRID RESPONSIVO --- */
+        .form-row {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-row.two-columns {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .form-row.three-columns {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .form-row.mixed-columns {
+            grid-template-columns: 1fr 2fr 1fr;
+        }
+
+        .form-row.pix-columns {
+            grid-template-columns: 1fr 2fr;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 20px;
+                border-radius: 15px;
+            }
+
+            .form-header {
+                padding: 20px;
+            }
+
+            .form-title {
+                font-size: 1.8rem;
+            }
+
+            .form-body {
+                padding: 20px;
+            }
+
+            .form-section {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .form-row.two-columns,
+            .form-row.three-columns,
+            .form-row.mixed-columns,
+            .form-row.pix-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group-modern {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-modern {
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .form-title {
+                font-size: 1.6rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="form-container">
+            <!-- Header Modernizado -->
+            <div class="form-header">
+                <h1 class="form-title">
+                    <i class="bi bi-bank"></i>
+                    {{ form_action_title }}
+                </h1>
+                <p class="form-subtitle">
+                    Configure seus dados bancários para recebimento de reembolsos e pagamentos
+                </p>
+            </div>
+
+            <!-- Corpo do Formulário -->
+            <div class="form-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger fade-in-up" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Erro de validação:</strong>
+                            {% for error in form.non_field_errors %}
+                                <br>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Seção: Dados do Titular -->
+                    <div class="form-section titular fade-in-up">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <h5 class="section-title">{% trans "Dados do Titular da Conta" %}</h5>
+                        </div>
+                        
+                        <div class="form-row two-columns">
+                            <div class="form-group">
+                                <label for="{{ form.cpf_titular_conta.id_for_label }}" class="form-label">
+                                    {{ form.cpf_titular_conta.label }}
+                                </label>
+                                {{ form.cpf_titular_conta }}
+                                {% if form.cpf_titular_conta.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.cpf_titular_conta.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.cpf_titular_conta.help_text %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ form.cpf_titular_conta.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.nome_titular_conta.id_for_label }}" class="form-label">
+                                    {{ form.nome_titular_conta.label }}
+                                </label>
+                                {{ form.nome_titular_conta }}
+                                {% if form.nome_titular_conta.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.nome_titular_conta.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção: Dados Bancários -->
+                    <div class="form-section bancarios fade-in-up">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-bank2"></i>
+                            </div>
+                            <h5 class="section-title">{% trans "Dados Bancários" %}</h5>
+                        </div>
+                        
+                        <div class="form-row three-columns">
+                            <div class="form-group">
+                                <label for="{{ form.banco_codigo.id_for_label }}" class="form-label">
+                                    {{ form.banco_codigo.label }}
+                                </label>
+                                {{ form.banco_codigo }}
+                                {% if form.banco_codigo.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.banco_codigo.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.banco_codigo.help_text %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ form.banco_codigo.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.banco_nome.id_for_label }}" class="form-label">
+                                    {{ form.banco_nome.label }}
+                                </label>
+                                {{ form.banco_nome }}
+                                {% if form.banco_nome.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.banco_nome.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.tipo_conta.id_for_label }}" class="form-label">
+                                    {{ form.tipo_conta.label }}
+                                </label>
+                                {{ form.tipo_conta }}
+                                {% if form.tipo_conta.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.tipo_conta.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-row mixed-columns">
+                            <div class="form-group">
+                                <label for="{{ form.agencia.id_for_label }}" class="form-label">
+                                    {{ form.agencia.label }}
+                                </label>
+                                {{ form.agencia }}
+                                {% if form.agencia.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.agencia.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.agencia.help_text %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ form.agencia.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.numero_conta.id_for_label }}" class="form-label">
+                                    {{ form.numero_conta.label }}
+                                </label>
+                                {{ form.numero_conta }}
+                                {% if form.numero_conta.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.numero_conta.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.digito_conta.id_for_label }}" class="form-label">
+                                    {{ form.digito_conta.label }}
+                                </label>
+                                {{ form.digito_conta }}
+                                {% if form.digito_conta.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.digito_conta.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.digito_conta.help_text %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ form.digito_conta.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seção: Dados PIX -->
+                    <div class="form-section pix fade-in-up">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i class="bi bi-qr-code"></i>
+                            </div>
+                            <h5 class="section-title">{% trans "Dados PIX" %}</h5>
+                        </div>
+                        
+                        <div class="form-row pix-columns">
+                            <div class="form-group">
+                                <label for="{{ form.chave_pix_tipo.id_for_label }}" class="form-label">
+                                    {{ form.chave_pix_tipo.label }}
+                                </label>
+                                {{ form.chave_pix_tipo }}
+                                {% if form.chave_pix_tipo.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.chave_pix_tipo.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.chave_pix_valor.id_for_label }}" class="form-label">
+                                    {{ form.chave_pix_valor.label }}
+                                </label>
+                                {{ form.chave_pix_valor }}
+                                {% if form.chave_pix_valor.errors %}
+                                    <div class="text-danger">
+                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                        {{ form.chave_pix_valor.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.chave_pix_valor.help_text %}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        {{ form.chave_pix_valor.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="btn-group-modern fade-in-up">
+                        <button type="submit" class="btn-modern btn-success-modern">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {% trans "Salvar Dados Bancários" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animação de entrada para os elementos
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Aplica animação aos elementos
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Efeito de foco suave nos campos
+        const formInputs = document.querySelectorAll('.form-control, .form-select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+
+        // Validação visual em tempo real
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    this.style.borderColor = '#28a745';
+                } else {
+                    this.style.borderColor = '#e9ecef';
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+{% endblock %}

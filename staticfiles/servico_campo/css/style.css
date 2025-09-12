@@ -1,0 +1,202 @@
+:root {
+    /* Cores da sua marca */
+    --bs-primary: #0056b3; /* Um azul mais escuro, exemplo para P3 Smart Solutions */
+    --bs-secondary: #6c757d;
+    --bs-success: #28a745;
+    --bs-info: #17a2b8;
+    --bs-warning: #ffc107;
+    --bs-danger: #dc3545;
+    --bs-light: #f8f9fa;
+    --bs-dark: #343a40;
+    --bs-purple: #6f42c1; /* Adicionado para Pendente Aprovação */
+
+
+    /* Tipografia */
+    --bs-body-font-family: "Roboto", sans-serif; /* Exemplo de fonte do Google Fonts */
+    --bs-heading-font-family: "Montserrat", sans-serif; /* Outra fonte para títulos */
+}
+
+/* Sobrescrever variáveis do Bootstrap (se estiver usando Sass) */
+/* Para CSS puro, você define as classes diretamente */
+
+/* Estilos gerais */
+body {
+    background-color: #f0f2f5; /* Um cinza claro para o fundo */
+    font-family: var(--bs-body-font-family);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--bs-heading-font-family);
+    color: var(--bs-dark);
+}
+
+/* Ajustes na barra de navegação */
+.navbar-dark.bg-dark {
+    background-color: var(--bs-primary) !important; /* Usar sua cor primária */
+}
+.navbar-brand, .nav-link {
+    color: white !important;
+}
+.navbar-toggler-icon {
+    filter: invert(1); /* Deixa o ícone do menu responsivo branco */
+}
+
+/* Cards */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Sombra suave */
+}
+.card-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+/* Botões */
+.btn-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+.btn-primary:hover {
+    background-color: darken(var(--bs-primary), 10%); /* Mais escuro no hover */
+    border-color: darken(var(--bs-primary), 10%);
+}
+
+/* Badges de status */
+.badge.bg-planejada { background-color: var(--bs-info) !important; }
+.badge.bg-em_execucao { background-color: var(--bs-warning) !important; }
+.badge.bg-concluida { background-color: var(--bs-success) !important; }
+.badge.bg-cancelada { background-color: var(--bs-danger) !important; }
+.badge.bg-aguardando_planejamento { background-color: #495057 !important; color: #fff !important; } /* Um cinza mais escuro (var(--bs-dark) ou similar) */
+.badge.bg-pendente_aprovacao { background-color: var(--bs-purple) !important; } /* Cor roxa */
+.badge.bg-secondary { background-color: var(--bs-secondary) !important; } /* Para "Aguardando Planejamento" */
+
+
+.header-content .user-menu {
+    margin-left: auto;
+}
+
+/* No seu servico_campo/static/servico_campo/css/style.css */
+
+/* REMOVIDO: Regras de 'fill' para 'rect' de status, pois a barra sera colorida por tecnico */
+/* As cores da barra são definidas diretamente no 'style' do JSON agora. */
+
+
+/* Cores para o TEXTO (rótulo) da OS dentro das barras (text) - ESTAS SÃO MANTIDAS! */
+/* Ajustadas para garantir boa legibilidade com as novas cores de barra */
+.google-visualization-gantt-bar-status-concluida text { fill: #fff !important; } 
+.google-visualization-gantt-bar-status-em_execucao text { fill: #000 !important; } 
+.google-visualization-gantt-bar-status-planejada text { fill: #fff !important; } 
+.google-visualization-gantt-bar-status-aguardando_planejamento text { fill: #fff !important; } 
+.google-visualization-gantt-bar-status-cancelada text { fill: #fff !important; } 
+.google-visualization-gantt-bar-status-pendente_aprovacao text { fill: #fff !important; }
+
+/* servico_campo/static/servico_campo/css/style.css */
+
+/* ... (Mantenha seu CSS existente) ... */
+
+/* Classes de Status para DHTMLX Gantt */
+/* As cores devem ser consistentes com o status_color_map no views.py */
+
+.gantt_task_line.status-concluida {
+    background-color: #28a745; /* Verde */
+    border-color: #28a745;
+}
+.gantt_task_line.status-em-execucao {
+    background-color: #ffc107; /* Amarelo */
+    border-color: #ffc107;
+    color: #333; /* Texto escuro para contraste no amarelo */
+}
+.gantt_task_line.status-planejada {
+    background-color: #17a2b8; /* Azul claro */
+    border-color: #17a2b8;
+}
+.gantt_task_line.status-aguardando-planejamento {
+    background-color: #6c757d; /* Cinza */
+    border-color: #6c757d;
+}
+.gantt_task_line.status-cancelada {
+    background-color: #dc3545; /* Vermelho */
+    border-color: #dc3545;
+}
+.gantt_task_line.status-pendente-aprovacao {
+    background-color: #6f42c1; /* Roxo */
+    border-color: #6f42c1;
+}
+
+/* Classes para bordas de atraso/urgência (para DHTMLX Gantt) */
+.gantt_task_line.border-atrasada {
+    border: 3px solid #dc3545 !important; /* Vermelho forte */
+    box-sizing: border-box;
+}
+.gantt_task_line.border-urgente {
+    border: 2px solid #fd7e14 !important; /* Laranja forte */
+    box-sizing: border-box;
+}
+
+/* Estilo para o texto do status dentro do tooltip customizado */
+.dhtmlx-gantt-tooltip-status {
+    font-weight: bold;
+}
+
+/* Opcional: Cores de fundo para as raias de recursos.
+   Essas classes .gantt_grid_row_cell[data-resource-id="..."]
+   são mapeadas do `resource_map` no views.py (resource_1, resource_2, etc.)
+   Você pode adicionar mais conforme a quantidade de técnicos.
+*/
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_1"] { background-color: #e3f2fd; } /* Azul muito claro */
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_2"] { background-color: #f3e5f5; } /* Lilás muito claro */
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_3"] { background-color: #e8f5e8; } /* Verde muito claro */
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_4"] { background-color: #fff3e0; } /* Amarelo muito claro */
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_5"] { background-color: #fce4ec; } /* Rosa muito claro */
+.gantt_grid_data .gantt_grid_row_cell[data-resource-id="resource_6"] { background-color: #f1f8e9; } /* Outro verde claro */
+/* ... adicione mais conforme necessário ... */
+
+/* Ajuste a largura mínima do contêiner do gráfico para garantir espaço */
+#gantt_here { /* O ID mudou de gantt_chart_div para gantt_here */
+    width: 100%;
+    height: 600px;
+    min-height: 400px;
+    min-width: 1200px; /* Aumentado para dar mais espaço, ajuste conforme sua tela */
+    overflow-x: auto; /* Permite scroll horizontal se o conteúdo for maior */
+}
+
+.formset-row .col-md-3,
+.formset-row .col-md-2,
+.formset-row .col-md-1 { /* Aplica a todas as colunas que contêm campos do formset */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Alinha o conteúdo ao topo da coluna */
+    /* Adiciona um padding-bottom para dar espaço entre as linhas, se necessário */
+    padding-bottom: 10px; /* Ajuste este valor conforme o espaçamento desejado */
+    height: auto; /* Permite que a coluna se adapte ao conteúdo */
+}
+
+.formset-row label.form-label {
+    margin-bottom: 5px; /* Margem entre a label e o input */
+    line-height: 1.2; /* Garante que a altura da label não seja muito grande */
+}
+
+.formset-row .form-control {
+    flex-grow: 1; /* Permite que o input se estique para ocupar o espaço restante (se a label for curta) */
+    width: 100%; /* Garante que o input preencha a largura da coluna */
+}
+
+/* Estilo para o novo container do texto de ajuda */
+.formset-row .field-help-text {
+    font-size: 0.8em; /* Fonte menor para o texto de ajuda */
+    color: var(--text-color); /* Usa a cor padrão do texto para consistência */
+    margin-top: auto; /* Empurra o texto de ajuda para o final da coluna flexbox */
+    line-height: 1.2; /* Ajusta o espaçamento entre linhas */
+    padding-top: 5px; /* Espaçamento entre o input e o texto de ajuda */
+}
+
+/* Ajuste específico para o botão de remover/checkbox na última coluna */
+.formset-row .col-md-1.justify-content-center { /* Usando o seletor mais específico */
+    align-items: flex-end; /* Alinha o conteúdo (botão/checkbox) à base da coluna */
+    padding-bottom: 10px; /* Alinha com o padding-bottom das outras colunas */
+}
+
+/* Seletor para o input.form-check-input que desabilita/habilita */
+.formset-row .form-check-input.bg-light { /* Classe adicionada via JS */
+    background-color: var(--bs-light) !important; /* Cor de fundo quando desabilitado */
+}

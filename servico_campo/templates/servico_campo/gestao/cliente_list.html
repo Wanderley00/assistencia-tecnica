@@ -1,0 +1,48 @@
+{% extends 'servico_campo/base.html' %}
+{% block title %}Gestão de Clientes{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">Gestão de Clientes</h1>
+        <div class="d-flex flex-column flex-sm-row gap-2">
+            {% if perms.servico_campo.add_cliente %}
+            <a href="{% url 'servico_campo:cadastro_massa_clientes' %}" class="btn btn-secondary me-2">
+                <i class="bi bi-cloud-arrow-up"></i> Cadastro em Massa
+            </a>
+            <a href="{% url 'servico_campo:novo_cliente' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Adicionar Cliente
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Razão Social</th>
+                        <th>CNPJ/CPF</th>
+                        <th>Contato Principal</th>
+                        <th>Telefone</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td><a href="{% url 'servico_campo:detalhe_cliente' cliente.pk %}">{{ cliente.razao_social }}</a></td>
+                        <td>{{ cliente.cnpj_cpf }}</td>
+                        <td>{{ cliente.contato_principal }}</td>
+                        <td>{{ cliente.telefone_contato }}</td>
+                        <td>
+                            <a href="{% url 'servico_campo:editar_cliente' cliente.pk %}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'servico_campo:excluir_cliente' cliente.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>  
+    </div>
+{% endblock %}

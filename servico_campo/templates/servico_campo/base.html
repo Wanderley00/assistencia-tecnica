@@ -1,0 +1,294 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}P3 Smart Solutions{% endblock %}</title>
+    <style>
+    .page-content.loading {
+        opacity: 0.5;
+        transition: opacity 0.3s ease-in-out;
+    }
+    </style>
+    <link rel="icon" href="{% static 'servico_campo/images/icon.png' %}" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'servico_campo/css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'servico_campo/css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-toggle" aria-label="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <header class="sidebar-header">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class='bi bi-gear-wide-connected'></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-name">
+                        <span class="brand-initials">P3</span> Smart
+                    </span>
+                    <span class="brand-sub">Solutions</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="sidebar-menu">
+            <ul class="menu-list">
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:dashboard' %}" class="menu-link">
+                        <i class="bi bi-house-door menu-icon"></i>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:lista_os' %}" class="menu-link">
+                        <i class="bi bi-card-list menu-icon"></i>
+                        <span class="menu-text">Ordens de Serviço</span>
+                    </a>
+                </li>
+
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:editar_dados_bancarios' %}" class="menu-link">
+                        <i class="bi bi-credit-card menu-icon"></i>
+                        <span class="menu-text">Meus Dados Bancários</span>
+                    </a>
+                </li>
+
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:minhas_despesas' %}" class="menu-link">
+                        <i class="bi bi-wallet2 menu-icon"></i>
+                        <span class="menu-text">Minhas Despesas</span>
+                    </a>
+                </li>
+
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:gantt_chart' %}" class="menu-link">
+                        <i class="bi bi-bar-chart-line menu-icon"></i>
+                        <span class="menu-text">Planejamento</span>
+                    </a>
+                </li>
+
+                {% if perms.servico_campo.change_despesa %}
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:lista_despesas_pendentes' %}" class="menu-link">
+                        <i class="bi bi-cash-coin menu-icon"></i>
+                        <span class="menu-text">Aprovar Despesas</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if perms.servico_campo.view_contapagar %}
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:lista_contas_a_pagar' %}" class="menu-link">
+                        <i class="bi bi-currency-dollar menu-icon"></i>
+                        <span class="menu-text">{% trans "Contas a Pagar" %}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                    {% if perms.configuracoes.view_tipomanutencao or perms.configuracoes.view_tipodocumento or perms.configuracoes.view_formapagamento or perms.servico_campo.view_regrajornadatrabalho or perms.servico_campo.view_categoriaproblema or perms.servico_campo.view_subcategoriaproblema %}
+                    <!-- ITEM DE SUBMENU MELHORADO -->
+                    <li class="menu-item has-submenu">
+                        <a href="#" class="menu-link submenu-toggle">
+                            <i class="bi bi-gear menu-icon"></i>
+                            <span class="menu-text">Configurações</span>
+                            <i class="bi bi-chevron-right submenu-arrow"></i>
+                        </a>
+                        <ul class="submenu">
+                            {% if perms.configuracoes.view_tipomanutencao %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_tipos_manutencao' %}" class="submenu-link">
+                                    <i class="bi bi-tools submenu-icon"></i>
+                                    <span class="submenu-text">Tipos de Serviço</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.view_tiporelatorio %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_tipos_relatorio' %}" class="submenu-link">
+                                    <i class="bi bi-journal-text submenu-icon"></i>
+                                    <span class="submenu-text">Tipos de Relatório</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.view_tipodocumento %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_tipos_documento' %}" class="submenu-link">
+                                    <i class="bi bi-file-earmark-ruled submenu-icon"></i>
+                                    <span class="submenu-text">Tipos de Documento</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.view_formapagamento %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_formas_pagamento' %}" class="submenu-link">
+                                    <i class="bi bi-wallet2 submenu-icon"></i>
+                                    <span class="submenu-text">Formas de Pagamento</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.servico_campo.view_regrajornadatrabalho %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_regras_jornada' %}" class="submenu-link">
+                                    <i class="bi bi-clock-history submenu-icon"></i>
+                                    <span class="submenu-text">Regras de Jornada</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.servico_campo.view_categoriaproblema %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_categorias_problema' %}" class="submenu-link">
+                                    <i class="bi bi-tags submenu-icon"></i>
+                                    <span class="submenu-text">Categorias de Problemas</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.servico_campo.view_subcategoriaproblema %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_subcategorias_problema' %}" class="submenu-link">
+                                    <i class="bi bi-tag submenu-icon"></i>
+                                    <span class="submenu-text">Subcategorias de Problemas</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.view_categoriadespesa %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_categorias_despesa' %}" class="submenu-link">
+                                    <i class="bi bi-tag-fill submenu-icon"></i>
+                                    <span class="submenu-text">{% trans "Categorias de Despesas" %}</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.view_politicadespesa %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:lista_politicas_despesa' %}" class="submenu-link">
+                                    <i class="bi bi-file-earmark-ruled submenu-icon"></i>
+                                    <span class="submenu-text">{% trans "Políticas de Despesas" %}</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.configuracoes.change_configuracaoemail %}
+                            <li class="submenu-item">
+                                <a href="{% url 'configuracoes:configuracao_email' %}" class="submenu-link">
+                                    <i class="bi bi-envelope-fill submenu-icon"></i>
+                                    <span class="submenu-text">{% trans "Configurações de Email" %}</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.servico_campo.view_cliente %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_clientes' %}" class="submenu-link">
+                                    <i class="bi bi-people submenu-icon"></i>
+                                    <span class="submenu-text">Clientes</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.servico_campo.view_equipamento %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_equipamentos' %}" class="submenu-link">
+                                    <i class="bi bi-cpu submenu-icon"></i>
+                                    <span class="submenu-text">Equipamentos</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.auth.view_group %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_grupos' %}" class="submenu-link">
+                                    <i class="bi bi-shield-lock submenu-icon"></i>
+                                    <span class="submenu-text">Grupos e Permissões</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% if perms.auth.view_user %}
+                            <li class="submenu-item">
+                                <a href="{% url 'servico_campo:lista_usuarios' %}" class="submenu-link">
+                                    <i class="bi bi-person-gear submenu-icon"></i>
+                                    <span class="submenu-text">Usuários</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+        </div>
+
+        <footer class="sidebar-footer">
+            <button class="desktop-toggle" aria-label="Toggle Sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </footer>
+    </nav>
+
+    <!-- Overlay -->
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <div class="topbar">
+            <div class="topbar-content">
+                {% if user.is_authenticated %}
+                <div class="user-menu">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-fill"></i>
+                            <span>Olá, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'servico_campo:perfil' %}">{% trans "Perfil" %}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">{% trans "Sair" %}</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary">{% trans "Entrar" %}</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div id="extra-js-container">
+        {% block extra_js %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'servico_campo/js/sidebar.js' %}"></script>
+    <script src="{% static 'servico_campo/js/dynamic_loader.js' %}"></script>
+</body>
+</html>

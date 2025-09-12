@@ -1,0 +1,376 @@
+{% extends 'servico_campo/base.html' %}
+
+{% block title %}Configurações de E-mail{% endblock %}
+
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <!--<div class="row mb-3">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0">
+                        <li class="breadcrumb-item"><a href="{% url 'servico_campo:dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">E-mail</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>-->
+
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-envelope-open-text fa-lg me-3"></i>
+                            <div>
+                                <h3 class="card-title mb-0">Configurações de E-mail</h3>
+                                <small class="opacity-75">Configure o servidor SMTP para envio de notificações</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="card-body">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        <div class="d-flex align-items-center">
+                                            {% if message.tags == 'success' %}
+                                                <i class="fas fa-check-circle me-2"></i>
+                                            {% elif message.tags == 'error' %}
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                            {% elif message.tags == 'warning' %}
+                                                <i class="fas fa-exclamation-circle me-2"></i>
+                                            {% else %}
+                                                <i class="fas fa-info-circle me-2"></i>
+                                            {% endif %}
+                                            <span>{{ message }}</span>
+                                        </div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <!-- Info Box -->
+                            <div class="alert alert-info border-0 mb-4">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">Informações Importantes</h6>
+                                        <small>
+                                            Configure corretamente os dados do servidor SMTP para garantir o envio de notificações por e-mail.
+                                            Recomendamos usar serviços como Gmail, Outlook ou provedores SMTP dedicados.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Servidor SMTP -->
+                                <div class="col-md-8">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.email_host.id_for_label }}" class="form-label fw-semibold">
+                                            <i class="fas fa-server me-2 text-muted"></i>{{ form.email_host.label }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-globe text-muted"></i>
+                                            </span>
+                                            {{ form.email_host }}
+                                        </div>
+                                        {% if form.email_host.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                {{ form.email_host.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">
+                                            Ex: smtp.gmail.com, smtp.outlook.com
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Porta -->
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.email_port.id_for_label }}" class="form-label fw-semibold">
+                                            <i class="fas fa-plug me-2 text-muted"></i>{{ form.email_port.label }}
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-hashtag text-muted"></i>
+                                            </span>
+                                            {{ form.email_port }}
+                                        </div>
+                                        {% if form.email_port.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                {{ form.email_port.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">
+                                            587 (TLS) ou 465 (SSL)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Usuário -->
+                            <div class="form-group mb-3">
+                                <label for="{{ form.email_host_user.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="fas fa-user me-2 text-muted"></i>{{ form.email_host_user.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-at text-muted"></i>
+                                    </span>
+                                    {{ form.email_host_user }}
+                                </div>
+                                {% if form.email_host_user.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ form.email_host_user.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Endereço de e-mail completo (ex: noreply@empresa.com)
+                                </small>
+                            </div>
+
+                            <!-- Senha -->
+                            <div class="form-group mb-3">
+                                <label for="{{ form.email_host_password.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="fas fa-lock me-2 text-muted"></i>{{ form.email_host_password.label }}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-key text-muted"></i>
+                                    </span>
+                                    {{ form.email_host_password }}
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                                {% if form.email_host_password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        {{ form.email_host_password.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    Para Gmail, use uma senha de app. Para outros provedores, use a senha da conta.
+                                </small>
+                            </div>
+
+                            <!-- Teste de Conexão -->
+                            <div class="mt-4">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-light">
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-flask me-2"></i>Teste de Conexão
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-2">
+                                            Teste se as configurações estão corretas enviando um e-mail de teste.
+                                        </p>
+                                        <button type="button" class="btn btn-outline-info btn-sm" id="testConnection">
+                                            <i class="fas fa-paper-plane me-1"></i>Enviar E-mail de Teste
+                                        </button>
+                                        <div id="testResult" class="mt-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    As configurações são aplicadas imediatamente após salvar
+                                </small>
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Salvar Configurações
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Cards de Ajuda -->
+                <!--<div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-question-circle fa-2x text-info mb-2"></i>
+                                <h6 class="card-title">Precisa de Ajuda?</h6>
+                                <p class="card-text small text-muted">
+                                    Consulte nossa documentação para configurar diferentes provedores de e-mail.
+                                </p>
+                                <a href="#" class="btn btn-sm btn-outline-info">Ver Documentação</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                                <h6 class="card-title">Segurança</h6>
+                                <p class="card-text small text-muted">
+                                    Todas as senhas são criptografadas e armazenadas com segurança.
+                                </p>
+                                <a href="#" class="btn btn-sm btn-outline-success">Saiba Mais</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-cog fa-2x text-warning mb-2"></i>
+                                <h6 class="card-title">Configurações Avançadas</h6>
+                                <p class="card-text small text-muted">
+                                    Configure SSL/TLS, autenticação e outras opções avançadas.
+                                </p>
+                                <a href="#" class="btn btn-sm btn-outline-warning">Configurar</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>-->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript para funcionalidades extras -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para mostrar/esconder senha (sem alterações)
+    const togglePassword = document.getElementById('togglePassword');
+    // ATENÇÃO: Corrigindo o seletor do campo de senha
+    const passwordField = document.getElementById('id_email_host_password'); 
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            toggleIcon.className = type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        });
+    }
+    
+    // --- LÓGICA ATUALIZADA PARA O TESTE DE CONEXÃO ---
+    const testButton = document.getElementById('testConnection');
+    const testResult = document.getElementById('testResult');
+    const form = document.querySelector('form');
+    
+    if (testButton) {
+        testButton.addEventListener('click', function() {
+            testButton.disabled = true;
+            testButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testando...';
+            testResult.innerHTML = ''; // Limpa resultados anteriores
+
+            // 1. Coleta os dados dos campos do formulário
+            const data = {
+                host: document.getElementById('id_email_host').value,
+                port: document.getElementById('id_email_port').value,
+                user: document.getElementById('id_email_host_user').value,
+                password: passwordField.value
+            };
+
+            // 2. Envia os dados para a view de teste
+            fetch("{% url 'servico_campo:testar_conexao_email' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                // 3. Exibe o resultado retornado pela view
+                let alertClass = result.status === 'success' ? 'alert-success' : 'alert-danger';
+                let iconClass = result.status === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                
+                testResult.innerHTML = `
+                    <div class="alert ${alertClass} alert-sm">
+                        <i class="fas ${iconClass} me-1"></i>
+                        ${result.message}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                testResult.innerHTML = `
+                    <div class="alert alert-danger alert-sm">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Erro de comunicação com o servidor: ${error}
+                    </div>
+                `;
+            })
+            .finally(() => {
+                // 4. Reativa o botão
+                testButton.disabled = false;
+                testButton.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Enviar E-mail de Teste';
+            });
+        });
+    }
+});
+</script>
+
+<style>
+.alert-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.card-header {
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.input-group-text {
+    border-color: #ced4da;
+}
+
+.form-control {
+    border-color: #ced4da;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem;
+}
+
+.btn-group .btn:not(:last-child) {
+    margin-right: 0.5rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+</style>
+{% endblock %}

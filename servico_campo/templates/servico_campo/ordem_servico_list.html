@@ -1,0 +1,782 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Lista de Ordens de Serviço" %}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Ordens de Serviço</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .orders-container {
+            background: #f8f9fa;
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .orders-header {
+            /* PALETA AZUL */
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .orders-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .orders-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .new-order-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-order-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            font-weight: 400; /* Garante que não fique em negrito */
+        }
+
+        /* --- FILTROS MODERNIZADOS --- */
+        .filters-section {
+            padding: 30px;
+            background: transparent;
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
+        }
+
+        .status-filters {
+            margin-bottom: 25px;
+        }
+
+        .status-label {
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .status-btn {
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .status-btn.btn-outline-dark {
+            background: #f0f2f5;
+            color: #495057;
+            border-color: #dee2e6;
+        }
+
+        .status-btn.btn-dark {
+            /* PALETA AZUL */
+            background: linear-gradient(135deg, #009AD1, #00628A);
+            color: white;
+            border-color: transparent;
+            /* NOVA COR DO CLIENTE */
+            box-shadow: 0 4px 15px rgba(0, 154, 209, 0.3);
+        }
+
+        .status-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .filter-input {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .filter-input:focus {
+            /* PALETA AZUL */
+            border-color: #009AD1;
+            /* NOVA COR DO CLIENTE */
+            box-shadow: 0 0 0 0.2rem rgba(0, 154, 209, 0.25);
+            outline: none;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .filter-btn {
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn.btn-info {
+            /* PALETA AZUL */
+            background: linear-gradient(135deg, #009AD1, #00628A);
+            color: white;
+        }
+
+        .filter-btn.btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        /* --- TABELA MODERNIZADA --- */
+        .table-section {
+            padding: 0 30px 30px;
+        }
+
+        .modern-table-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-table {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .custom-table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            color: #495057;
+            padding: 20px 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+        }
+
+        .custom-table tbody td {
+            padding: 20px 25px;
+            border: none;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            /* PALETA AZUL */
+            background: rgba(0, 154, 209, 0.05);
+            transform: scale(1.005);
+            transition: all 0.2s ease;
+        }
+
+        .custom-table a {
+            /* NOVA COR DO CLIENTE */
+            color: #009AD1;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .custom-table a:hover {
+            /* NOVA COR DO CLIENTE */
+            color: #00628A;
+            text-decoration: underline;
+        }
+
+        /* --- BADGES DE STATUS --- */
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge.bg-planejada { 
+            background: linear-gradient(135deg, #009AD1, #007ca8) !important;
+            color: white !important;
+        }
+        .badge.bg-em_execucao { 
+            background: linear-gradient(135deg, #ffc107, #f59e0b) !important;
+            color: #000 !important;
+        }
+        .badge.bg-concluida { 
+            background: linear-gradient(135deg, #198754, #10b981) !important;
+            color: white !important;
+        }
+        .badge.bg-cancelada { 
+            background: linear-gradient(135deg, #dc3545, #ef4444) !important;
+            color: white !important;
+        }
+        .badge.bg-aguardando_planejamento { 
+            background: linear-gradient(135deg, #6c757d, #64748b) !important;
+            color: white !important;
+        }
+        .badge.bg-pendente_aprovacao { 
+            /* PALETA AZUL: Alterado de roxo para azul-esverdeado (teal) */
+            background: linear-gradient(135deg, #14b8a6, #0d9488) !important;
+            color: white !important;
+        }
+
+        /* --- BOTÕES DE AÇÃO --- */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .action-btn.btn-info {
+            background: linear-gradient(135deg, #17a2b8, #0ea5e9);
+            color: white;
+        }
+
+        .action-btn.btn-warning {
+            background: linear-gradient(135deg, #ffc107, #f59e0b);
+            color: #000;
+        }
+
+        .action-btn.btn-danger {
+            background: linear-gradient(135deg, #dc3545, #ef4444);
+            color: white;
+        }
+
+        /* --- PAGINAÇÃO --- */
+        .pagination-section {
+            padding: 0 30px 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- EMPTY STATE --- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .orders-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .orders-header {
+                padding: 20px;
+            }
+
+            .orders-title {
+                font-size: 1.8rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters-section,
+            .table-section {
+                padding: 20px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-buttons {
+                justify-content: center;
+            }
+
+            .custom-table {
+                font-size: 0.8rem;
+            }
+
+            .custom-table thead th,
+            .custom-table tbody td {
+                padding: 15px 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        /* --- LOADING STATE --- */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="orders-container">
+            <div class="orders-header">
+                <div class="header-content">
+                    <div>
+                        <h1 class="orders-title">
+                            <i class="bi bi-clipboard-check"></i>
+                            {% trans "Ordens de Serviço" %}
+                        </h1>
+                        <p class="page-subtitle">
+                            Gerencie, filtre e visualize todas as ordens de serviço
+                        </p>
+                    </div>
+
+                    {% if perms.servico_campo.add_ordemservico %}
+                        <a href="{% url 'servico_campo:nova_os' %}" class="new-order-btn">
+                            <i class="bi bi-plus-circle"></i>
+                            {% trans "Abrir Nova OS" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="filters-section fade-in-up delay-2">
+                <div class="filters-card">
+                    <form method="get" action="{% url 'servico_campo:lista_os' %}" id="search-filter-form">
+                        <div class="status-filters">
+                            <div class="status-label">
+                                <i class="bi bi-funnel"></i>
+                                {% trans "Filtrar por Status" %}
+                            </div>
+                            <div class="status-buttons" id="status-filter-buttons">
+                                <a href="#" class="status-btn {% if not filters.status %}btn-dark{% else %}btn-outline-dark{% endif %}" data-status-value="">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                    {% trans "Todos" %}
+                                </a>
+                                {% for value, display in status_choices %}
+                                    <a href="#" class="status-btn {% if filters.status == value %}btn-dark{% else %}btn-outline-dark{% endif %}" data-status-value="{{ value }}">
+                                        {{ display }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label for="id_numero_os_filter" class="filter-label">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    {% trans "Nº da OS" %}
+                                </label>
+                                <input type="text" class="filter-input" id="id_numero_os_filter" name="numero_os" placeholder="Digite o número da OS..." value="{{ filters.numero_os }}">
+                            </div>
+                            <div class="filter-group">
+                                <label for="id_cliente_filter" class="filter-label">
+                                    <i class="bi bi-person-bounding-box"></i>
+                                    {% trans "Cliente" %}
+                                </label>
+                                <input type="text" class="filter-input" id="id_cliente_filter" name="cliente" placeholder="Nome do cliente..." value="{{ filters.cliente }}">
+                            </div>
+                            <div class="filter-group">
+                                <label for="id_equipamento_filter" class="filter-label">
+                                    <i class="bi bi-gear me-1"></i>
+                                    {% trans "Equipamento" %}
+                                </label>
+                                <input type="text" class="filter-input" id="id_equipamento_filter" name="equipamento" placeholder="Nome do equipamento..." value="{{ filters.equipamento }}">
+                            </div>
+                            <div class="filter-group">
+                                <label for="id_titulo_servico_filter" class="filter-label">
+                                    <i class="bi bi-card-text me-1"></i>
+                                    {% trans "Título" %}
+                                </label>
+                                <input type="text" class="filter-input" id="id_titulo_servico_filter" name="titulo_servico" placeholder="Título do serviço..." value="{{ filters.titulo_servico }}">
+                            </div>
+                            <div class="filter-group">
+                                <label for="id_tecnico_filter_text" class="filter-label">
+                                    <i class="bi bi-person me-1"></i>
+                                    {% trans "Responsável" %}
+                                </label>
+                                <input type="text" class="filter-input" id="id_tecnico_filter_text" name="tecnico_nome" placeholder="Nome do técnico..." value="{{ filters.tecnico_nome }}">
+                            </div>
+                            <div class="filter-group">
+                                <label for="id_data_abertura_filter" class="filter-label">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    {% trans "Data Abertura" %}
+                                </label>
+                                <input type="date" class="filter-input" id="id_data_abertura_filter" name="data_abertura" value="{{ filters.data_abertura }}">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <a href="{% url 'servico_campo:lista_os' %}" class="filter-btn btn-secondary">
+                                <i class="bi bi-x-circle"></i>
+                                {% trans "Limpar" %}
+                            </a>
+                            <button type="submit" class="filter-btn btn-info">
+                                <i class="bi bi-search"></i>
+                                {% trans "Buscar" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="table-section fade-in-up delay-3">
+                <div class="modern-table-card">
+                    <div class="table-header">
+                        <h5 class="table-title">
+                            <i class="bi bi-list-check"></i>
+                            Lista de Ordens de Serviço
+                        </h5>
+                    </div>
+                    
+                    {% if not ordens_servico %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <h3>{% trans "Nenhuma Ordem de Serviço encontrada" %}</h3>
+                            <p>{% trans "Nenhuma Ordem de Serviço encontrada com os critérios selecionados." %}</p>
+                            <small class="text-muted">
+                                {% trans "Filtros aplicados" %}: 
+                                {% for key, value in filters.items %}
+                                    {% if value and key != 'page' %}
+                                        {% if not forloop.first %}, {% endif %}
+                                        <strong>{{ key|title }}:</strong> {{ value }}
+                                    {% endif %}
+                                {% endfor %}
+                            </small>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Número OS" %}</th>
+                                        <th>{% trans "Cliente" %}</th>
+                                        <th>{% trans "Equipamento" %}</th>
+                                        <th>{% trans "Título do Serviço" %}</th>
+                                        <th>{% trans "Responsável" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "Data Abertura" %}</th>
+                                        <th>{% trans "Ações" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-content">
+                                    {% for os in ordens_servico %}
+                                        <tr>
+                                            <td><strong>{{ os.numero_os }}</strong></td>
+                                            <td>{{ os.cliente.razao_social }}</td>
+                                            <td>
+                                                <a href="{% url 'servico_campo:detalhe_os' os.pk %}">
+                                                    {{ os.equipamento.nome }}
+                                                    <small class="text-muted d-block">({{ os.equipamento.modelo }})</small>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'servico_campo:detalhe_os' os.pk %}">{{ os.titulo_servico }}</a>
+                                            </td>
+                                            <td>
+                                                {% if os.tecnico_responsavel %}
+                                                    {{ os.tecnico_responsavel.get_full_name|default:os.tecnico_responsavel.username }}
+                                                {% else %}
+                                                    <span class="text-muted">---</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="status-badge badge bg-{{ os.status|lower }}">
+                                                    {% if os.status == 'PLANEJADA' %}
+                                                        <i class="bi bi-calendar-check"></i>
+                                                    {% elif os.status == 'EM_EXECUCAO' %}
+                                                        <i class="bi bi-play-circle"></i>
+                                                    {% elif os.status == 'CONCLUIDA' %}
+                                                        <i class="bi bi-check-circle"></i>
+                                                    {% elif os.status == 'CANCELADA' %}
+                                                        <i class="bi bi-x-circle"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-clock"></i>
+                                                    {% endif %}
+                                                    {{ os.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span>{{ os.data_abertura|date:"d/m/Y" }}</span>
+                                                    <small class="text-muted">{{ os.data_abertura|date:"H:i" }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="action-btn btn-info" title="{% trans 'Ver Detalhes' %}">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    {% if perms.servico_campo.change_ordemservico %}
+                                                        <a href="{% url 'servico_campo:editar_os' os.pk %}" class="action-btn btn-warning" title="{% trans 'Editar' %}">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    {% if perms.servico_campo.delete_ordemservico %}
+                                                        <a href="{% url 'servico_campo:excluir_os' os.pk %}" class="action-btn btn-danger" title="{% trans 'Excluir' %}">
+                                                            <i class="bi bi-trash"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="pagination-section fade-in-up delay-4">
+                {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchFilterForm = document.getElementById('search-filter-form');
+            const statusFilterButtonsContainer = document.getElementById('status-filter-buttons');
+            
+            const osNumberFilter = document.getElementById('id_numero_os_filter');
+            const clienteFilter = document.getElementById('id_cliente_filter');
+            const equipamentoFilter = document.getElementById('id_equipamento_filter');
+            const tituloServicoFilter = document.getElementById('id_titulo_servico_filter');
+            const tecnicoFilterText = document.getElementById('id_tecnico_filter_text');
+            const dataAberturaFilter = document.getElementById('id_data_abertura_filter');
+            
+            let debounceTimer;
+
+            function submitFormWithFilters(pageNumber = 1) {
+                const urlParams = new URLSearchParams();
+
+                if (osNumberFilter.value) urlParams.set('numero_os', osNumberFilter.value);
+                if (clienteFilter.value) urlParams.set('cliente', clienteFilter.value);
+                if (equipamentoFilter.value) urlParams.set('equipamento', equipamentoFilter.value);
+                if (tituloServicoFilter.value) urlParams.set('titulo_servico', tituloServicoFilter.value);
+                if (tecnicoFilterText.value) urlParams.set('tecnico_nome', tecnicoFilterText.value);
+                if (dataAberturaFilter.value) urlParams.set('data_abertura', dataAberturaFilter.value);
+
+                const activeStatusLink = statusFilterButtonsContainer.querySelector('.btn-dark');
+                const statusValue = activeStatusLink ? activeStatusLink.dataset.statusValue : '';
+                if (statusValue) urlParams.set('status', statusValue); 
+                
+                if (pageNumber > 1) urlParams.set('page', pageNumber); 
+
+                document.body.classList.add('loading');
+                window.location.href = `${searchFilterForm.action}?${urlParams.toString()}`;
+            }
+
+            statusFilterButtonsContainer.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault(); 
+                    statusFilterButtonsContainer.querySelectorAll('a').forEach(l => l.classList.replace('btn-dark', 'btn-outline-dark'));
+                    e.currentTarget.classList.replace('btn-outline-dark', 'btn-dark');
+                    submitFormWithFilters(1); 
+                });
+            });
+
+            [osNumberFilter, clienteFilter, equipamentoFilter, tituloServicoFilter, tecnicoFilterText, dataAberturaFilter].forEach(input => {
+                if (input) {
+                    input.addEventListener('input', () => {
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(() => {
+                            submitFormWithFilters(1); 
+                        }, 300);
+                    });
+                    input.addEventListener('change', () => { 
+                        clearTimeout(debounceTimer); 
+                        submitFormWithFilters(1); 
+                    });
+                }
+            });
+
+            const clearButton = searchFilterForm.querySelector('a.btn-secondary'); 
+            if (clearButton) {
+                clearButton.addEventListener('click', e => {
+                    e.preventDefault(); 
+                    window.location.href = searchFilterForm.action; 
+                });
+            }
+
+            function initializeStatusButtons() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentStatusFromUrl = urlParams.get('status') || ''; 
+
+                statusFilterButtonsContainer.querySelectorAll('a').forEach(link => {
+                    const linkStatus = link.dataset.statusValue || ''; 
+                    
+                    if (linkStatus === currentStatusFromUrl) {
+                        link.classList.replace('btn-outline-dark', 'btn-dark');
+                    } else {
+                        link.classList.replace('btn-dark', 'btn-outline-dark');
+                    }
+                });
+            }
+
+            initializeStatusButtons(); 
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

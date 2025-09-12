@@ -1,0 +1,397 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_action_title }} - OS {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:detalhe_os' os.pk %}">{% trans "Detalhes da OS" %} {{ os.numero_os }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ form_action_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h1 class="card-title mb-0">{{ form_action_title }} para OS {{ os.numero_os }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="relatorio-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.data_relatorio.id_for_label }}" class="form-label">{{ form.data_relatorio.label }}</label>
+                        {{ form.data_relatorio }}
+                        {% if form.data_relatorio.errors %}<div class="text-danger">{{ form.data_relatorio.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.tipo_relatorio.id_for_label }}" class="form-label">{{ form.tipo_relatorio.label }}</label>
+                        {{ form.tipo_relatorio }}
+                        {% if form.tipo_relatorio.errors %}<div class="text-danger">{{ form.tipo_relatorio.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.descricao_atividades.id_for_label }}" class="form-label">{{ form.descricao_atividades.label }}</label>
+                    {{ form.descricao_atividades }}
+                    {% if form.descricao_atividades.errors %}<div class="text-danger">{{ form.descricao_atividades.errors }}</div>{% endif %}
+                </div>
+
+                <hr>
+                <h5 class="mb-3">{% trans "Problemas Identificados" %}</h5>
+                <div id="problema-form-list">
+                    {{ problema_formset.management_form }}
+                    
+                    {% if problema_formset.non_form_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <ul>
+                                {% for error in problema_formset.non_form_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    {% for form in problema_formset %}
+                        <div class="row align-items-end mb-3 p-3 border rounded bg-light formset-problema-row" id="problema-{{ forloop.counter0 }}">
+                            {{ form.id }}
+                            <div class="col-12 col-md-4 mb-2">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label">{{ form.categoria.label }}</label>
+                                {{ form.categoria }}
+                            </div>
+                            <div class="col-12 col-md-4 mb-2">
+                                <label for="{{ form.subcategoria.id_for_label }}" class="form-label">{{ form.subcategoria.label }}</label>
+                                {{ form.subcategoria }}
+                            </div>
+                            <div class="col-12 col-md-3 mb-2">
+                                <label for="{{ form.observacao.id_for_label }}" class="form-label">{{ form.observacao.label }}</label>
+                                {{ form.observacao }}
+                            </div>
+                            <div class="col-12 col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                                {% if form.instance.pk %}
+                                    <div class="form-check">
+                                        {{ form.DELETE }}
+                                        <label for="{{ form.DELETE.id_for_label }}" class="form-check-label">Remover</label>
+                                    </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-problema-form-button">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="col-12 mt-2">
+                                <label for="{{ form.solucao_aplicada.id_for_label }}" class="form-label fw-bold">{{ form.solucao_aplicada.label }}</label>
+                                {{ form.solucao_aplicada }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-problema-button" class="btn btn-outline-primary mt-2">
+                    <i class="bi bi-plus-circle"></i> Adicionar Problema
+                </button>
+                <div id="empty-problema-form-template" style="display: none;">
+                    <div class="row align-items-end mb-3 p-3 border rounded bg-light formset-problema-row" id="problema-__prefix__">
+                        {{ problema_formset.empty_form.id }}
+                        <div class="col-12 col-md-4 mb-2">
+                            <label for="id_problemas_identificados_detalhes-__prefix__-categoria" class="form-label">{{ problema_formset.empty_form.categoria.label }}</label>
+                            {{ problema_formset.empty_form.categoria }}
+                        </div>
+                        <div class="col-12 col-md-4 mb-2">
+                            <label for="id_problemas_identificados_detalhes-__prefix__-subcategoria" class="form-label">{{ problema_formset.empty_form.subcategoria.label }}</label>
+                            {{ problema_formset.empty_form.subcategoria }}
+                        </div>
+                        <div class="col-12 col-md-3 mb-2">
+                            <label for="id_problemas_identificados_detalhes-__prefix__-observacao" class="form-label">{{ problema_formset.empty_form.observacao.label }}</label>
+                            {{ problema_formset.empty_form.observacao }}
+                        </div>
+                        <div class="col-12 col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-problema-form-button">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <label for="id_problemas_identificados_detalhes-__prefix__-solucao_aplicada" class="form-label fw-bold">{{ problema_formset.empty_form.solucao_aplicada.label }}</label>
+                            {{ problema_formset.empty_form.solucao_aplicada }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3 mt-3">
+                    <label for="{{ form.material_utilizado.id_for_label }}" class="form-label">{{ form.material_utilizado.label }}</label>
+                    {{ form.material_utilizado }}
+                </div>
+
+                <hr>
+                <h5 class="mb-3">{% trans "Dados de Horas e Deslocamento" %}</h5>
+                {{ horas_formset.management_form }}
+                {% if horas_formset.non_form_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in horas_formset.non_form_errors %} {{ error }} {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 25%;">Responsável</th>
+                                <th>Horas Normais</th>
+                                <th>Horas Extras (50%)</th>
+                                <th>Horas Extras (100%)</th>
+                                <th>KM Rodado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form, display_data in zipped_horas_data %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ display_data.tecnico.get_full_name|default:display_data.tecnico.username }}</strong>
+                                        
+                                        {{ form.id }}
+                                        {{ form.tecnico }}
+                                        {{ form.horas_normais }}
+                                        {{ form.horas_extras_60 }}
+                                        {{ form.horas_extras_100 }}
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" value="{{ display_data.horas_normais_hhmm }}" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" value="{{ display_data.horas_extras_60_hhmm }}" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm" value="{{ display_data.horas_extras_100_hhmm }}" readonly>
+                                    </td>
+                                    <td>
+                                        {{ form.km_rodado }}
+                                        {% if form.km_rodado.errors %}<div class="text-danger small">{{ form.km_rodado.errors }}</div>{% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Nenhum registro de horas encontrado para esta data.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.local_servico.id_for_label }}" class="form-label">{{ form.local_servico.label }}</label>
+                    {{ form.local_servico }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.observacoes_adicionais.id_for_label }}" class="form-label">{{ form.observacoes_adicionais.label }}</label>
+                    {{ form.observacoes_adicionais }}
+                </div>
+                
+                <hr>
+                <h5 class="mb-3">{% trans "Assinatura do Executante" %}</h5>
+
+                {{ form.assinatura_executante_data }}
+
+                {% if form.instance and form.instance.assinatura_executante %}
+                    <div class="mb-2">
+                        <p><strong>Assinatura atual:</strong></p>
+                        
+                        <img src="{{ form.instance.assinatura_executante.url }}" alt="Assinatura Existente" style="max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                        
+                        <p class="form-text mt-1">Para substituir, desenhe uma nova assinatura abaixo.</p>
+                    </div>
+                {% endif %}
+
+                <div class="signature-pad-container" style="border: 1px solid #ccc; border-radius: 0.25rem; background-color: #f8f9fa;">
+                    <canvas id="signature-canvas-executante" style="width: 100%; height: 200px;"></canvas>
+                </div>
+                <button type="button" id="clear-signature-executante" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Desenho" %}</button>
+
+                <hr class="mt-4">
+
+                <h5 class="mb-3">{% trans "Assinatura do Cliente" %}</h5>
+
+                {{ form.assinatura_cliente_data }}
+
+                {% if form.instance and form.instance.assinatura_cliente %}
+                    <div class="mb-2">
+                        <p><strong>Assinatura atual:</strong></p>
+
+                        <img src="{{ form.instance.assinatura_cliente.url }}" alt="Assinatura Existente" style="max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+
+                        <p class="form-text mt-1">Para substituir, desenhe uma nova assinatura abaixo.</p>
+                    </div>
+                {% endif %}
+
+                <div class="signature-pad-container" style="border: 1px solid #ccc; border-radius: 0.25rem; background-color: #f8f9fa;">
+                    <canvas id="signature-canvas-cliente" style="width: 100%; height: 200px;"></canvas>
+                </div>
+                <button type="button" id="clear-signature-cliente" class="btn btn-sm btn-secondary mt-2">{% trans "Limpar Desenho" %}</button>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+                    <button type="button" id="submit-button-main" class="btn btn-success">{% trans "Salvar Relatório" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- LÓGICA DE RECARREGAR PÁGINA COM DATA ---
+    const dataInput = document.getElementById('id_data_relatorio');
+    if (dataInput) {
+        dataInput.addEventListener('change', function() {
+            const novaData = this.value;
+            if (novaData) {
+                const baseUrl = window.location.pathname;
+                window.location.href = baseUrl + '?data=' + novaData;
+            }
+        });
+    }
+
+    // --- LÓGICA DAS ASSINATURAS (VERSÃO FINAL) ---
+    function setupSignaturePad(canvasId, clearButtonId, hiddenInputId) {
+        const canvas = document.getElementById(canvasId);
+        const clearButton = document.getElementById(clearButtonId);
+        const hiddenInput = document.getElementById(hiddenInputId);
+
+        if (!canvas || !clearButton || !hiddenInput) {
+            console.error("Não foi possível inicializar o Signature Pad. Elemento não encontrado:", {canvasId, clearButtonId, hiddenInputId});
+            return null;
+        }
+
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(248, 249, 250)',
+        });
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        clearButton.addEventListener('click', () => {
+            signaturePad.clear();
+        });
+
+        return signaturePad;
+    }
+
+    const signaturePadExecutante = setupSignaturePad(
+        'signature-canvas-executante',
+        'clear-signature-executante',
+        'id_assinatura_executante_data'
+    );
+
+    const signaturePadCliente = setupSignaturePad(
+        'signature-canvas-cliente',
+        'clear-signature-cliente',
+        'id_assinatura_cliente_data'
+    );
+
+    // --- LÓGICA DO BOTÃO DE SUBMISSÃO (VERSÃO FINAL) ---
+    const form = document.getElementById('relatorio-form');
+    const submitButton = document.getElementById('submit-button-main');
+
+    if (form && submitButton) {
+        submitButton.addEventListener('click', function(event) {
+            if (!form.reportValidity()) {
+                return;
+            }
+
+            if (signaturePadExecutante && !signaturePadExecutante.isEmpty()) {
+                document.getElementById('id_assinatura_executante_data').value = signaturePadExecutante.toDataURL('image/png');
+            }
+            if (signaturePadCliente && !signaturePadCliente.isEmpty()) {
+                document.getElementById('id_assinatura_cliente_data').value = signaturePadCliente.toDataURL('image/png');
+            }
+
+            form.submit();
+        });
+    }
+
+    // --- LÓGICA DE PROBLEMAS IDENTIFICADOS (Sua lógica original, mantida) ---
+    const addProblemaButton = document.getElementById('add-problema-button');
+    if (addProblemaButton) {
+        const problemaFormList = document.getElementById('problema-form-list');
+        const emptyProblemaFormTemplate = document.getElementById('empty-problema-form-template').innerHTML;
+        const totalProblemaFormsInput = document.querySelector('#id_problemas_identificados_detalhes-TOTAL_FORMS');
+        function addRemoveProblemaListener(button) {
+            button.addEventListener('click', function() {
+                const formRow = button.closest('.formset-problema-row');
+                if (formRow) {
+                    const deleteCheckbox = formRow.querySelector('input[name$="-DELETE"]');
+                    if (deleteCheckbox) {
+                        deleteCheckbox.checked = true;
+                        formRow.style.display = 'none';
+                    } else { formRow.remove(); }
+                }
+            });
+        }
+        function loadSubcategorias(categoriaSelect, subcategoriaSelect, selectedSubcategoryId = null) {
+            const categoriaId = categoriaSelect.value;
+            if (!categoriaId) { subcategoriaSelect.innerHTML = '<option value="">---------</option>'; return; }
+            fetch(`/servico/api/load-subcategorias-problema/?categoria_id=${categoriaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    subcategoriaSelect.innerHTML = '<option value="">---------</option>';
+                    data.forEach(subcategoria => {
+                        const option = document.createElement('option');
+                        option.value = subcategoria.id;
+                        option.textContent = subcategoria.nome;
+                        subcategoriaSelect.appendChild(option);
+                    });
+                    if (selectedSubcategoryId) { subcategoriaSelect.value = selectedSubcategoryId; }
+                })
+                .catch(error => console.error('Erro ao carregar subcategorias:', error));
+        }
+        function setupProblemaFormFields(formRow) {
+            const categoriaSelect = formRow.querySelector('.problema-categoria-select');
+            const subcategoriaSelect = formRow.querySelector('.problema-subcategoria-select');
+            if (categoriaSelect && subcategoriaSelect) {
+                categoriaSelect.addEventListener('change', function() {
+                    loadSubcategorias(categoriaSelect, subcategoriaSelect);
+                });
+                if (categoriaSelect.value) {
+                    loadSubcategorias(categoriaSelect, subcategoriaSelect, subcategoriaSelect.value);
+                }
+            }
+        }
+        document.querySelectorAll('.formset-problema-row').forEach(row => {
+            const removeButton = row.querySelector('.remove-problema-form-button');
+            if (removeButton) { addRemoveProblemaListener(removeButton); }
+            setupProblemaFormFields(row);
+        });
+        addProblemaButton.addEventListener('click', function() {
+            let formNum = parseInt(totalProblemaFormsInput.value);
+            const newFormHtml = emptyProblemaFormTemplate.replace(/__prefix__/g, formNum);
+            const newFormElement = document.createElement('div');
+            newFormElement.innerHTML = newFormHtml;
+            const newFormRow = newFormElement.firstElementChild; 
+            problemaFormList.appendChild(newFormRow);
+            const removeButton = newFormRow.querySelector('.remove-problema-form-button');
+            if (removeButton) addRemoveProblemaListener(removeButton);
+            setupProblemaFormFields(newFormRow);
+            totalProblemaFormsInput.value = formNum + 1;
+        });
+    }
+});
+</script>
+{% endblock %}

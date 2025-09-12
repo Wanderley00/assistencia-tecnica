@@ -1,0 +1,27 @@
+{% extends 'servico_campo/base.html' %}
+{% block title %}Gestão de Grupos{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">Gestão de Grupos</h1>
+        <a href="{% url 'servico_campo:novo_grupo' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Adicionar Grupo
+        </a>
+    </div>
+    <div class="card card-body">
+        <table class="table table-hover">
+            <thead><tr><th>Nome do Grupo</th><th>Ações</th></tr></thead>
+            <tbody>
+                {% for grupo in grupos %}
+                <tr>
+                    <td>{{ grupo.name }}</td>
+                    <td>
+                        <a href="{% url 'servico_campo:editar_grupo' grupo.pk %}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'servico_campo:excluir_grupo' grupo.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gestão de Subcategorias de Problemas" %}{% endblock %}
+
+{% block content %}
+    <div class="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
+        <h1 class="mb-0">{% trans "Subcategorias de Problemas" %}</h1>
+        <a href="{% url 'servico_campo:nova_subcategoria_problema' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> {% trans "Adicionar Subcategoria" %}
+        </a>
+    </div>
+
+    <div class="card card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "Nome da Subcategoria" %}</th>
+                        <th>{% trans "Categoria Principal" %}</th>
+                        <th>{% trans "Ativo" %}</th>
+                        <th>{% trans "Ações" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subcategoria in subcategorias %}
+                    <tr>
+                        <td>{{ subcategoria.nome }}</td>
+                        <td>{{ subcategoria.categoria.nome }}</td>
+                        <td>
+                            {% if subcategoria.ativo %}
+                                <span class="badge bg-success">{% trans "Sim" %}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{% trans "Não" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'servico_campo:editar_subcategoria_problema' subcategoria.pk %}" class="btn btn-sm btn-warning" title="{% trans 'Editar' %}"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'servico_campo:excluir_subcategoria_problema' subcategoria.pk %}" class="btn btn-sm btn-danger" title="{% trans 'Excluir' %}"><i class="bi bi-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">{% trans "Nenhuma subcategoria de problema cadastrada." %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

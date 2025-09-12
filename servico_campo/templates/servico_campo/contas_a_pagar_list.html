@@ -1,0 +1,614 @@
+{# servico_campo/templates/servico_campo/contas_a_pagar_list.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gestão de Contas a Pagar" %}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Gestão de Contas a Pagar" %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .page-header {
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-politica {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-politica:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            font-weight: 400; /* Garante que o texto não fique em negrito */
+        }
+
+        /* --- FILTROS MODERNIZADOS --- */
+        .filters-section {
+            background: white;
+            border-radius: 20px;
+            margin: 30px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 4px solid #009AD1;
+        }
+
+        .filters-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #009AD1, #00628A);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .filters-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+        }
+
+        .form-select-modern {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .form-select-modern:focus {
+            border-color: #009AD1;
+            box-shadow: 0 0 0 0.2rem rgba(0, 154, 209, 0.15);
+            background: white;
+        }
+
+        .btn-filter {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-filter.primary {
+            background: linear-gradient(135deg, #009AD1, #00628A);
+            color: white;
+        }
+
+        .btn-filter.secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- TABELA MODERNIZADA --- */
+        .table-section {
+            background: white;
+            border-radius: 20px;
+            margin: 30px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .table-modern {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin: 0;
+        }
+
+        .table-modern thead {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .table-modern th {
+            font-weight: 700;
+            color: #495057;
+            padding: 18px 15px;
+            border: none;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-modern td {
+            padding: 15px;
+            border: none;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .table-modern tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .table-modern .os-link {
+            color: #009AD1;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .table-modern .os-link:hover {
+            color: #00628A;
+        }
+
+        .table-modern .description {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* --- BADGES MODERNIZADOS --- */
+        .badge-modern {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pago {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .badge-pendente {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+        }
+
+        .badge-cancelado {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .badge-sim {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .badge-nao {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        /* --- BOTÕES DE AÇÃO --- */
+        .btn-action {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-action.edit {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-action.view {
+            background: linear-gradient(135deg, #17a2b8, #117a8b);
+            color: white;
+        }
+
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* --- COMENTÁRIOS --- */
+        .comment-row {
+            background: linear-gradient(135deg, #e3f2fd, #f0f8ff) !important;
+            border-left: 4px solid #2196f3;
+        }
+
+        .comment-text {
+            font-size: 0.85rem;
+            color: #1976d2;
+            font-style: italic;
+            margin: 0;
+            padding: 8px 12px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #2196f3;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .page-header,
+            .filters-section,
+            .table-section {
+                margin: 15px;
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .table-responsive {
+                border-radius: 15px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+        }
+
+        /* --- ESTADO VAZIO --- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header Modernizado -->
+            <div class="page-header">
+                <div class="header-content">
+                    <div>
+                        <h1 class="page-title">
+                            <i class="bi bi-credit-card"></i>
+                            {% trans "Contas a Pagar" %}
+                        </h1>
+                        <p class="page-subtitle">
+                            Gerencie todos os pagamentos e reembolsos pendentes
+                        </p>
+                    </div>
+
+                    {% if politica_despesa_ativa %}
+                        <a href="{{ politica_despesa_ativa.arquivo.url }}" target="_blank" class="btn-politica">
+                            <i class="bi bi-journal-richtext"></i>
+                            {% trans "Ver Política de Despesa" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Seção de Filtros -->
+            <div class="filters-section fade-in-up">
+                <div class="filters-header">
+                    <div class="filter-icon">
+                        <i class="bi bi-funnel-fill"></i>
+                    </div>
+                    <h5 class="filters-title">{% trans "Filtros de Pesquisa" %}</h5>
+                </div>
+                
+                <form method="get" action="{% url 'servico_campo:lista_contas_a_pagar' %}" id="filter-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label for="id_status_pagamento_filter" class="form-label fw-semibold text-muted">
+                                <i class="bi bi-tags me-1"></i>
+                                {% trans "Status do Pagamento" %}
+                            </label>
+                            <select class="form-select form-select-modern" id="id_status_pagamento_filter" name="status_pagamento">
+                                <option value="TODOS" {% if filters.status_pagamento == 'TODOS' %}selected{% endif %}>
+                                    {% trans "Todos os Status" %}
+                                </option>
+                                {% for value, display in status_pagamento_choices %}
+                                    <option value="{{ value }}" {% if filters.status_pagamento == value %}selected{% endif %}>
+                                        {{ display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex gap-3">
+                            <button type="submit" class="btn-filter primary">
+                                <i class="bi bi-search"></i>
+                                {% trans "Filtrar" %}
+                            </button>
+                            <a href="{% url 'servico_campo:lista_contas_a_pagar' %}" class="btn-filter secondary">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                {% trans "Limpar" %}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Seção da Tabela -->
+            <div class="table-section fade-in-up">
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-list-task me-1"></i>{% trans "Despesa (OS)" %}</th>
+                                <th><i class="bi bi-person me-1"></i>{% trans "Responsável" %}</th>
+                                <th><i class="bi bi-calendar me-1"></i>{% trans "Data" %}</th>
+                                <th><i class="bi bi-currency-dollar me-1"></i>{% trans "Valor" %}</th>
+                                <th><i class="bi bi-file-earmark me-1"></i>{% trans "Comprovante" %}</th>
+                                <th><i class="bi bi-cash me-1"></i>{% trans "Adiantamento" %}</th>
+                                <th><i class="bi bi-check-circle me-1"></i>{% trans "Status" %}</th>
+                                <th><i class="bi bi-calendar-check me-1"></i>{% trans "Dt. Pagamento" %}</th>
+                                <th><i class="bi bi-person-check me-1"></i>{% trans "Pagador" %}</th>
+                                <th><i class="bi bi-gear me-1"></i>{% trans "Ações" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conta in contas_a_pagar %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'servico_campo:detalhe_os' conta.despesa.ordem_servico.pk %}" class="os-link">
+                                        <strong>OS {{ conta.despesa.ordem_servico.numero_os }}</strong>
+                                    </a>
+                                    <br>
+                                    <div class="description">{{ conta.despesa.descricao|truncatechars:45 }}</div>
+                                </td>
+                                <td>
+                                    <strong>{{ conta.despesa.tecnico.get_full_name|default:conta.despesa.tecnico.username }}</strong>
+                                </td>
+                                <td>
+                                    <i class="bi bi-calendar3 me-1 text-muted"></i>
+                                    {{ conta.despesa.data_despesa|date:"d/m/Y" }}
+                                </td>
+                                <td>
+                                    <strong class="text-success">R$ {{ conta.despesa.valor|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {% if conta.despesa.comprovante_anexo %}
+                                        <a href="{{ conta.despesa.comprovante_anexo.url }}" target="_blank" class="btn-action view" title="{% trans 'Ver Comprovante' %}">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="bi bi-dash-circle"></i>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if conta.despesa.is_adiantamento %}
+                                        <span class="badge badge-modern badge-sim">{% trans "Sim" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-modern badge-nao">{% trans "Não" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if conta.status_pagamento == 'PAGO' %}
+                                        <span class="badge badge-modern badge-pago">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            {{ conta.get_status_pagamento_display }}
+                                        </span>
+                                    {% elif conta.status_pagamento == 'CANCELADO' %}
+                                        <span class="badge badge-modern badge-cancelado">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            {{ conta.get_status_pagamento_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-modern badge-pendente">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ conta.get_status_pagamento_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if conta.data_pagamento %}
+                                        <i class="bi bi-calendar-check me-1 text-success"></i>
+                                        {{ conta.data_pagamento|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="bi bi-dash-circle"></i>
+                                            N/A
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if conta.responsavel_pagamento %}
+                                        {{ conta.responsavel_pagamento.get_full_name|default:conta.responsavel_pagamento.username }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'servico_campo:editar_conta_a_pagar' conta.pk %}" 
+                                       class="btn-action edit" 
+                                       title="{% trans 'Editar Status de Pagamento' %}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% if conta.comentario %}
+                            <tr class="comment-row">
+                                <td colspan="10">
+                                    <div class="comment-text">
+                                        <i class="bi bi-chat-left-text me-2"></i>
+                                        <strong>{% trans "Comentário:" %}</strong> {{ conta.comentario }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="10">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox"></i>
+                                            <h3>{% trans "Nenhuma conta encontrada" %}</h3>
+                                            <p>{% trans "Não há contas a pagar para exibir com os filtros selecionados." %}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% include 'servico_campo/partials/pagination_controls.html' with page_obj=page_obj paginator=paginator filters=filters %}
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animação de entrada
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Auto-submit do formulário de filtros
+        const statusSelect = document.getElementById('id_status_pagamento_filter');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                document.getElementById('filter-form').submit();
+            });
+        }
+
+        // Tooltips para botões de ação
+        const actionButtons = document.querySelectorAll('.btn-action');
+        actionButtons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px) scale(1.05)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+{% endblock %}

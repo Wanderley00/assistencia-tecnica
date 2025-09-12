@@ -1,0 +1,25 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirmar Exclusão" %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white"><h1 class="mb-0">{% trans "Confirmar Exclusão" %}</h1></div>
+    <div class="card-body">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <p>{% trans "Você tem certeza que deseja excluir a subcategoria de problema" %} <strong>"{{ object.nome }}"</strong>?</p>
+        <p class="text-danger">{% trans "Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver problemas associados." %}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% trans "Sim, excluir" %}</button>
+            <a href="{% url 'servico_campo:lista_subcategorias_problema' %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

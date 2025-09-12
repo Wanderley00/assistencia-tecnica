@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" >
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P3 Smart Solutions - Login</title>
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="{% static 'servico_campo/css/login.css' %}">
+</head>
+<script>
+function togglePasswordVisibility() {
+    const passwordField = document.querySelector('input[name="password"]');
+    const toggleIcon = document.querySelector('.password-toggle');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.classList.remove('bxs-lock-alt');
+        toggleIcon.classList.add('bxs-lock-open');
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.classList.remove('bxs-lock-open');
+        toggleIcon.classList.add('bxs-lock-alt');
+    }
+}
+</script>
+<body>
+    <div class="wrapper">
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <h1>Login</h1>
+
+            {% if form.errors %}
+                <div class="error-message">
+                    <p>Seu usuário ou senha estão incorretos. Por favor, tente novamente.</p>
+                </div>
+            {% endif %}
+
+            
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+
+            <div class="input-box">
+                {{ form.username }}
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                {{ form.password }}
+                <i class='bx bxs-lock-alt password-toggle' onclick="togglePasswordVisibility()"></i>
+            </div>
+
+            <div class="remember-forgot">
+                <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit" class="btn">Login</button>
+
+            <div class="register-link">
+                <p>P3 Smart Solutions</p>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

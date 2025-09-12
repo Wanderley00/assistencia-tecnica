@@ -1,0 +1,519 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gráfico de Linha do Tempo de Ordens de Serviço" %}{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfico Gantt com Popups</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .gantt-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08 );
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        .gantt-header {
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .gantt-title {
+            margin: 0;
+            font-weight: 700;
+            font-size: 2.2rem;
+        }
+
+        .gantt-subtitle {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.0rem;
+        }
+
+        /* --- CONTROLES DE FILTRO --- */
+        .filter-controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filter-controls .form-group {
+            min-width: 150px;
+        }
+
+        .filter-controls label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        /* --- LEGENDA DE STATUS --- */
+        .status-legend {
+            padding: 15px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .status-legend-label {
+            font-weight: 600;
+            color: #495057;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-concluida { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-em-execucao { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .status-planejada { background: #cce5ff; color: #004085; border: 1px solid #99d3ff; }
+        .status-cancelada { background: #f8d7da; color: #721c24; border: 1px solid #f1aeb5; }
+        .status-pendente { background: #e2e3e5; color: #383d41; border: 1px solid #d1d3d4; }
+
+        /* --- GRÁFICO GANTT --- */
+        .gantt-chart {
+            padding: 0;
+            background: white;
+        }
+
+        .gantt-scroll-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 20px 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .gantt-scroll-inner {
+            padding: 0 20px;
+            min-width: max-content;
+        }
+
+        .gantt-grid {
+            display: grid;
+            min-width: calc(280px + {{ total_days|default:30 }} * 80px);
+            gap: 1px;
+            background: #e9ecef;
+            border-radius: 6px;
+            grid-template-columns: 280px repeat({{ total_days|default:30 }}, minmax(80px, 1fr));
+        }
+
+        .date-header { display: contents; }
+        .resource-header, .date-cell {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+            text-align: center;
+            border-right: 1px solid #dee2e6;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .resource-header {
+            background: #e9ecef;
+            text-align: left;
+            padding-left: 15px;
+            font-weight: 700;
+            color: #212529;
+            min-width: 280px;
+            justify-content: flex-start;
+            position: sticky;
+            left: 0;
+            z-index: 20;
+        }
+        .resource-row { display: contents; }
+        .resource-name {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-right: 1px solid #dee2e6;
+            min-height: 60px;
+            font-size: 0.85rem;
+            line-height: 1.3;
+            min-width: 280px;
+            max-width: 280px;
+            position: sticky;
+            left: 0;
+            z-index: 20;
+        }
+        .tecnico-name { font-weight: 700; color: #212529; }
+        .os-info { color: #6c757d; font-size: 0.8rem; }
+        .day-cell {
+            background: white;
+            position: relative;
+            min-height: 60px;
+            border-right: 1px solid #f0f0f0;
+            min-width: 80px;
+        }
+        .day-cell:hover { background: #f8f9fa; }
+
+        /* Barras de tarefas */
+        .task-bar {
+            position: absolute;
+            top: 8px;
+            bottom: 8px;
+            z-index: 5;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task-bar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        /* Cores das barras por status */
+        .task-concluida, .task-concluída { background: linear-gradient(135deg, #28a745, #20c997); }
+        .task-emexecucao, .task-em-execução { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .task-planejada, .task-aberta { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .task-cancelada { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+        .task-pendente { background: linear-gradient(135deg, #6c757d, #495057); }
+
+        /* --- NOVO ESTILO PARA O POPUP CUSTOMIZADO --- */
+        #gantt-tooltip {
+            position: fixed; /* Usar 'fixed' para posicionar relativo à janela */
+            background: rgba(30, 30, 30, 0.95);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 1001; /* Acima de tudo */
+            pointer-events: none; /* Para não interferir com o mouse */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            max-width: 320px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px); /* Efeito de vidro fosco (suporte variado) */
+        }
+
+        #gantt-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #gantt-tooltip .tooltip-header {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #gantt-tooltip .tooltip-body p {
+            margin: 0 0 6px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #gantt-tooltip .tooltip-body p strong {
+            color: #a0a0a0; /* Cor mais suave para os rótulos */
+            margin-right: 10px;
+        }
+
+        #gantt-tooltip .tooltip-body p span {
+            text-align: right;
+        }
+
+        /* --- FIM DO ESTILO DO POPUP --- */
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #6c757d; }
+        .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #dee2e6; }
+        .loading-state { text-align: center; padding: 40px; color: #6c757d; }
+        .loading-spinner { margin-right: 10px; }
+        .today-column { background: #fff3cd !important; border-left: 2px solid #ffc107; border-right: 2px solid #ffc107; }
+        .weekend-column { background: #f8f9fa !important; }
+        .gantt-summary { padding: 10px 20px; background: #e9ecef; font-size: 0.9rem; color: #495057; border-bottom: 1px solid #dee2e6; }
+        .scroll-indicator { background: linear-gradient(90deg, rgba(0, 154, 209, 0.1) 0%, rgba(0, 98, 138, 0.1) 100%); font-size: 0.8rem; color: #495057; text-align: center; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .gantt-scroll-container::-webkit-scrollbar { height: 12px; }
+        .gantt-scroll-container::-webkit-scrollbar-track { background: #f8f9fa; border-radius: 6px; }
+        .gantt-scroll-container::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #577e8a, #3c7c95); border-radius: 6px; border: 2px solid #f8f9fa; }
+        .gantt-scroll-container::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #008ac0, #00597d); }
+
+        @media (max-width: 768px) {
+            .filter-controls { flex-direction: column; align-items: stretch; }
+            .filter-controls .form-group { min-width: auto; width: 100%; }
+            .status-legend { justify-content: center; }
+            .resource-header, .resource-name { min-width: 220px; max-width: 220px; }
+            .gantt-grid { grid-template-columns: 220px repeat({{ total_days|default:30 }}, minmax(70px, 1fr)); min-width: calc(220px + {{ total_days|default:30 }} * 70px); }
+            .day-cell { min-width: 70px; }
+        }
+        @media (max-width: 576px) {
+            .gantt-scroll-inner { padding: 0 10px; }
+            .resource-header, .resource-name { min-width: 200px; max-width: 200px; font-size: 0.8rem; }
+            .gantt-grid { grid-template-columns: 200px repeat({{ total_days|default:30 }}, minmax(60px, 1fr)); min-width: calc(200px + {{ total_days|default:30 }} * 60px); }
+            .day-cell { min-width: 60px; }
+            .date-cell { font-size: 0.75rem; padding: 8px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Cabeçalho -->
+        <div class="gantt-container">
+            <div class="gantt-header">
+                <h1 class="gantt-title"><i class="bi bi-diagram-3-fill me-2"></i>Gráfico de Linha do Tempo - Ordens de Serviço</h1>
+                <p class="gantt-subtitle">Visualização de projetos por responsável</p>
+            </div>
+
+            <!-- Controles de Filtro -->
+            <div class="filter-controls fade-in-up">
+                <form method="GET" class="d-flex gap-3 align-items-end flex-wrap">
+                    <div class="form-group">
+                        <label for="start_date_filter"><i class="bi bi-calendar-event me-1"></i>Data de Início:</label>
+                        <input type="date" id="start_date_filter" name="start_date" class="form-control" value="{{ filters.start_date }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date_filter"><i class="bi bi-calendar-check me-1"></i>Data de Fim:</label>
+                        <input type="date" id="end_date_filter" name="end_date" class="form-control" value="{{ filters.end_date }}">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Aplicar Filtro</button>
+                    </div>
+                    <div class="form-group">
+                        <a href="{% url 'servico_campo:gantt_chart' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Redefinir</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resumo -->
+            {% if tasks_by_resource %}
+            <div class="gantt-summary fade-in-up">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>{{ tasks_by_resource|length }}</strong> ordem{{ tasks_by_resource|length|pluralize:"s" }} de serviço encontrada{{ tasks_by_resource|length|pluralize:"s" }} no período selecionado
+            </div>
+            {% endif %}
+
+            <!-- Indicador de scroll -->
+            {% if total_days > 15 %}
+            <div class="scroll-indicator fade-in-up">
+                <i class="bi bi-arrow-left-right"></i> Use a barra de rolagem horizontal para navegar pelos dias <i class="bi bi-arrow-left-right"></i>
+            </div>
+            {% endif %}
+
+            <!-- Legenda de Status -->
+            <div class="status-legend fade-in-up">
+                <span class="status-legend-label">Status:</span>
+                <span class="status-badge status-concluida"><i class="bi bi-check-circle-fill"></i>Concluída</span>
+                <span class="status-badge status-em-execucao"><i class="bi bi-play-circle-fill"></i>Em Execução</span>
+                <span class="status-badge status-planejada"><i class="bi bi-calendar-plus-fill"></i>Planejada</span>
+                <span class="status-badge status-cancelada"><i class="bi bi-x-circle-fill"></i>Cancelada</span>
+                <span class="status-badge status-pendente"><i class="bi bi-clock-fill"></i>Pendente</span>
+            </div>
+
+            <!-- Gráfico Gantt -->
+            <div class="gantt-chart fade-in-up">
+                {% if tasks_by_resource %}
+                    <div class="gantt-scroll-container">
+                        <div class="gantt-scroll-inner">
+                            <div class="gantt-grid" style="--days-count: {{ total_days|default:30 }};">
+                                <!-- Cabeçalho -->
+                                <div class="date-header">
+                                    <div class="resource-header"><i class="bi bi-person-fill me-2"></i>Responsável / Ordem de Serviço</div>
+                                    {% for day in days_in_period %}
+                                    <div class="date-cell {% if day|date:'w' == '0' or day|date:'w' == '6' %}weekend-column{% endif %} {% if day == today_date %}today-column{% endif %}">
+                                        {{ day|date:"d/m" }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Linhas de recursos -->
+                                {% for resource_key, tasks in tasks_by_resource.items %}
+                                    {% with task=tasks.0 %}
+                                        <div class="resource-row">
+                                            <div class="resource-name">
+                                                <i class="bi bi-clipboard-check"></i>
+                                                <div>
+                                                    <div class="tecnico-name">{{ task.tecnico_name }}</div>
+                                                    <div class="os-info">OS {{ task.os.numero_os }} {% if task.os.cliente %}- {{ task.os.cliente.razao_social|truncatechars:20 }}{% endif %}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            {% for day in days_in_period %}
+                                                <div class="day-cell {% if day|date:'w' == '0' or day|date:'w' == '6' %}weekend-column{% endif %} {% if day == today_date %}today-column{% endif %}">
+                                                    {% if task.start_date == day %}
+                                                        <a href="{% url 'servico_campo:detalhe_os' task.os.pk %}"
+                                                           class="task-bar task-{{ task.os.status|lower|cut:' '|cut:'_' }}" 
+                                                           style="left: 0; width: calc({{ task.duration_days }} * 100%);"
+                                                           title="" {# O title agora é gerenciado pelo JS, então pode ser deixado em branco #}
+                                                           
+                                                           {# --- NOVOS ATRIBUTOS DE DADOS PARA O POPUP --- #}
+                                                           data-cliente="{{ task.os.cliente.razao_social|default:'N/A' }}"
+                                                           data-equipamento="{{ task.os.equipamento.nome|default:'N/A' }}"
+                                                           data-responsavel="{{ task.tecnico_name|default:'N/A' }}"
+                                                           data-status="{{ task.os.get_status_display|default:'N/A' }}"
+                                                           data-inicio-planejado="{{ task.os.data_inicio_planejado|date:'d/m/Y'|default:'--' }}"
+                                                           data-inicio-real="{{ task.os.data_inicio_real|date:'d/m/Y'|default:'--' }}"
+                                                           data-prazo-conclusao="{{ task.os.prazo_conclusao|date:'d/m/Y'|default:'--' }}"
+                                                           data-conclusao-real="{{ task.os.data_conclusao_real|date:'d/m/Y'|default:'--' }}"
+                                                           data-os-titulo="OS {{ task.os.numero_os }}: {{ task.os.titulo_servico }}"
+                                                           >
+                                                            {{ task.os.titulo_servico|truncatechars:30 }}
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endwith %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <h5>Nenhuma ordem de serviço encontrada</h5>
+                        <p>Não há ordens de serviço no período selecionado ou você não tem permissão para visualizá-las.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Elemento HTML para o Tooltip (Popup) -->
+    <div id="gantt-tooltip">
+        <div class="tooltip-header" id="tooltip-header"></div>
+        <div class="tooltip-body" id="tooltip-body"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Gráfico Gantt carregado com {{ tasks_by_resource|length }} ordens de serviço');
+        
+        // Scroll automático para o dia atual
+        const todayColumn = document.querySelector('.today-column');
+        const scrollContainer = document.querySelector('.gantt-scroll-container');
+        if (todayColumn && scrollContainer) {
+            setTimeout(() => {
+                const containerWidth = scrollContainer.clientWidth;
+                const todayPosition = todayColumn.offsetLeft;
+                const columnWidth = todayColumn.clientWidth;
+                const scrollPosition = todayPosition - (containerWidth / 2) + (columnWidth / 2);
+                scrollContainer.scrollLeft = Math.max(0, scrollPosition);
+            }, 100);
+        }
+        
+        // Navegação por teclado
+        if (scrollContainer) {
+            scrollContainer.addEventListener('keydown', function(e) {
+                const scrollAmount = 80;
+                if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+                    e.preventDefault();
+                    if (e.key === 'ArrowLeft') this.scrollLeft -= scrollAmount;
+                    else if (e.key === 'ArrowRight') this.scrollLeft += scrollAmount;
+                    else if (e.key === 'Home') this.scrollLeft = 0;
+                    else if (e.key === 'End') this.scrollLeft = this.scrollWidth - this.clientWidth;
+                }
+            });
+            scrollContainer.setAttribute('tabindex', '0');
+        }
+
+        // --- NOVO: LÓGICA DO POPUP CUSTOMIZADO ---
+        const tooltip = document.getElementById('gantt-tooltip');
+        const tooltipHeader = document.getElementById('tooltip-header');
+        const tooltipBody = document.getElementById('tooltip-body');
+        const taskBars = document.querySelectorAll('.task-bar');
+
+        taskBars.forEach(bar => {
+            bar.addEventListener('mouseenter', (e) => {
+                const data = e.target.dataset;
+
+                // Preenche o conteúdo do tooltip
+                tooltipHeader.textContent = data.osTitulo;
+                tooltipBody.innerHTML = `
+                    <p><strong>Cliente:</strong> <span>${data.cliente}</span></p>
+                    <p><strong>Equipamento:</strong> <span>${data.equipamento}</span></p>
+                    <p><strong>Responsável:</strong> <span>${data.responsavel}</span></p>
+                    <p><strong>Status:</strong> <span>${data.status}</span></p>
+                    <p><strong>Início Planejado:</strong> <span>${data.inicioPlanejado}</span></p>
+                    <p><strong>Início Real:</strong> <span>${data.inicioReal}</span></p>
+                    <p><strong>Prazo Conclusão:</strong> <span>${data.prazoConclusao}</span></p>
+                    <p><strong>Conclusão Real:</strong> <span>${data.conclusaoReal}</span></p>
+                `;
+
+                // Mostra o tooltip
+                tooltip.classList.add('visible');
+            });
+
+            bar.addEventListener('mousemove', (e) => {
+                // Posiciona o tooltip perto do cursor do mouse
+                // Adiciona um pequeno deslocamento para não ficar sobre o cursor
+                let x = e.clientX + 15;
+                let y = e.clientY + 15;
+
+                // Evita que o tooltip saia da tela na horizontal
+                if (x + tooltip.offsetWidth > window.innerWidth) {
+                    x = e.clientX - tooltip.offsetWidth - 15;
+                }
+
+                // Evita que o tooltip saia da tela na vertical
+                if (y + tooltip.offsetHeight > window.innerHeight) {
+                    y = e.clientY - tooltip.offsetHeight - 15;
+                }
+
+                tooltip.style.left = `${x}px`;
+                tooltip.style.top = `${y}px`;
+            });
+
+            bar.addEventListener('mouseleave', () => {
+                // Esconde o tooltip
+                tooltip.classList.remove('visible');
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+
+{% endblock %}

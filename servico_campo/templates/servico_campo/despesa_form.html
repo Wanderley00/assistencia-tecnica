@@ -1,0 +1,93 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_action_title }} - OS {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:detalhe_os' os.pk %}">{% trans "Detalhes da OS" %} {{ os.numero_os }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ form_action_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h1 class="card-title mb-0">{{ form_action_title }} Despesa para OS {{ os.numero_os }}</h1>
+        </div>
+        <div class="card-body">
+            {# IMPORTANTE: enctype é obrigatório para upload de arquivos #}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {# Renderiza o formulário campo a campo para melhor controle #}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.data_despesa.id_for_label }}" class="form-label">{{ form.data_despesa.label }}</label>
+                        {{ form.data_despesa }}
+                        {% if form.data_despesa.errors %}<div class="text-danger">{{ form.data_despesa.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.valor.id_for_label }}" class="form-label">{{ form.valor.label }}</label>
+                        {{ form.valor }}
+                        {% if form.valor.errors %}<div class="text-danger">{{ form.valor.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                {# NOVO CAMPO: Categoria da Despesa #}
+                <div class="mb-3">
+                    <label for="{{ form.categoria_despesa.id_for_label }}" class="form-label">{{ form.categoria_despesa.label }}</label>
+                    {{ form.categoria_despesa }}
+                    {% if form.categoria_despesa.errors %}<div class="text-danger">{{ form.categoria_despesa.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.descricao.id_for_label }}" class="form-label">{{ form.descricao.label }}</label>
+                    {{ form.descricao }}
+                    {% if form.descricao.errors %}<div class="text-danger">{{ form.descricao.errors }}</div>{% endif %}
+                </div>
+
+                <div class="row">
+                     <div class="col-md-6 mb-3">
+                        <label for="{{ form.local_despesa.id_for_label }}" class="form-label">{{ form.local_despesa.label }}</label>
+                        {{ form.local_despesa }}
+                        {% if form.local_despesa.errors %}<div class="text-danger">{{ form.local_despesa.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.tipo_pagamento.id_for_label }}" class="form-label">{{ form.tipo_pagamento.label }}</label>
+                        {{ form.tipo_pagamento }}
+                        {% if form.tipo_pagamento.errors %}<div class="text-danger">{{ form.tipo_pagamento.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                {# NOVO CAMPO: Checkbox de Adiantamento #}
+                <div class="form-check mb-3">
+                    {{ form.is_adiantamento }}
+                    <label class="form-check-label" for="{{ form.is_adiantamento.id_for_label }}">
+                        {{ form.is_adiantamento.label }}
+                        {% if form.is_adiantamento.help_text %}<small class="form-text text-muted">{{ form.is_adiantamento.help_text }}</small>{% endif %}
+                    </label>
+                    {% if form.is_adiantamento.errors %}<div class="text-danger">{{ form.is_adiantamento.errors }}</div>{% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.comprovante_anexo.id_for_label }}" class="form-label">{{ form.comprovante_anexo.label }}</label>
+                    {{ form.comprovante_anexo }}
+                    {% if form.comprovante_anexo.errors %}<div class="text-danger">{{ form.comprovante_anexo.errors }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-warning mt-3">{% trans "Salvar Despesa" %}</button>
+                <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary mt-3">{% trans "Cancelar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

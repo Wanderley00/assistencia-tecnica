@@ -1,0 +1,49 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h1 class="mb-0">{{ form_title }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data"> {# Necessário para upload de arquivo #}
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                    {{ form.nome }}
+                    {% if form.nome.errors %}<div class="text-danger">{{ form.nome.errors }}</div>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.arquivo.id_for_label }}" class="form-label">{{ form.arquivo.label }}</label>
+                    {{ form.arquivo }}
+                    {% if form.arquivo.errors %}<div class="text-danger">{{ form.arquivo.errors }}</div>{% endif %}
+                    {% if form.instance.arquivo %}<p class="mt-2">{% trans "Arquivo atual:" %} <a href="{{ form.instance.arquivo.url }}" target="_blank">{% trans "Ver" %}</a></p>{% endif %}
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.ativa }}
+                    <label class="form-check-label" for="{{ form.ativa.id_for_label }}">
+                        {{ form.ativa.label }}
+                    </label>
+                    {% if form.ativa.errors %}<div class="text-danger">{{ form.ativa.errors }}</div>{% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-success">{% trans "Salvar" %}</button>
+                <a href="{% url 'configuracoes:lista_politicas_despesa' %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

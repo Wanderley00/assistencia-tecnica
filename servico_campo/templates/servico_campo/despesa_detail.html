@@ -1,0 +1,157 @@
+{# servico_campo/templates/servico_campo/despesa_detail.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Detalhes da Despesa" %} - OS {{ os.numero_os }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:lista_os' %}">{% trans "Ordens de Serviço" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'servico_campo:detalhe_os' os.pk %}">{% trans "Detalhes da OS" %} {{ os.numero_os }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Detalhes da Despesa" %}</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h1 class="card-title mb-0">{% trans "Detalhes da Despesa" %}</h1>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">{% trans "Informações da Despesa" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "OS:" %}</strong> <a href="{% url 'servico_campo:detalhe_os' os.pk %}">{{ os.numero_os }}</a>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Responsável:" %}</strong> {{ despesa.tecnico.get_full_name|default:despesa.tecnico.username }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Data da Despesa:" %}</strong> {{ despesa.data_despesa|date:"d/m/Y" }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Valor:" %}</strong> R$ {{ despesa.valor|floatformat:2 }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Categoria:" %}</strong> {{ despesa.categoria_despesa.nome|default:"N/A" }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Local (Estabelecimento):" %}</strong> {{ despesa.local_despesa|default:"N/A" }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Forma de Pagamento:" %}</strong> {{ despesa.tipo_pagamento.nome|default:"N/A" }}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "É Adiantamento?" %}:</strong> 
+                    {% if despesa.is_adiantamento %}
+                        <span class="badge bg-primary">{% trans "Sim" %}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{% trans "Não" %}</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-12 mb-2">
+                    <strong>{% trans "Descrição:" %}</strong>
+                    <p>{{ despesa.descricao|linebreaksbr }}</p>
+                </div>
+                {% if despesa.comprovante_anexo %}
+                    <div class="col-md-12 mb-2">
+                        <strong>{% trans "Comprovante Anexo:" %}</strong> 
+                        <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn btn-sm btn-info ms-2" title="{% trans 'Visualizar Comprovante da Despesa' %}">
+                            <i class="bi bi-file-earmark-image"></i> {% trans "Visualizar" %}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <hr>
+            <h5 class="card-title">{% trans "Status de Aprovação" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Status:" %}</strong> 
+                    {% if despesa.status_aprovacao == 'APROVADA' %}
+                        <span class="badge bg-success">{{ despesa.get_status_aprovacao_display }}</span>
+                    {% elif despesa.status_aprovacao == 'REJEITADA' %}
+                        <span class="badge bg-danger">{{ despesa.get_status_aprovacao_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ despesa.get_status_aprovacao_display }}</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Aprovado Por:" %}</strong> 
+                    {% if despesa.aprovado_por %}
+                        {{ despesa.aprovado_por.get_full_name|default:despesa.aprovado_por.username }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-2">
+                    <strong>{% trans "Data da Aprovação:" %}</strong> 
+                    {% if despesa.data_aprovacao %}
+                        {{ despesa.data_aprovacao|date:"d/m/Y H:i" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="col-md-12 mb-2">
+                    <strong>{% trans "Comentário da Aprovação/Rejeição:" %}</strong>
+                    <p>{{ despesa.comentario_aprovacao|default:"Nenhum."|linebreaksbr }}</p>
+                </div>
+            </div>
+
+            {% if conta_a_pagar %}
+                <hr>
+                <h5 class="card-title">{% trans "Informações de Pagamento (Contas a Pagar)" %}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>{% trans "Status do Pagamento:" %}</strong> 
+                        {% if conta_a_pagar.status_pagamento == 'PAGO' %}
+                            <span class="badge bg-success">{{ conta_a_pagar.get_status_pagamento_display }}</span>
+                        {% elif conta_a_pagar.status_pagamento == 'CANCELADO' %}
+                            <span class="badge bg-danger">{{ conta_a_pagar.get_status_pagamento_display }}</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">{{ conta_a_pagar.get_status_pagamento_display }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>{% trans "Responsável pelo Pagamento:" %}</strong> 
+                        {% if conta_a_pagar.responsavel_pagamento %}
+                            {{ conta_a_pagar.responsavel_pagamento.get_full_name|default:conta_a_pagar.responsavel_pagamento.username }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>{% trans "Data do Pagamento:" %}</strong> 
+                        {# CORREÇÃO AQUI: Exibe a data de pagamento da DESPESA #}
+                        {% if despesa.data_pagamento %} 
+                            {{ despesa.data_pagamento|date:"d/m/Y H:i" }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="col-md-12 mb-2">
+                        <strong>{% trans "Comentário do Pagamento:" %}</strong>
+                        <p>{{ conta_a_pagar.comentario|default:"Nenhum."|linebreaksbr }}</p>
+                    </div>
+                    {% if conta_a_pagar.comprovante_pagamento %}
+                        <div class="col-md-12 mb-2">
+                            <strong>{% trans "Comprovante de Pagamento:" %}</strong> 
+                            <a href="{{ conta_a_pagar.comprovante_pagamento.url }}" target="_blank" class="btn btn-sm btn-info ms-2" title="{% trans 'Visualizar Comprovante de Pagamento' %}">
+                                <i class="bi bi-file-earmark-image"></i> {% trans "Visualizar" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <hr>
+                <p class="text-muted text-center">{% trans "Nenhuma informação de pagamento disponível para esta despesa." %}</p>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">{% trans "Voltar para OS" %}</a>
+                <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn btn-warning">{% trans "Editar Despesa" %}</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

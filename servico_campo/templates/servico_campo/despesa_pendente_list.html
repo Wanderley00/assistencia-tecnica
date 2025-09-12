@@ -1,0 +1,553 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Despesas Pendentes de Aprovação" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Despesas Pendentes de Aprovação" %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .page-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .page-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- ÁREA DE CONTEÚDO --- */
+        .page-body {
+            padding: 40px;
+        }
+
+        /* --- CARD DE SUCESSO --- */
+        .success-card {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 20px 40px rgba(40, 167, 69, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .success-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .success-message {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- TABELA MODERNA --- */
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .table-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .table-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+        }
+
+        /* --- TABELA RESPONSIVA --- */
+        .modern-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .modern-table thead th {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #495057;
+            font-weight: 600;
+            padding: 15px 12px;
+            border: none;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .modern-table thead th:first-child {
+            border-radius: 12px 0 0 0;
+        }
+
+        .modern-table thead th:last-child {
+            border-radius: 0 12px 0 0;
+        }
+
+        .modern-table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .modern-table tbody tr:hover {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .modern-table tbody td {
+            padding: 18px 12px;
+            vertical-align: middle;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .modern-table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 12px;
+        }
+
+        .modern-table tbody tr:last-child td:last-child {
+            border-radius: 0 0 12px 0;
+        }
+
+        /* --- BADGES E STATUS --- */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pendente {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+        }
+
+        /* --- BOTÕES MODERNOS --- */
+        .btn-modern {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            min-width: 80px;
+            justify-content: center;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-success-modern {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-danger-modern {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn-warning-modern {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+        }
+
+        .btn-info-modern {
+            background: linear-gradient(135deg, #009AD1, #00628A);
+            color: white;
+        }
+
+        .btn-group-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* --- VALOR DESTACADO --- */
+        .value-highlight {
+            font-weight: 700;
+            color: #28a745;
+            font-size: 1rem;
+        }
+
+        /* --- LINKS MODERNOS --- */
+        .link-modern {
+            color: #009AD1;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .link-modern:hover {
+            color: #00628A;
+            text-decoration: underline;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 1200px) {
+            .page-container {
+                margin: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                margin: 20px;
+                border-radius: 15px;
+            }
+
+            .page-header {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .page-body {
+                padding: 20px;
+            }
+
+            .table-container {
+                padding: 15px;
+                overflow-x: auto;
+            }
+
+            .modern-table {
+                min-width: 800px;
+            }
+
+            .btn-group-actions {
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .btn-modern {
+                min-width: 100px;
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .success-card {
+                padding: 30px 20px;
+            }
+
+            .success-icon {
+                font-size: 3rem;
+            }
+
+            .success-title {
+                font-size: 1.3rem;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="page-container">
+            <!-- Header Modernizado -->
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    {% trans "Despesas Pendentes de Aprovação" %}
+                </h1>
+                <p class="page-subtitle">
+                    Gerencie e aprove as despesas submetidas pelos técnicos de campo
+                </p>
+            </div>
+
+            <!-- Corpo da Página -->
+            <div class="page-body">
+                {% if not despesas_pendentes %}
+                    <!-- Card de Sucesso Modernizado -->
+                    <div class="success-card fade-in-up">
+                        <div class="success-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h2 class="success-title">{% trans "Ótimo trabalho!" %}</h2>
+                        <p class="success-message">{% trans "Não há nenhuma despesa pendente de aprovação." %}</p>
+                    </div>
+                {% else %}
+                    <!-- Tabela de Despesas Modernizada -->
+                    <div class="table-container fade-in-up">
+                        <div class="table-header">
+                            <div class="table-icon">
+                                <i class="bi bi-table"></i>
+                            </div>
+                            <h5 class="table-title">{% trans "Lista de Despesas Pendentes" %}</h5>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th><i class="bi bi-calendar-event me-1"></i>{% trans "Data" %}</th>
+                                        <th><i class="bi bi-person-badge me-1"></i>{% trans "Técnico" %}</th>
+                                        <th><i class="bi bi-file-earmark-text me-1"></i>{% trans "OS" %}</th>
+                                        <th><i class="bi bi-card-text me-1"></i>{% trans "Descrição" %}</th>
+                                        <th><i class="bi bi-currency-dollar me-1"></i>{% trans "Valor (R$)" %}</th>
+                                        <th><i class="bi bi-paperclip me-1"></i>{% trans "Comprovante" %}</th>
+                                        <th class="text-center"><i class="bi bi-gear-fill me-1"></i>{% trans "Ações" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for despesa in despesas_pendentes %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="bi bi-calendar3 text-muted"></i>
+                                                    {{ despesa.data_despesa|date:"d/m/Y" }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="bi bi-person-circle text-primary"></i>
+                                                    {{ despesa.tecnico.get_full_name|default:despesa.tecnico.username }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'servico_campo:detalhe_os' despesa.ordem_servico.pk %}" class="link-modern">
+                                                    <i class="bi bi-link-45deg me-1"></i>
+                                                    {{ despesa.ordem_servico.numero_os }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 200px;" title="{{ despesa.descricao }}">
+                                                    {{ despesa.descricao }}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="value-highlight">
+                                                    R$ {{ despesa.valor|floatformat:2 }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if despesa.comprovante_anexo %}
+                                                    <a href="{{ despesa.comprovante_anexo.url }}" target="_blank" class="btn-modern btn-info-modern">
+                                                        <i class="bi bi-eye"></i>
+                                                        {% trans "Ver" %}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">
+                                                        <i class="bi bi-x-circle me-1"></i>
+                                                        {% trans "Nenhum" %}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group-actions">
+                                                    {% if perms.servico_campo.change_despesa %}
+                                                    <a href="{% url 'servico_campo:editar_despesa' despesa.pk %}" class="btn-modern btn-warning-modern" title="{% trans 'Editar Despesa' %}">
+                                                        <i class="bi bi-pencil"></i>
+                                                        {% trans "Editar" %}
+                                                    </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'servico_campo:acao_despesa' pk=despesa.pk acao='aprovar' %}" class="btn-modern btn-success-modern" title="{% trans 'Aprovar Despesa' %}">
+                                                        <i class="bi bi-check-circle"></i>
+                                                        {% trans "Aprovar" %}
+                                                    </a>
+                                                    <a href="{% url 'servico_campo:acao_despesa' pk=despesa.pk acao='rejeitar' %}" class="btn-modern btn-danger-modern" title="{% trans 'Rejeitar Despesa' %}">
+                                                        <i class="bi bi-x-circle"></i>
+                                                        {% trans "Rejeitar" %}
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>    
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animação de entrada para os elementos
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Aplica animação aos elementos
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Efeito hover suave nas linhas da tabela
+        const tableRows = document.querySelectorAll('.modern-table tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Confirmação para ações críticas
+        const deleteButtons = document.querySelectorAll('[href*="rejeitar"]');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (!confirm('Tem certeza que deseja rejeitar esta despesa?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+{% endblock %}

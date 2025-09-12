@@ -1,0 +1,108 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h1 class="mb-0">{{ form_title }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}<div class="text-danger">{{ form.nome.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.horas_normais_diarias.id_for_label }}" class="form-label">{{ form.horas_normais_diarias.label }}</label>
+                        {{ form.horas_normais_diarias }}
+                        {% if form.horas_normais_diarias.errors %}<div class="text-danger">{{ form.horas_normais_diarias.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.inicio_jornada_normal.id_for_label }}" class="form-label">{{ form.inicio_jornada_normal.label }}</label>
+                        {{ form.inicio_jornada_normal }}
+                        {% if form.inicio_jornada_normal.errors %}<div class="text-danger">{{ form.inicio_jornada_normal.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.fim_jornada_normal.id_for_label }}" class="form-label">{{ form.fim_jornada_normal.label }}</label>
+                        {{ form.fim_jornada_normal }}
+                        {% if form.fim_jornada_normal.errors %}<div class="text-danger">{{ form.fim_jornada_normal.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-3">{% trans "Configuração de Horas Extras" %}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.inicio_extra_60.id_for_label }}" class="form-label">{{ form.inicio_extra_60.label }}</label>
+                        {{ form.inicio_extra_60 }}
+                        {% if form.inicio_extra_60.errors %}<div class="text-danger">{{ form.inicio_extra_60.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.fim_extra_60.id_for_label }}" class="form-label">{{ form.fim_extra_60.label }}</label>
+                        {{ form.fim_extra_60 }}
+                        {% if form.fim_extra_60.errors %}<div class="text-danger">{{ form.fim_extra_60.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.inicio_extra_100.id_for_label }}" class="form-label">{{ form.inicio_extra_100.label }}</label>
+                        {{ form.inicio_extra_100 }}
+                        {% if form.inicio_extra_100.errors %}<div class="text-danger">{{ form.inicio_extra_100.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-3">{% trans "Fins de Semana" %}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            {{ form.considerar_sabado_100_extra }}
+                            <label class="form-check-label" for="{{ form.considerar_sabado_100_extra.id_for_label }}">
+                                {{ form.considerar_sabado_100_extra.label }}
+                            </label>
+                            {% if form.considerar_sabado_100_extra.errors %}<div class="text-danger">{{ form.considerar_sabado_100_extra.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            {{ form.considerar_domingo_100_extra }}
+                            <label class="form-check-label" for="{{ form.considerar_domingo_100_extra.id_for_label }}">
+                                {{ form.considerar_domingo_100_extra.label }}
+                            </label>
+                            {% if form.considerar_domingo_100_extra.errors %}<div class="text-danger">{{ form.considerar_domingo_100_extra.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_default }}
+                        <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                            {{ form.is_default.label }}
+                        </label>
+                        {% if form.is_default.errors %}<div class="text-danger">{{ form.is_default.errors }}</div>{% endif %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">{% trans "Salvar" %}</button>
+                <a href="{% url 'servico_campo:lista_regras_jornada' %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

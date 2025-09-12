@@ -1,0 +1,86 @@
+{% extends 'servico_campo/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro em Massa de Equipamentos{% endblock %}
+
+{% block content %}
+<style>
+    /* O mesmo CSS da outra tela de upload */
+    .upload-wrapper { max-width: 800px; margin: 40px auto; padding: 30px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
+    .upload-wrapper h1 { color: #343a40; margin-bottom: 20px; font-weight: 600; }
+    .step { display: flex; align-items: center; margin-bottom: 25px; }
+    .step-number { background-color: #007bff; color: white; font-weight: bold; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-right: 20px; flex-shrink: 0; }
+    .step-content p { margin: 0; color: #495057; line-height: 1.6; }
+    .step-content .btn { margin-top: 10px; }
+    .form-upload-group { border: 2px dashed #007bff; border-radius: 8px; padding: 40px; text-align: center; background-color: #f8f9fa; cursor: pointer; transition: background-color 0.2s; }
+    .form-upload-group:hover { background-color: #e9ecef; }
+    .form-upload-group input[type="file"] { display: none; }
+    .form-upload-group i { font-size: 40px; color: #007bff; margin-bottom: 15px; }
+    .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+    .messages li { padding: 15px; margin-bottom: 10px; border-radius: 5px; font-weight: 500; }
+    .messages li.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .messages li.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .messages li.warning, .messages li.info { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+</style>
+
+<div class="upload-wrapper">
+    <h1><i class="fas fa-desktop"></i> Cadastro em Massa de Equipamentos</h1>
+    
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <p><strong>Faça o download do nosso modelo de planilha.</strong><br>
+            Preencha-o com os dados dos equipamentos que você deseja cadastrar.</p>
+            <a href="{% url 'servico_campo:download_modelo_equipamentos' %}" class="btn btn-secondary">
+                <i class="fas fa-download"></i> Baixar Modelo de Planilha (.xlsx)
+            </a>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <p><strong>Envie a planilha preenchida.</strong><br>
+            O sistema irá validar e cadastrar os novos equipamentos automaticamente.</p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file-upload" class="form-upload-group" id="upload-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p id="upload-text">Clique aqui ou arraste a planilha para esta área</p>
+        </label>
+        <input type="file" id="file-upload" name="arquivo_excel" accept=".xlsx" required>
+        
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-4">
+            <i class="fas fa-check-circle"></i> Enviar e Cadastrar Equipamentos
+        </button>
+    </form>
+</div>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script>
+    const uploadInput = document.getElementById('file-upload');
+    const uploadArea = document.getElementById('upload-area');
+    const uploadText = document.getElementById('upload-text');
+
+    uploadInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            uploadText.textContent = this.files[0].name;
+            uploadArea.style.borderColor = '#28a745';
+        } else {
+            uploadText.textContent = 'Clique aqui ou arraste a planilha para esta área';
+            uploadArea.style.borderColor = '#007bff';
+        }
+    });
+</script>
+{% endblock %}
