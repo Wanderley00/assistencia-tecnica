@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const text = document.createElement('div');
         text.className = 'loading-text';
-        text.textContent = 'Carregando...';
         
         container.appendChild(spinner);
         // container.appendChild(dotsContainer); // Para usar dots em vez de spinner
