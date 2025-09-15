@@ -727,3 +727,32 @@ body {
 .submenu::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* Ajuste no link do menu para alinhar o texto e o badge */
+.menu-link {
+  justify-content: space-between;
+}
+
+.menu-text {
+  flex-grow: 1; /* Permite que o texto ocupe o espaço disponível */
+}
+
+/* Estilo para o contador/badge de notificação */
+.menu-badge {
+  background-color: #ef4444; /* Cor de perigo (vermelho) */
+  color: white;
+  font-size: 0.75rem; /* Tamanho da fonte menor */
+  font-weight: 700;
+  padding: 2px 8px; /* Preenchimento vertical e horizontal */
+  border-radius: 12px; /* Totalmente arredondado */
+  line-height: 1.5;
+  min-width: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  margin-left: auto; /* Empurra o badge para a direita */
+  flex-shrink: 0; /* Impede que o badge encolha */
+}
+
+.sidebar.collapsed .menu-badge {
+  display: none; /* Esconde o badge quando o menu está colapsado */
+}

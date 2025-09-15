@@ -88,6 +88,11 @@
                     <a href="{% url 'servico_campo:lista_despesas_pendentes' %}" class="menu-link">
                         <i class="bi bi-cash-coin menu-icon"></i>
                         <span class="menu-text">Aprovar Despesas</span>
+                        {# --- CÓDIGO ADICIONADO --- #}
+                        {% if pending_counts.aprovar_despesas > 0 %}
+                            <span class="menu-badge">{{ pending_counts.aprovar_despesas }}</span>
+                        {% endif %}
+                        {# --- FIM DO CÓDIGO ADICIONADO --- #}
                     </a>
                 </li>
                 {% endif %}
@@ -97,6 +102,11 @@
                     <a href="{% url 'servico_campo:aprovacao_ordens_concluidas' %}" class="menu-link">
                         <i class="bi bi-check-circle menu-icon"></i>
                         <span class="menu-text">Aprovar Ordens</span>
+                        {# --- CÓDIGO ADICIONADO --- #}
+                        {% if pending_counts.aprovar_ordens > 0 %}
+                            <span class="menu-badge">{{ pending_counts.aprovar_ordens }}</span>
+                        {% endif %}
+                        {# --- FIM DO CÓDIGO ADICIONADO --- #}
                     </a>
                 </li>
                 {% endif %}
@@ -106,6 +116,11 @@
                     <a href="{% url 'servico_campo:lista_contas_a_pagar' %}" class="menu-link">
                         <i class="bi bi-currency-dollar menu-icon"></i>
                         <span class="menu-text">{% trans "Contas a Pagar" %}</span>
+                        {# --- CÓDIGO ADICIONADO --- #}
+                        {% if pending_counts.contas_a_pagar > 0 %}
+                            <span class="menu-badge">{{ pending_counts.contas_a_pagar }}</span>
+                        {% endif %}
+                        {# --- FIM DO CÓDIGO ADICIONADO --- #}
                     </a>
                 </li>
                 {% endif %}
