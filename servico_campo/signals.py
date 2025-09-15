@@ -92,7 +92,7 @@ def notificar_gestor_para_aprovacao(sender, instance, created, **kwargs):
             }
             # Renderiza o template de e-mail
             mensagem = render_to_string(
-                'emails/notificacao_aprovacao.html', context)
+                'servico_campo/email/notificacao_aprovacao.html', context)
 
             # Envia o e-mail
             send_mail(
@@ -121,7 +121,7 @@ def notificar_tecnico_reprovacao(sender, instance, created, **kwargs):
             }
             # Renderiza o template de e-mail
             mensagem = render_to_string(
-                'emails/notificacao_reprovacao.html', context)
+                'servico_campo/email/notificacao_reprovacao.html', context)
 
             # Envia o e-mail
             send_mail(

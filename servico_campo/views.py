@@ -3,6 +3,7 @@
 # Python / Django Imports
 from io import BytesIO
 import csv
+import calendar
 from django.db import transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib import messages
@@ -1655,7 +1656,7 @@ class OrdemServicoEncerramentoView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         os_instance = form.save(commit=False)
-        os_instance.status = 'CONCLUIDA'
+        os_instance.status = 'PENDENTE_APROVACAO'
         os_instance.data_fechamento = timezone.now()
         os_instance.save()
         messages.success(self.request, _(
@@ -2072,34 +2073,41 @@ class GanttChartView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         user = self.request.user
         empresas_do_usuario = user.empresas_associadas.all()
 
+        # --- NOVA LÓGICA PARA DATAS PADRÃO ---
+        today = date.today()
+        # Encontra o primeiro dia do mês atual
+        first_day_of_month = today.replace(day=1)
+        # Encontra o último dia do mês atual
+        _, last_day_num = calendar.monthrange(today.year, today.month)
+        last_day_of_month = today.replace(day=last_day_num)
+        # --- FIM DA NOVA LÓGICA ---
+
         if not empresas_do_usuario.exists():
             context['tasks_by_resource'] = {}
-            # <-- CORREÇÃO 1: Garante que o template receba valores padrão mesmo sem OS
             context['days_in_period'] = []
             context['total_days'] = 0
             context['filters'] = {
-                'start_date': (date.today() - timedelta(days=30)).isoformat(),
-                'end_date': date.today().isoformat(),
+                # Usa as novas datas padrão aqui também
+                'start_date': first_day_of_month.isoformat(),
+                'end_date': last_day_of_month.isoformat(),
             }
             return context
 
-        today = date.today()
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
 
         # Mantém a lógica de parse das datas, que já estava boa
         try:
             filter_start_date = date.fromisoformat(
-                start_date_str) if start_date_str else today - timedelta(days=30)
+                start_date_str) if start_date_str else first_day_of_month
         except (ValueError, TypeError):
-            filter_start_date = today - timedelta(days=30)
+            filter_start_date = first_day_of_month
 
         try:
-            # <-- CORREÇÃO 2: Define um padrão mais lógico para a data final se não for informada
             filter_end_date = date.fromisoformat(
-                end_date_str) if end_date_str else today
+                end_date_str) if end_date_str else last_day_of_month
         except (ValueError, TypeError):
-            filter_end_date = today
+            filter_end_date = last_day_of_month
 
         # Garante que a data final não seja anterior à inicial
         if filter_end_date < filter_start_date:
@@ -2173,26 +2181,29 @@ class GanttDataJsonView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         if not empresas_do_usuario.exists():
             return OrdemServico.objects.none()
 
+        # --- NOVA LÓGICA PARA DATAS PADRÃO ---
         hoje = timezone.localdate()
-        # Período padrão se nenhum filtro for fornecido (ex: último mês)
-        default_start_date = hoje - timedelta(days=30)
-        default_end_date = hoje + timedelta(days=7)  # Até uma semana no futuro
+        # Encontra o primeiro dia do mês atual
+        default_start_date = hoje.replace(day=1)
+        # Encontra o último dia do mês atual
+        _, last_day_num = calendar.monthrange(hoje.year, hoje.month)
+        default_end_date = hoje.replace(day=last_day_num)
+        # --- FIM DA NOVA LÓGICA ---
 
-        # --- NOVO: Receber filtros de data da requisição GET ---
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
 
-        # Converter strings para objetos date
+        # Converte strings para objetos date, usando os novos padrões
         try:
             filter_start_date = datetime.strptime(
                 start_date_str, '%Y-%m-%d').date() if start_date_str else default_start_date
-        except ValueError:
+        except (ValueError, TypeError):
             filter_start_date = default_start_date
 
         try:
             filter_end_date = datetime.strptime(
                 end_date_str, '%Y-%m-%d').date() if end_date_str else default_end_date
-        except ValueError:
+        except (ValueError, TypeError):
             filter_end_date = default_end_date
 
         # Garantir que a data final não seja anterior à inicial

@@ -28,8 +28,8 @@
 
         /* --- HEADER MODERNIZADO --- */
         .page-header {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            padding: 30px;
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 20px;
             color: white;
             position: relative;
             overflow: hidden;
@@ -71,54 +71,29 @@
             padding: 40px;
         }
 
-        /* --- CARD DE SUCESSO --- */
-        .success-card {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border-radius: 20px;
-            padding: 40px;
+        /* --- EMPTY STATE CLEAN --- */
+        .empty-state {
             text-align: center;
-            color: white;
-            box-shadow: 0 20px 40px rgba(40, 167, 69, 0.3);
-            position: relative;
-            overflow: hidden;
+            padding: 80px 30px;
+            color: #6c757d;
         }
 
-        .success-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 3s ease-in-out infinite;
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 30px;
+            opacity: 0.5;
+            color: #28a745;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        .success-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .success-title {
-            font-size: 1.5rem;
+        .empty-state h3 {
+            color: #495057;
+            margin-bottom: 15px;
             font-weight: 700;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 2;
         }
 
-        .success-message {
+        .empty-state p {
             font-size: 1.1rem;
-            opacity: 0.9;
-            position: relative;
-            z-index: 2;
+            opacity: 0.8;
         }
 
         /* --- TABELA MODERNA --- */
@@ -357,22 +332,30 @@
         }
 
         @media (max-width: 576px) {
-            .success-card {
-                padding: 30px 20px;
-            }
-
-            .success-icon {
-                font-size: 3rem;
-            }
-
-            .success-title {
-                font-size: 1.3rem;
-            }
-
             .table-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
+            }
+        }
+
+        /* --- ANIMAÇÕES --- */
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
@@ -394,13 +377,11 @@
             <!-- Corpo da Página -->
             <div class="page-body">
                 {% if not despesas_pendentes %}
-                    <!-- Card de Sucesso Modernizado -->
-                    <div class="success-card fade-in-up">
-                        <div class="success-icon">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                        <h2 class="success-title">{% trans "Ótimo trabalho!" %}</h2>
-                        <p class="success-message">{% trans "Não há nenhuma despesa pendente de aprovação." %}</p>
+                    <!-- Empty State Clean -->
+                    <div class="empty-state fade-in-up">
+                        <i class="bi bi-check-circle"></i>
+                        <h3>Nenhuma despesa pendente</h3>
+                        <p>Não há despesas pendentes de aprovação no momento.</p>
                     </div>
                 {% else %}
                     <!-- Tabela de Despesas Modernizada -->

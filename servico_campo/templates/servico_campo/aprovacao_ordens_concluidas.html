@@ -1,105 +1,640 @@
+{# servico_campo/templates/servico_campo/aprovacao_ordens_concluidas.html #}
+
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Aprovação de Ordens Concluídas" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aprovação de Ordens Concluídas</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; }
-        .container { margin-top: 20px; }
-        .card { margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card-header { background-color: #f8f9fa; border-bottom: 1px solid #e0e0e0; padding: 15px; font-weight: bold; }
-        .card-body { padding: 20px; }
-        .card-title { color: #0056b3; margin-bottom: 10px; }
-        .btn-success { background-color: #28a745; border-color: #28a745; }
-        .btn-danger { background-color: #dc3545; border-color: #dc3545; }
-        .form-group { margin-bottom: 15px; }
-        .pagination { justify-content: center; }
+        /* --- ESTILOS GERAIS --- */
+
+        .page-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .page-header {
+             background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            font-weight: 400;
+        }
+
+        /* --- CARDS MODERNIZADOS --- */
+        .orders-container {
+            padding: 30px;
+            display: grid;
+            gap: 25px;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
+            transition: all 0.3s ease;
+            border-top: 4px solid #179b38;
+        }
+
+        .order-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .order-card-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .order-card-header i {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .order-card-body {
+            padding: 30px;
+        }
+
+        .order-title {
+            color: #0056b3;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .order-info {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            flex-shrink: 0;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            color: #212529;
+            font-size: 1rem;
+        }
+
+        /* --- BADGES MODERNIZADOS --- */
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+            color: #212529 !important;
+        }
+
+        /* --- BOTÕES MODERNIZADOS --- */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-top: 20px;
+            border-top: 2px solid #f1f3f4;
+        }
+
+        .btn-modern {
+            padding: 12px 24px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-info-modern {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-success-modern {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-danger-modern {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        /* --- MODAL MODERNIZADO --- */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 20px 30px;
+            border: none;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            border: none;
+            background: #f8f9fa;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        /* --- PAGINAÇÃO --- */
+        .pagination-section {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination {
+            gap: 8px;
+        }
+
+        .page-link {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-weight: 600;
+            color: #495057;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .page-item.active .page-link {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: none;
+        }
+
+        /* --- EMPTY STATE --- */
+        .empty-state {
+            text-align: center;
+            padding: 80px 30px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 30px;
+            opacity: 0.5;
+            color: #28a745;
+        }
+
+        .empty-state h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .page-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .page-header {
+                padding: 20px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .page-title {
+                font-size: 1.8rem;
+                justify-content: center;
+            }
+
+            .orders-container {
+                padding: 20px;
+            }
+
+            .order-card-body {
+                padding: 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-modern {
+                justify-content: center;
+            }
+        }
+
+        /* --- ANIMAÇÕES --- */
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 class="mb-4">Ordens de Serviço Pendentes de Aprovação</h2>
-
-        {% if ordens_pendentes %}
-            {% for ordem in ordens_pendentes %}
-                <div class="card">
-                    <div class="card-header">
-                        OS #{{ ordem.numero_os }} - {{ ordem.titulo_servico }}
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Cliente: {{ ordem.cliente.razao_social }}</h5>
-                        <p><strong>Equipamento:</strong> {{ ordem.equipamento.nome }} ({{ ordem.equipamento.modelo }})</p>
-                        <p><strong>Técnico Responsável:</strong> {{ ordem.tecnico_responsavel.get_full_name }}</p>
-                        <p><strong>Data de Abertura:</strong> {{ ordem.data_abertura|date:"d/m/Y H:i" }}</p>
-                        <p><strong>Descrição do Problema:</strong> {{ ordem.descricao_problema }}</p>
-                        <p><strong>Status Atual:</strong> <span class="badge badge-warning">{{ ordem.get_status_display }}</span></p>
-                        
-                        <div class="mt-3">
-                            <a href="{% url 'servico_campo:detalhe_os' pk=ordem.pk %}" class="btn btn-info btn-sm">Ver Detalhes da OS</a>
-                            
-                            <form action="{% url 'servico_campo:aprovar_os' pk=ordem.pk %}" method="post" style="display:inline-block; margin-left: 10px;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">Aprovar</button>
-                            </form>
-
-                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#reprovarModal{{ ordem.pk }}" style="margin-left: 10px;">Reprovar</button>
-                        </div>
+    <div class="container-fluid">
+        <div class="page-container">
+            <!-- Header Modernizado -->
+            <div class="page-header">
+                <div class="header-content">
+                    <div>
+                        <h1 class="page-title">
+                            <i class="bi bi-check-circle"></i>
+                            Aprovação de Ordens Concluídas
+                        </h1>
+                        <p class="page-subtitle">
+                            Gerencie e aprove as ordens de serviço pendentes
+                        </p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Modal de Reprovação -->
-                <div class="modal fade" id="reprovarModal{{ ordem.pk }}" tabindex="-1" role="dialog" aria-labelledby="reprovarModalLabel{{ ordem.pk }}" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="reprovarModalLabel{{ ordem.pk }}">Reprovar OS #{{ ordem.numero_os }}</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
+            <!-- Container das Ordens -->
+            <div class="orders-container">
+                {% if ordens_pendentes %}
+                    {% for ordem in ordens_pendentes %}
+                        <div class="order-card fade-in-up delay-{{ forloop.counter|add:1 }}">
+                            <div class="order-card-header">
+                                <i class="bi bi-file-earmark-text"></i>
+                                OS {{ ordem.numero_os }} - {{ ordem.titulo_servico }}
                             </div>
-                            <form action="{% url 'servico_campo:reprovar_os' pk=ordem.pk %}" method="post">
-                                {% csrf_token %}
-                                <div class="modal-body">
-                                    <div class="form-group">
-                                        <label for="motivo_reprovacao">Motivo da Reprovação:</label>
-                                        <textarea class="form-control" id="motivo_reprovacao" name="motivo_reprovacao" rows="3" required></textarea>
+                            <div class="order-card-body">
+                                <h5 class="order-title">
+                                    <i class="bi bi-person-bounding-box"></i>
+                                    Cliente: {{ ordem.cliente.razao_social }}
+                                </h5>
+                                
+                                <div class="order-info">
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="bi bi-gear"></i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Equipamento</div>
+                                            <div class="info-value">{{ ordem.equipamento.nome }} ({{ ordem.equipamento.modelo }})</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Técnico Responsável</div>
+                                            <div class="info-value">{{ ordem.tecnico_responsavel.get_full_name }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="bi bi-calendar3"></i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Data de Abertura</div>
+                                            <div class="info-value">{{ ordem.data_abertura|date:"d/m/Y H:i" }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Descrição do Problema</div>
+                                            <div class="info-value">{{ ordem.descricao_problema }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="bi bi-flag"></i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Status Atual</div>
+                                            <div class="info-value">
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-clock-fill"></i>
+                                                    {{ ordem.get_status_display }}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                    <button type="submit" class="btn btn-danger">Reprovar OS</button>
+
+                                <div class="action-buttons">
+                                    <a href="{% url 'servico_campo:detalhe_os' pk=ordem.pk %}" class="btn-modern btn-info-modern">
+                                        <i class="bi bi-eye"></i>
+                                        Ver Detalhes da OS
+                                    </a>
+                                    
+                                    <form action="{% url 'servico_campo:aprovar_os' pk=ordem.pk %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-modern btn-success-modern">
+                                            <i class="bi bi-check-circle"></i>
+                                            Aprovar
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn-modern btn-danger-modern" data-bs-toggle="modal" data-bs-target="#reprovarModal{{ ordem.pk }}">
+                                        <i class="bi bi-x-circle"></i>
+                                        Reprovar
+                                    </button>
                                 </div>
-                            </form>
+                            </div>
                         </div>
+
+                        <!-- Modal de Reprovação -->
+                        <div class="modal fade" id="reprovarModal{{ ordem.pk }}" tabindex="-1" aria-labelledby="reprovarModalLabel{{ ordem.pk }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="reprovarModalLabel{{ ordem.pk }}">
+                                            <i class="bi bi-x-circle"></i>
+                                            Reprovar OS {{ ordem.numero_os }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{% url 'servico_campo:reprovar_os' pk=ordem.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="motivo_reprovacao{{ ordem.pk }}" class="form-label">
+                                                    <i class="bi bi-chat-left-text me-1"></i>
+                                                    Motivo da Reprovação:
+                                                </label>
+                                                <textarea class="form-control" id="motivo_reprovacao{{ ordem.pk }}" name="motivo_reprovacao" rows="4" required placeholder="Descreva o motivo da reprovação desta ordem de serviço..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn-modern btn-info-modern" data-bs-dismiss="modal">
+                                                <i class="bi bi-arrow-left"></i>
+                                                Cancelar
+                                            </button>
+                                            <button type="submit" class="btn-modern btn-danger-modern">
+                                                <i class="bi bi-x-circle"></i>
+                                                Reprovar OS
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Paginação -->
+                    {% if page_obj %}
+                    <div class="pagination-section">
+                        <nav aria-label="Navegação de páginas">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                            <i class="bi bi-chevron-left"></i> Anterior
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">{{ page_obj.number }}</a>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                            Próxima <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
                     </div>
-                </div>
-            {% endfor %}
-
-            <nav aria-label="Page navigation example">
-                <ul class="pagination">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
                     {% endif %}
-                    <li class="page-item active"><a class="page-link" href="#">{{ page_obj.number }}</a></li>
-                    {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
 
-        {% else %}
-            <div class="alert alert-info" role="alert">
-                Não há ordens de serviço pendentes de aprovação.
+                {% else %}
+                    <div class="empty-state fade-in-up">
+                        <i class="bi bi-check-circle"></i>
+                        <h3>Nenhuma ordem pendente</h3>
+                        <p>Não há ordens de serviço pendentes de aprovação no momento.</p>
+                    </div>
+                {% endif %}
             </div>
-        {% endif %}
+        </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Animações suaves nos botões
+        document.querySelectorAll('.btn-modern').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Efeito nos cards
+        document.querySelectorAll('.order-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Animação no textarea do modal
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+    </script>
 </body>
 </html>
-
-
+{% endblock %}

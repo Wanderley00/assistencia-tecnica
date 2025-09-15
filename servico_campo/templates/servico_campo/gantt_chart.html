@@ -31,7 +31,7 @@
         .gantt-header {
             background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
         }
 
         .gantt-title {
@@ -101,7 +101,7 @@
         .status-em-execucao { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
         .status-planejada { background: #cce5ff; color: #004085; border: 1px solid #99d3ff; }
         .status-cancelada { background: #f8d7da; color: #721c24; border: 1px solid #f1aeb5; }
-        .status-pendente { background: #e2e3e5; color: #383d41; border: 1px solid #d1d3d4; }
+        .status-pendente { background: #e9d8fd; color: #5832a8; border: 1px solid #d3b1fa; }
 
         /* --- GRÁFICO GANTT --- */
         .gantt-chart {
@@ -218,7 +218,7 @@
         .task-emexecucao, .task-em-execução { background: linear-gradient(135deg, #ffc107, #fd7e14); }
         .task-planejada, .task-aberta { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
         .task-cancelada { background: linear-gradient(135deg, #dc3545, #e83e8c); }
-        .task-pendente { background: linear-gradient(135deg, #6c757d, #495057); }
+        .task-pendente, .task-pendenteaprovacao { background: linear-gradient(135deg, #6f42c1, #5832a8); }
 
         /* --- NOVO ESTILO PARA O POPUP CUSTOMIZADO --- */
         #gantt-tooltip {
@@ -349,7 +349,7 @@
                 <span class="status-badge status-em-execucao"><i class="bi bi-play-circle-fill"></i>Em Execução</span>
                 <span class="status-badge status-planejada"><i class="bi bi-calendar-plus-fill"></i>Planejada</span>
                 <span class="status-badge status-cancelada"><i class="bi bi-x-circle-fill"></i>Cancelada</span>
-                <span class="status-badge status-pendente"><i class="bi bi-clock-fill"></i>Pendente</span>
+                <span class="status-badge status-pendente"><i class="bi bi-clock-fill"></i>Pendente de Aprovação</span>
             </div>
 
             <!-- Gráfico Gantt -->
@@ -395,9 +395,11 @@
                                                            data-status="{{ task.os.get_status_display|default:'N/A' }}"
                                                            data-inicio-planejado="{{ task.os.data_inicio_planejado|date:'d/m/Y'|default:'--' }}"
                                                            data-inicio-real="{{ task.os.data_inicio_real|date:'d/m/Y'|default:'--' }}"
-                                                           data-prazo-conclusao="{{ task.os.prazo_conclusao|date:'d/m/Y'|default:'--' }}"
-                                                           data-conclusao-real="{{ task.os.data_conclusao_real|date:'d/m/Y'|default:'--' }}"
+                                                           data-prazo-conclusao="{{ task.os.data_previsao_conclusao|date:'d/m/Y'|default:'--' }}"
+                                                           data-conclusao-real="{{ task.os.data_fechamento|date:'d/m/Y'|default:'--' }}"
                                                            data-os-titulo="OS {{ task.os.numero_os }}: {{ task.os.titulo_servico }}"
+                                                           data-tipo-servico="{{ task.os.tipo_manutencao.nome|default:'N/A' }}"
+                                                           data-gestor="{{ task.os.gestor_responsavel.get_full_name|default:'N/A' }}"
                                                            >
                                                             {{ task.os.titulo_servico|truncatechars:30 }}
                                                         </a>
@@ -474,7 +476,9 @@
                 tooltipBody.innerHTML = `
                     <p><strong>Cliente:</strong> <span>${data.cliente}</span></p>
                     <p><strong>Equipamento:</strong> <span>${data.equipamento}</span></p>
+                    <p><strong>Tipo de Serviço:</strong> <span>${data.tipoServico}</span></p>
                     <p><strong>Responsável:</strong> <span>${data.responsavel}</span></p>
+                    <p><strong>Gestor Responsável:</strong> <span>${data.gestor}</span></p>
                     <p><strong>Status:</strong> <span>${data.status}</span></p>
                     <p><strong>Início Planejado:</strong> <span>${data.inicioPlanejado}</span></p>
                     <p><strong>Início Real:</strong> <span>${data.inicioReal}</span></p>

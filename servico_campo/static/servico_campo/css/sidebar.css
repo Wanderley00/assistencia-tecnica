@@ -483,6 +483,13 @@ body {
   padding: 1rem 2rem;
   flex-shrink: 0;
   box-shadow: 0 1px 3px var(--shadow);
+   /* AJUSTE CRÍTICO: 
+    Remove um espaço vertical de 24px no topo da página.
+    Uma regra padrão (provavelmente do Bootstrap) não pôde ser sobrescrita.
+    Esta margem negativa força o alinhamento correto.
+    Verificar o comportamento em telas menores.
+  */
+  margin-top: -24px;
 }
 
 .topbar-content {
