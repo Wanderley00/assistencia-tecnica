@@ -306,6 +306,18 @@
             font-style: italic;
         }
 
+        .empty-chart-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+
         /* --- GRÁFICOS MODERNIZADOS --- */
         .charts-section {
             padding: 0 30px 30px;
@@ -333,10 +345,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-
-        .chart-body {
-            padding: 25px;
         }
 
         .chart-container {
@@ -596,9 +604,10 @@
                                     Ordens de Serviço por Status
                                 </h5>
                             </div>
-                            <div class="chart-body">
-                                <div class="chart-container">
-                                    <canvas id="statusChart"></canvas>
+                            <div class="chart-container">
+                                <canvas id="statusChart"></canvas>
+                                <div id="no-data-status" class="empty-chart-message" style="display: none;">
+                                    <i class="bi bi-info-circle me-2"></i>Não há dados de status para exibir.
                                 </div>
                             </div>
                         </div>
@@ -614,6 +623,9 @@
                             <div class="chart-body">
                                 <div class="chart-container">
                                     <canvas id="tipoManutencaoChart"></canvas>
+                                    <div id="no-data-tipo" class="empty-chart-message" style="display: none;">
+                                        <i class="bi bi-info-circle me-2"></i>Não há dados de serviço para exibir.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -644,8 +656,11 @@
         Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
         Chart.defaults.font.size = 12;
 
+        // Gráfico de Status
         const ctxStatus = document.getElementById('statusChart');
-        if (ctxStatus && statusLabels.length > 0) {
+        const noDataStatusDiv = document.getElementById('no-data-status');
+        // Verifica se a soma dos dados é maior que 0
+        if (ctxStatus && statusCounts.reduce((a, b) => a + b, 0) > 0) {
             new Chart(ctxStatus.getContext('2d'), {
                 type: 'doughnut',
                 data: {
@@ -661,6 +676,13 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    // ADICIONE ESTA SEÇÃO "layout"
+                    layout: {
+                        padding: {
+                            top: 20,
+                            bottom: 20
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: 'bottom',
@@ -673,10 +695,17 @@
                     cutout: '60%'
                 }
             });
+        } else if (ctxStatus) {
+            // Se não houver dados, esconde o canvas e mostra a mensagem
+            ctxStatus.style.display = 'none';
+            noDataStatusDiv.style.display = 'flex';
         }
 
+        // Gráfico de Tipo de Manutenção
         const ctxTipo = document.getElementById('tipoManutencaoChart');
-        if (ctxTipo && tipoLabels.length > 0) {
+        const noDataTipoDiv = document.getElementById('no-data-tipo');
+        // Verifica se a soma dos dados é maior que 0
+        if (ctxTipo && tipoCounts.reduce((a, b) => a + b, 0) > 0) {
             new Chart(ctxTipo.getContext('2d'), {
                 type: 'bar',
                 data: {
@@ -716,9 +745,13 @@
                     }
                 }
             });
+        } else if (ctxTipo) {
+            // Se não houver dados, esconde o canvas e mostra a mensagem
+            ctxTipo.style.display = 'none';
+            noDataTipoDiv.style.display = 'flex';
         }
 
-        // Animação de entrada para os cards
+        // Animação de entrada para os cards (mantida do seu código original)
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -733,7 +766,6 @@
             });
         }, observerOptions);
 
-        // Aplica animação aos elementos
         document.querySelectorAll('.fade-in-up').forEach(el => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(30px)';
