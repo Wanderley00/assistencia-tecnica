@@ -32,7 +32,7 @@
                 <li><strong>Data de Abertura:</strong> {{ os.data_abertura|date:"d/m/Y H:i" }}</li>
                 <li><strong>Descrição do Problema:</strong> {{ os.descricao_problema|linebreaksbr }}</li>
             </ul>
-            <p>Por favor, acesse o sistema para verificar os detalhes completos e iniciar o serviço.</p>
+            <p>Por favor, acesse o sistema ou o app mobile para verificar os detalhes completos e iniciar o serviço.</p>
             <a href="{{ protocol }}://{{ domain }}{% url 'servico_campo:detalhe_os' os.pk %}" class="button">Ver Detalhes da OS</a>
         </div>
         <div class="footer">

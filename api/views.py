@@ -559,7 +559,7 @@ class ConcluirOrdemServicoAPIView(APIView):
             assinatura_cliente_file = serializer.validated_data['assinatura_cliente_data']
 
             # Atualiza a Ordem de Serviço
-            os.status = 'CONCLUIDA'  # Ou o nome do status que você usa
+            os.status = 'PENDENTE_APROVACAO'  # Ou o nome do status que você usa
             os.data_fechamento = timezone.now()
             os.assinatura_executante_conclusao = assinatura_exec_file
             os.assinatura_cliente_conclusao = assinatura_cliente_file
