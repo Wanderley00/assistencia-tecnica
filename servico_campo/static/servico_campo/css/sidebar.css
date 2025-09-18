@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap' );
 
 :root {
   /* Cores do Cliente */
@@ -46,6 +46,65 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
 }
+
+/* --- NOVO: Estilos para o Mobile Toggle --- */
+/* Mobile Toggle - Posição padrão (fechado) */
+.mobile-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1050;
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 45px;
+    height: 45px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    padding: 10px;
+    transition: all 0.3s ease;
+}
+
+/* Mobile Toggle - Quando ativo (menu aberto) - move para direita */
+.mobile-toggle.active {
+    left: calc(var(--sidebar-width) - 60px); /* Posiciona dentro do menu, próximo à borda direita */
+    background: var(--surface);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0, 154, 209, 0.2);
+}
+
+/* Em telas muito pequenas, ajusta a posição */
+@media (max-width: 480px) {
+    .mobile-toggle.active {
+        left: calc(85vw - 60px); /* Usa a largura do sidebar em telas pequenas */
+    }
+}
+
+
+.mobile-toggle span {
+    width: 100%;
+    height: 3px;
+    background-color: var(--primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.mobile-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(4px, 4px);
+}
+
+.mobile-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+
 
 /* Sidebar */
 .sidebar {
@@ -489,7 +548,7 @@ body {
     Esta margem negativa força o alinhamento correto.
     Verificar o comportamento em telas menores.
   */
-  margin-top: -24px;
+  margin-top: 0px;
 }
 
 .topbar-content {
@@ -568,6 +627,9 @@ body {
 
   .topbar {
     padding: 1rem;
+    /* Ajuste para o mobile toggle */
+    padding-left: 70px; 
+    margin-top: 3px;
   }
 
   .page-content {
@@ -612,6 +674,7 @@ body {
 @media (max-width: 480px) {
   .topbar {
     padding: 0.75rem;
+    padding-left: 60px;
   }
 
   .page-content {

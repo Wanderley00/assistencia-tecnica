@@ -317,18 +317,29 @@
         }
 
         /* --- RESPONSIVIDADE --- */
-        @media (max-width: 768px) {
+                @media (max-width: 768px) {
             .main-container {
-                margin: 10px;
+                margin: 0 -14px; /* Remove a margem negativa que estica a tela */
                 border-radius: 15px;
+                box-shadow: none;
             }
 
-            .page-header,
+            .page-header {
+                margin: 0px;
+                padding: 20px;
+                border-top-left-radius: 20px;     /* Arredonda o canto superior esquerdo */
+                border-top-right-radius: 20px;    /* Arredonda o canto superior direito */
+                border-bottom-left-radius: 0;     /* Mantém o canto inferior esquerdo reto */
+                border-bottom-right-radius: 0;    /* Mantém o canto inferior direito reto */
+            }
+
             .filters-section,
             .table-section {
-                margin: 15px;
-                padding: 20px;
+                margin: 10px;
+                padding: 10px;
+                border-radius: 20px; /* Mantém os outros cards com todas as bordas arredondadas */
             }
+
 
             .page-title {
                 font-size: 1.8rem;
@@ -347,6 +358,7 @@
                 box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             }
         }
+
 
         /* --- ESTADO VAZIO --- */
         .empty-state {

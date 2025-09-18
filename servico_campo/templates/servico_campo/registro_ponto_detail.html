@@ -22,18 +22,36 @@
             <p><strong>{% trans "Responsável:" %}</strong> {{ registro_ponto.tecnico.get_full_name|default:registro_ponto.tecnico.username }}</p>
             <p><strong>{% trans "Data:" %}</strong> {{ registro_ponto.data|date:"d/m/Y" }}</p>
             <p><strong>{% trans "Hora de Entrada:" %}</strong> {{ registro_ponto.hora_entrada|time:"H:i" }}</p>
-            {% if registro_ponto.observacoes_entrada %} {# NOVO: Exibe observação de entrada #}
+            {% if registro_ponto.observacoes_entrada %}
                 <p class="ms-3 text-muted small">{% trans "Observação:" %} {{ registro_ponto.observacoes_entrada }}</p>
             {% endif %}
             <p><strong>{% trans "Hora de Saída:" %}</strong> {% if registro_ponto.hora_saida %}{{ registro_ponto.hora_saida|time:"H:i" }}{% else %}<span class="badge bg-warning">{% trans "Em Aberto" %}</span>{% endif %}</p>
-            {% if registro_ponto.observacoes %} {# Exibe observação de saída #}
+            {% if registro_ponto.observacoes %}
                 <p class="ms-3 text-muted small">{% trans "Observação:" %} {{ registro_ponto.observacoes }}</p>
             {% endif %}
             <p><strong>{% trans "Duração:" %}</strong> {{ registro_ponto.duracao_formatada }}</p>
             <hr>
             <h5 class="card-title">{% trans "Localização e Observações" %}</h5>
-            <p><strong>{% trans "Localização de Entrada:" %}</strong> {{ registro_ponto.localizacao|default:"N/A" }}</p>
-            <p><strong>{% trans "Localização de Saída:" %}</strong> {{ registro_ponto.localizacao_saida|default:"N/A" }}</p>
+
+            <p class="small text-muted fst-italic">
+                {% trans "Nota: A precisão da localização depende do sinal de GPS do dispositivo no momento do registro e pode não ser exata." %}
+            </p>
+            
+            <p>
+                <strong>{% trans "Localização de Entrada:" %}</strong> 
+                {{ registro_ponto.localizacao|default:"N/A" }}
+                {% if registro_ponto.localizacao %}
+                    <a href="http://maps.google.com/maps?q={{ registro_ponto.localizacao }}" target="_blank" class="ms-2 small">{% trans "Ver no mapa" %}</a>
+                {% endif %}
+            </p>
+
+            <p>
+                <strong>{% trans "Localização de Saída:" %}</strong> 
+                {{ registro_ponto.localizacao_saida|default:"N/A" }}
+                {% if registro_ponto.localizacao_saida %}
+                    <a href="http://maps.google.com/maps?q={{ registro_ponto.localizacao_saida }}" target="_blank" class="ms-2 small">{% trans "Ver no mapa" %}</a>
+                {% endif %}
+            </p>
 
             <div class="mt-4">
                 <a href="{% url 'servico_campo:detalhe_os' os.pk %}" class="btn btn-secondary">{% trans "Voltar para OS" %}</a>

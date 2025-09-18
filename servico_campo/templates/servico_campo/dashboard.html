@@ -369,27 +369,31 @@
         /* --- RESPONSIVIDADE --- */
         @media (max-width: 768px) {
             .dashboard-container {
-                margin: 10px;
-                border-radius: 15px;
+                /* Ajuste para ocupar a tela inteira */
+                margin: 0px -14px;
+                border-radius: 15;
+                box-shadow: none; /* Remove a sombra em telas pequenas */
             }
 
             .dashboard-header {
-                padding: 20px;
+                padding: 20px 15px; /* Adiciona um padding lateral mínimo */
+                border-radius: 0;
             }
 
             .dashboard-title {
-                font-size: 2rem;
+                font-size: 1.8rem; /* Reduz um pouco para caber melhor */
             }
 
             .metrics-section,
             .table-section,
             .lists-section,
             .charts-section {
-                padding: 20px;
+                /* Reduz o padding para dar mais espaço ao conteúdo */
+                padding: 15px;
             }
 
             .metric-card {
-                margin-bottom: 20px;
+                margin-bottom: 15px;
             }
 
             .chart-container {
