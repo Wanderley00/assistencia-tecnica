@@ -21,6 +21,8 @@ from decimal import Decimal
 from .serializers import TipoRelatorioSerializer, HorasRelatorioTecnicoSerializer
 from configuracoes.models import TipoRelatorio
 from servico_campo.models import RegraJornadaTrabalho
+from servico_campo.views import enviar_email_pendente_aprovacao
+
 
 from servico_campo.models import (
     OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico,
@@ -543,7 +545,7 @@ class TipoRelatorioListView(generics.ListAPIView):
 
 class ConcluirOrdemServicoAPIView(APIView):
     """
-    Endpoint para marcar uma Ordem de Serviço como 'CONCLUIDA' e
+    Endpoint para marcar uma Ordem de Serviço como 'PENDENTE_APROVACAO' e
     salvar as assinaturas de conclusão.
     """
     permission_classes = [IsAuthenticated]
@@ -559,15 +561,21 @@ class ConcluirOrdemServicoAPIView(APIView):
             assinatura_cliente_file = serializer.validated_data['assinatura_cliente_data']
 
             # Atualiza a Ordem de Serviço
-            os.status = 'PENDENTE_APROVACAO'  # Ou o nome do status que você usa
+            os.status = 'PENDENTE_APROVACAO'
             os.data_fechamento = timezone.now()
             os.assinatura_executante_conclusao = assinatura_exec_file
             os.assinatura_cliente_conclusao = assinatura_cliente_file
             os.save()
 
+            # --- 2. CHAME A FUNÇÃO DE ENVIO DE E-MAIL AQUI ---
+            # A função retornará (True/False, mensagem), mas para a API,
+            # podemos simplesmente chamá-la. O log de erros já acontece dentro da função.
+            enviar_email_pendente_aprovacao(request, os)
+            # ------------------------------------------------
+
             # Retorna uma resposta de sucesso
             return Response(
-                {"detail": "Ordem de Serviço concluída com sucesso!"},
+                {"detail": "Ordem de Serviço concluída com sucesso e gestor notificado."},
                 status=status.HTTP_200_OK
             )
 

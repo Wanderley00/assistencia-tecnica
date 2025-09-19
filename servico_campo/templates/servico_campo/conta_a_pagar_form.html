@@ -64,6 +64,18 @@
                     </div>
                 {% endif %}
 
+                {# --- NOVO CAMPO ADICIONADO AQUI --- #}
+                <div class="mb-3">
+                    <label for="{{ form.valor_pago.id_for_label }}" class="form-label">{{ form.valor_pago.label }}</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        {{ form.valor_pago }}
+                    </div>
+                    <small class="form-text text-muted">{{ form.valor_pago.help_text }}</small>
+                    {% if form.valor_pago.errors %}<div class="text-danger">{{ form.valor_pago.errors }}</div>{% endif %}
+                </div>
+                {# --- FIM DO NOVO CAMPO --- #}
+
                 <div class="mb-3">
                     <label for="{{ form.status_pagamento.id_for_label }}" class="form-label">{{ form.status_pagamento.label }}</label>
                     {{ form.status_pagamento }}

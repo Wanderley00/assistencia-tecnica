@@ -137,7 +137,15 @@ class OrdemServico(models.Model):
     data_previsao_conclusao = models.DateField(
         verbose_name="Previsão de Conclusão", null=True, blank=True)
     data_fechamento = models.DateTimeField(
-        verbose_name="Data de Fechamento", null=True, blank=True)
+        verbose_name="Data de Fechamento (Responsável)", null=True, blank=True,
+        help_text="Data em que o técnico finalizou o serviço em campo."
+    )
+    # --- NOVO CAMPO ADICIONADO ---
+    data_aprovacao_gestor = models.DateTimeField(
+        verbose_name="Data da Aprovação (Gestor)", null=True, blank=True,
+        help_text="Data em que o gestor aprovou e concluiu oficialmente a OS."
+    )
+
     status = models.CharField(max_length=25, choices=STATUS_CHOICES,
                               default='AGUARDANDO_PLANEJAMENTO', verbose_name="Status da OS")
     tecnico_responsavel = models.ForeignKey(
@@ -457,6 +465,13 @@ class Despesa(models.Model):
 class ContaPagar(models.Model):
     despesa = models.OneToOneField(Despesa, on_delete=models.CASCADE,
                                    related_name='conta_a_pagar', verbose_name=_("Despesa Associada"))
+
+    valor_pago = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name=_("Valor Pago"),
+        null=True, blank=True,
+        help_text=_(
+            "Valor efetivamente pago/reembolsado. Se deixado em branco, será usado o valor original da despesa.")
+    )
 
     STATUS_PAGAMENTO_CHOICES = [
         ('PENDENTE', _('Pendente')),
@@ -883,3 +898,63 @@ class HorasRelatorioTecnico(models.Model):
 
     def __str__(self):
         return f"Horas de {self.tecnico.username} para o Relatório {self.relatorio.id}"
+
+
+class HistoricoAprovacaoOS(models.Model):
+    """
+    Registra o histórico de aprovações e reprovações de uma Ordem de Serviço.
+    """
+    ACAO_CHOICES = [
+        ('APROVADA', _('Aprovada')),
+        ('REPROVADA', _('Reprovada')),
+    ]
+
+    ordem_servico = models.ForeignKey(
+        OrdemServico,
+        on_delete=models.CASCADE,
+        related_name="historico_aprovacoes",
+        verbose_name=_("Ordem de Serviço")
+    )
+    acao = models.CharField(
+        max_length=10,
+        choices=ACAO_CHOICES,
+        verbose_name=_("Ação Realizada")
+    )
+    comentario = models.TextField(
+        verbose_name=_("Comentário/Motivo"),
+        blank=True,
+        null=True
+    )
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name=_("Usuário da Ação (Gestor)")  # Renomeado para clareza
+    )
+    data_acao = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Data da Ação (Gestor)")  # Renomeado para clareza
+    )
+
+    # --- NOVOS CAMPOS ADICIONADOS ---
+    tecnico_finalizou = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='os_finalizadas',
+        verbose_name=_("Responsável que Finalizou")
+    )
+    data_finalizacao_tecnico = models.DateTimeField(
+        verbose_name=_("Data da Finalização (Responsável)"),
+        null=True,
+        blank=True
+    )
+    # --- FIM DOS NOVOS CAMPOS ---
+
+    class Meta:
+        verbose_name = _("Histórico de Aprovação da OS")
+        verbose_name_plural = _("Históricos de Aprovação da OS")
+        ordering = ['-data_acao']
+
+    def __str__(self):
+        return f"{self.get_acao_display()} na OS {self.ordem_servico.numero_os} por {self.usuario.username}"

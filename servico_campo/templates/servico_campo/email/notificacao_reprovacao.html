@@ -1,17 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Ordem de Serviço Reprovada</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ação Necessária: Ordem de Serviço Reprovada</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { background-color: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h2 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .content p { margin-bottom: 15px; font-size: 16px; }
+        .motivo-box { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; font-style: italic; }
+        .button { display: inline-block; background-color: #007bff; color: white !important; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-size: 16px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+    </style>
 </head>
 <body>
-    <p>Prezado(a) Técnico(a) {{ ordem.tecnico_responsavel.first_name }},</p>
-    <p>A Ordem de Serviço **{{ ordem.numero_os }} - {{ ordem.titulo_servico }}** foi reprovada pelo gestor.</p>
-    <p><strong>Motivo da Reprovação:</strong></p>
-    <p>{{ motivo }}</p>
-    <p>Por favor, revise a ordem de serviço e realize as correções necessárias. O status da OS foi retornado para 'Em Execução'.</p>
-    <p><a href="{{ link_os }}">Acessar Ordem de Serviço</a></p>
-    <p>Atenciosamente,</p>
-    <p>Sua Equipe de Gestão de Serviços</p>
+    <div class="container">
+        <div class="header">
+            <h2>Ordem de Serviço Reprovada</h2>
+        </div>
+        <div class="content">
+            <p>Olá, <strong>{{ ordem.tecnico_responsavel.get_full_name|default:ordem.tecnico_responsavel.username }}</strong>,</p>
+            <p>A Ordem de Serviço <strong>{{ ordem.numero_os }} - {{ ordem.titulo_servico }}</strong> foi <strong>reprovada</strong> pelo gestor e requer sua atenção.</p>
+            
+            <p><strong>Motivo da Reprovação:</strong></p>
+            <div class="motivo-box">
+                <p>{{ motivo }}</p>
+            </div>
+
+            <p>Por favor, revise a ordem de serviço e realize as correções necessárias. O status da OS foi retornado para 'Em Execução'.</p>
+            
+            <a href="{{ link_os }}" class="button">Acessar Ordem de Serviço</a>
+        </div>
+        <div class="footer">
+            <p>Este é um e-mail automático. Por favor, não responda.</p>
+            <p>&copy; {{ "now"|date:"Y" }} P3 Smart Solutions.</p>
+        </div>
+    </div>
 </body>
 </html>
-

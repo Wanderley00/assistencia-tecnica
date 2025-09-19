@@ -77,64 +77,54 @@ def recalcular_horas_relatorio(sender, instance, **kwargs):
         f"Horas para o relatório da OS {ordem_servico.numero_os} na data {data_ponto} recalculadas para o técnico {tecnico.username}.")
 
 
-@receiver(post_save, sender=OrdemServico)
-def notificar_gestor_para_aprovacao(sender, instance, created, **kwargs):
-    # Verifica se o status foi alterado para PENDENTE_APROVACAO e não é uma nova criação
-    # created é True apenas na primeira vez que o objeto é salvo (criação)
-    if instance.status == 'PENDENTE_APROVACAO' and not created:
-        # Garante que o gestor e o técnico estão definidos
-        if instance.gestor_responsavel and instance.gestor_responsavel.email:
-            # Monta o contexto para o template de e-mail
-            context = {
-                'ordem': instance,
-                # Supondo que a URL leve para a página de detalhes
-                'link_aprovacao': instance.get_absolute_url(),
-            }
-            # Renderiza o template de e-mail
-            mensagem = render_to_string(
-                'servico_campo/email/notificacao_aprovacao.html', context)
+# @receiver(post_save, sender=OrdemServico)
+# def notificar_gestor_para_aprovacao(sender, instance, created, **kwargs):
+#     # Verifica se o status foi alterado para PENDENTE_APROVACAO e não é uma nova criação
+#     if instance.status == 'PENDENTE_APROVACAO' and not created:
+#         gestor = instance.gestor_responsavel
+#         if gestor and gestor.email:
 
-            # Envia o e-mail
-            send_mail(
-                f'Aprovação Pendente: OS {instance.numero_os}',
-                mensagem,
-                settings.DEFAULT_FROM_EMAIL,
-                [instance.gestor_responsavel.email],
-                html_message=mensagem,
-                fail_silently=False,
-            )
+#             # Contexto para o e-mail do GESTOR
+#             context = {
+#                 'ordem': instance,
+#                 'gestor': gestor,  # Passa o objeto do gestor para o template
+#                 'link_aprovacao': instance.get_absolute_url(),
+#             }
+
+#             # Renderiza o template CORRETO para notificar o gestor
+#             mensagem = render_to_string(
+#                 'servico_campo/email/notificacao_pendente_aprovacao.html', context)
+
+#             # Envia o e-mail
+#             send_mail(
+#                 f'Aprovação Pendente: OS {instance.numero_os}',
+#                 mensagem,
+#                 settings.DEFAULT_FROM_EMAIL,
+#                 [gestor.email],
+#                 html_message=mensagem,
+#                 fail_silently=False,
+#             )
 
 
-@receiver(post_save, sender=OrdemServico)
-def notificar_tecnico_reprovacao(sender, instance, created, **kwargs):
-    # Verifica se o status foi alterado para REPROVADA e não é uma nova criação
-    # created é True apenas na primeira vez que o objeto é salvo (criação)
-    # Adicionamos uma verificação para evitar loop infinito ao salvar novamente
-    if instance.status == 'REPROVADA' and not created and 'reproved_status_change' not in kwargs:
-        # Garante que o técnico está definido
-        if instance.tecnico_responsavel and instance.tecnico_responsavel.email:
-            # Monta o contexto para o template de e-mail
-            context = {
-                'ordem': instance,
-                'motivo': instance.motivo_reprovacao,
-                'link_os': instance.get_absolute_url(),
-            }
-            # Renderiza o template de e-mail
-            mensagem = render_to_string(
-                'servico_campo/email/notificacao_reprovacao.html', context)
+# @receiver(post_save, sender=OrdemServico)
+# def notificar_tecnico_reprovacao(sender, instance, created, **kwargs):
+#     # Verifica se o status foi alterado para REPROVADA
+#     # A verificação 'update_fields' garante que o sinal só dispare se o status foi o campo alterado
+#     if not created and instance.status == 'REPROVADA' and kwargs.get('update_fields') and 'status' in kwargs['update_fields']:
+#         if instance.tecnico_responsavel and instance.tecnico_responsavel.email:
+#             context = {
+#                 'ordem': instance,
+#                 'motivo': instance.motivo_reprovacao,
+#                 'link_os': instance.get_absolute_url(),
+#             }
+#             mensagem = render_to_string(
+#                 'servico_campo/email/notificacao_reprovacao.html', context)
 
-            # Envia o e-mail
-            send_mail(
-                f'OS Reprovada: {instance.numero_os}',
-                mensagem,
-                settings.DEFAULT_FROM_EMAIL,
-                [instance.tecnico_responsavel.email],
-                html_message=mensagem,
-                fail_silently=False,
-            )
-
-            # Retorna o status para EM_EXECUCAO
-            # Passa um argumento para evitar que este sinal seja disparado novamente
-            instance.status = 'EM_EXECUCAO'
-            instance.save(update_fields=['status'],
-                          reproved_status_change=True)
+#             send_mail(
+#                 f'OS Reprovada: {instance.numero_os}',
+#                 mensagem,
+#                 settings.DEFAULT_FROM_EMAIL,
+#                 [instance.tecnico_responsavel.email],
+#                 html_message=mensagem,
+#                 fail_silently=False,
+#             )

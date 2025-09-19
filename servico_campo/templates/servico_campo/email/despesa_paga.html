@@ -12,7 +12,7 @@
         .button { display: inline-block; background-color: #28a745; color: white !important; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
         .footer { text-align: center; margin-top: 20px; font-size: 0.8em; color: #777; }
         p { margin-bottom: 10px; }
-        strong { color: #0056b3; } /* Cor azul para destacar */
+        strong { color: #0056b3; }
         ul { list-style-type: none; padding: 0; }
         ul li { margin-bottom: 5px; }
     </style>
@@ -23,15 +23,25 @@
             <h2>Notificação de Despesa Paga</h2>
         </div>
         <div class="content">
-            <p>Olá, <strong>{{ destinatario.user.get_full_name|default:destinatario.user.username }}</strong>,</p>
-            <p>Informamos que a despesa de valor <strong>{{ conta_a_pagar.valor_a_pagar|floatformat:2 }}</strong>, referente à OS número <strong>{{ conta_a_pagar.despesa.ordem_servico.numero_os }}</strong>, foi marcada como <strong>PAGA</strong>.</p>
-            <p><strong>Detalhes da Despesa:</strong></p>
+            {# --- CORREÇÃO DA PRIMEIRA LINHA --- #}
+            <p>Olá, <strong>{{ destinatario.user.get_full_name|default:destinatario.user.username }}</strong>,</p>  
+            <p>Informamos que a despesa de valor <strong>R$ {{ conta_a_pagar.despesa.valor|floatformat:2 }}</strong>, referente à OS número <strong>{{ conta_a_pagar.despesa.ordem_servico.numero_os }}</strong>, foi marcada como <strong>PAGA</strong>.</p>
+            
+            <p><strong>Detalhes do Pagamento:</strong></p>
             <ul>
                 <li><strong>Descrição:</strong> {{ conta_a_pagar.despesa.descricao }}</li>
-                <li><strong>Categoria:</strong> {{ conta_a_pagar.despesa.categoria_despesa.nome }}</li>
-                <li><strong>Data de Vencimento:</strong> {{ conta_a_pagar.data_vencimento|date:"d/m/Y" }}</li>
-                <li><strong>Valor Original:</strong> {{ conta_a_pagar.despesa.valor_original|floatformat:2 }}</li>
-                <li><strong>Valor Pago:</strong> {{ conta_a_pagar.valor_a_pagar|floatformat:2 }}</li>
+                <li><strong>Categoria:</strong> {{ conta_a_pagar.despesa.categoria_despesa.nome|default:"N/A" }}</li>
+                
+                {# --- CORREÇÃO DOS VALORES --- #}
+                <li><strong>Valor Original:</strong> R$ {{ conta_a_pagar.despesa.valor|floatformat:2 }}</li>
+                <li><strong>Valor Pago:</strong> R$ {{ conta_a_pagar.valor_pago|default:conta_a_pagar.despesa.valor|floatformat:2 }}</li>
+                {% if conta_a_pagar.comentario %}
+                <li style="background-color: #f0f8ff; padding: 10px; border-radius: 4px;">
+                    <strong>Comentário do Pagador:</strong>  
+
+                    <span style="font-style: italic;">"{{ conta_a_pagar.comentario }}"</span>
+                </li>
+                {% endif %}
                 <li><strong>Comprovante:</strong> {% if conta_a_pagar.comprovante_pagamento %}<a href="{{ protocol }}://{{ domain }}{{ conta_a_pagar.comprovante_pagamento.url }}">Ver Comprovante</a>{% else %}N/A{% endif %}</li>
             </ul>
             <p>Para mais detalhes, acesse a Ordem de Serviço ou a própria despesa no sistema:</p>
@@ -39,7 +49,7 @@
         </div>
         <div class="footer">
             <p>Este é um e-mail automático. Por favor, não responda.</p>
-            <p>&copy; {{ "now"|date:"Y" }} P3 Smart Solutions.</p>
+            <p>&copy; {% now "Y" %} P3 Smart Solutions.</p>
         </div>
     </div>
 </body>

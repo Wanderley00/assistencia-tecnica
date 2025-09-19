@@ -4,6 +4,7 @@
 from io import BytesIO
 import csv
 import calendar
+from django.db import IntegrityError
 from django.db import transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib import messages
@@ -70,7 +71,7 @@ from .models import (
     OrdemServico, Cliente, Equipamento, DocumentoOS, RegistroPonto,
     RelatorioCampo, FotoRelatorio, Despesa, MembroEquipe, RegraJornadaTrabalho,
     CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar, ConfiguracaoEmail,
-    PerfilUsuario, RegraJornadaTrabalho, RegistroPonto, RelatorioCampo, HorasRelatorioTecnico
+    PerfilUsuario, RegraJornadaTrabalho, RegistroPonto, RelatorioCampo, HorasRelatorioTecnico, HistoricoAprovacaoOS
 )
 # NOVO IMPORT
 from configuracoes.models import TipoManutencao, TipoDocumento, FormaPagamento, PoliticaDespesa, ConfiguracaoEmail
@@ -86,6 +87,47 @@ from .forms import (
     ContaPagarForm, BulkClientUploadForm, BulkEquipmentUploadForm, LoginFormCustom, ConfiguracaoEmailForm, PerfilUsuarioForm,
     HorasRelatorioTecnicoFormSet, HorasRelatorioTecnicoForm
 )
+
+
+def enviar_email_pendente_aprovacao(request, ordem_servico):
+    """
+    Função auxiliar para enviar e-mail de notificação de OS pendente para o gestor.
+    """
+    gestor = ordem_servico.gestor_responsavel
+    if gestor and gestor.email:
+        try:
+            email_backend = get_email_backend()
+            if email_backend:
+                # Usando o 'request' para construir a URL absoluta dinamicamente
+                link_absoluto = request.build_absolute_uri(
+                    ordem_servico.get_absolute_url())
+
+                context = {
+                    'ordem': ordem_servico,
+                    'gestor': gestor,
+                    'link_aprovacao': link_absoluto,
+                }
+
+                html_message = render_to_string(
+                    'servico_campo/email/notificacao_pendente_aprovacao.html', context)
+                plain_message = strip_tags(html_message)
+
+                msg = EmailMultiAlternatives(
+                    f'Aprovação Pendente: OS {ordem_servico.numero_os}',
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [gestor.email],
+                    connection=email_backend
+                )
+                msg.attach_alternative(html_message, "text/html")
+                msg.send()
+                return (True, f"Ordem de Serviço {ordem_servico.numero_os} encerrada e gestor notificado com sucesso!")
+            else:
+                return (True, f"Ordem de Serviço {ordem_servico.numero_os} encerrada, mas não foi possível notificar o gestor (sem config. de e-mail).")
+        except Exception as e:
+            return (False, f"OS encerrada, mas falhou ao enviar e-mail de notificação: {e}")
+
+    return (True, f"Ordem de Serviço {ordem_servico.numero_os} encerrada com sucesso (gestor sem e-mail).")
 
 
 def decimal_to_hhmm(decimal_hours):
@@ -930,30 +972,36 @@ class DocumentoOSCreateView(LoginRequiredMixin, CreateView):
 
 # Use GestorRequiredMixin para permissão
 class OrdemServicoDeleteView(GestorRequiredMixin, DeleteView):
-    permission_required = 'servico_campo.delete_ordemservico'  # Permissão necessária
+    permission_required = 'servico_campo.delete_ordemservico'
     model = OrdemServico
     template_name = 'servico_campo/ordem_servico_confirm_delete.html'
-    # Redireciona para a lista de OSs após exclusão
     success_url = reverse_lazy('servico_campo:lista_os')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['os'] = self.get_object()  # Passa o objeto OS para o template
+        context['os'] = self.get_object()
         return context
 
+    # --- MÉTODO POST CORRIGIDO ---
     def post(self, request, *args, **kwargs):
+        # Armazena o número da OS antes de tentar deletar
+        os_numero = self.get_object().numero_os
         try:
-            # Tenta excluir o objeto
+            # Tenta executar a exclusão padrão
             response = super().post(request, *args, **kwargs)
+            # Se der certo, mostra a mensagem de sucesso
             messages.success(request, _(
-                f"Ordem de Serviço {self.object.numero_os} excluída com sucesso."))
+                f"Ordem de Serviço {os_numero} excluída com sucesso."))
             return response
-        except models.ProtectedError:  # Importe models do django.db para isso
-            # Se houver objetos relacionados que impedem a exclusão (ex: Registros de Ponto, Relatórios, Despesas)
-            messages.error(request, _(
-                "Não foi possível excluir esta Ordem de Serviço. Há registros de Ponto, Relatórios ou Despesas associados a ela."))
-            # Redireciona de volta para a página de confirmação para mostrar a mensagem de erro
-            return self.get(request, *args, **kwargs)
+        except IntegrityError:
+            # Se o banco de dados bloquear a exclusão por causa de uma FOREIGN KEY...
+            messages.error(
+                request,
+                _(f"Não foi possível excluir a OS {os_numero}, pois ela possui registros associados (como pontos, relatórios ou despesas). "
+                  "Para excluí-la, remova primeiro todos os seus registros dependentes.")
+            )
+            # Redireciona de volta para a página de detalhes da OS para que o usuário veja a mensagem
+            return redirect('servico_campo:detalhe_os', pk=self.kwargs['pk'])
 
 
 class RegistroPontoCreateView(LoginRequiredMixin, CreateView):
@@ -1659,8 +1707,16 @@ class OrdemServicoEncerramentoView(LoginRequiredMixin, UpdateView):
         os_instance.status = 'PENDENTE_APROVACAO'
         os_instance.data_fechamento = timezone.now()
         os_instance.save()
-        messages.success(self.request, _(
-            f"Ordem de Serviço {os_instance.numero_os} encerrada com sucesso!"))
+
+        # --- CHAMA A FUNÇÃO AUXILIAR ---
+        success, message = enviar_email_pendente_aprovacao(
+            self.request, os_instance)
+        if success:
+            messages.success(self.request, message)
+        else:
+            messages.error(self.request, message)
+        # --- FIM DA CHAMADA ---
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -3299,16 +3355,68 @@ def password_reset_token_created_receiver(sender, instance, reset_password_token
 @login_required
 def aprovar_ordem_servico(request, pk):
     ordem = get_object_or_404(OrdemServico, pk=pk)
-    # Verifica se o usuário é o gestor responsável
     if request.user == ordem.gestor_responsavel and ordem.status == 'PENDENTE_APROVACAO':
         ordem.status = 'CONCLUIDA'
-        ordem.data_fechamento = timezone.now()
-        ordem.save()
-        messages.success(
-            request, f"Ordem de Serviço {ordem.numero_os} aprovada com sucesso.")
+        ordem.data_aprovacao_gestor = timezone.now()
+        # Não precisamos mais salvar 'data_fechamento' aqui.
+        ordem.save(update_fields=['status', 'data_aprovacao_gestor'])
+
+        # O resto do código, incluindo a criação do Histórico, está correto,
+        # pois agora 'ordem.data_fechamento' terá o valor salvo pela view de encerramento.
+        HistoricoAprovacaoOS.objects.create(
+            ordem_servico=ordem,
+            acao='APROVADA',
+            usuario=request.user,
+            comentario="Ordem de Serviço aprovada.",
+            tecnico_finalizou=ordem.tecnico_responsavel,
+            data_finalizacao_tecnico=ordem.data_fechamento
+        )
+
+        tecnico = ordem.tecnico_responsavel
+        if tecnico and tecnico.email:
+            try:
+                email_backend = get_email_backend()
+                if email_backend:
+                    aprovador_nome = request.user.get_full_name() or request.user.username
+
+                    # Constrói a URL completa e absoluta usando o request
+                    link_absoluto = request.build_absolute_uri(
+                        ordem.get_absolute_url())
+
+                    context = {
+                        'ordem': ordem,
+                        'aprovador_nome': aprovador_nome,
+                        'link_aprovacao': link_absoluto,  # Passa a URL completa
+                    }
+
+                    html_message = render_to_string(
+                        'servico_campo/email/notificacao_aprovacao.html', context)
+                    plain_message = strip_tags(html_message)
+
+                    msg = EmailMultiAlternatives(
+                        f"Ordem de Serviço Aprovada: OS {ordem.numero_os}",
+                        plain_message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [tecnico.email],
+                        connection=email_backend
+                    )
+                    msg.attach_alternative(html_message, "text/html")
+                    msg.send()
+                    messages.success(
+                        request, f"Ordem de Serviço {ordem.numero_os} aprovada e responsável notificado com sucesso.")
+                else:
+                    messages.success(
+                        request, f"Ordem de Serviço {ordem.numero_os} aprovada, mas não foi possível notificar (sem config. de e-mail).")
+            except Exception as e:
+                messages.error(
+                    request, f"OS aprovada, mas falhou ao enviar e-mail: {e}")
+        else:
+            messages.success(
+                request, f"Ordem de Serviço {ordem.numero_os} aprovada (responsável sem e-mail).")
     else:
         messages.error(
             request, "Você não tem permissão para aprovar esta Ordem de Serviço ou ela não está no status correto.")
+
     return redirect('servico_campo:detalhe_os', pk=ordem.pk)
 
 
@@ -3316,21 +3424,71 @@ def aprovar_ordem_servico(request, pk):
 def reprovar_ordem_servico(request, pk):
     ordem = get_object_or_404(OrdemServico, pk=pk)
     if request.method == 'POST':
-        # Verifica se o usuário é o gestor responsável
         if request.user == ordem.gestor_responsavel and ordem.status == 'PENDENTE_APROVACAO':
             motivo = request.POST.get('motivo_reprovacao')
             if motivo:
-                ordem.status = 'REPROVADA'
                 ordem.motivo_reprovacao = motivo
-                ordem.save()
-                messages.warning(
-                    request, f"Ordem de Serviço {ordem.numero_os} reprovada. O técnico foi notificado.")
+                ordem.status = 'EM_EXECUCAO'
+                ordem.save(update_fields=['status', 'motivo_reprovacao'])
+
+                # --- CRIA O REGISTRO DE HISTÓRICO ---
+                HistoricoAprovacaoOS.objects.create(
+                    ordem_servico=ordem,
+                    acao='REPROVADA',
+                    usuario=request.user,
+                    comentario=motivo,
+                    # --- NOVAS INFORMAÇÕES ---
+                    tecnico_finalizou=ordem.tecnico_responsavel,
+                    data_finalizacao_tecnico=ordem.data_fechamento
+                )
+
+                # --- LÓGICA DE ENVIO DE E-MAIL ADICIONADA AQUI ---
+                tecnico = ordem.tecnico_responsavel
+                if tecnico and tecnico.email:
+                    try:
+                        email_backend = get_email_backend()
+                        if email_backend:
+                            # Constrói a URL completa e absoluta
+                            link_absoluto = request.build_absolute_uri(
+                                ordem.get_absolute_url())
+
+                            context = {
+                                'ordem': ordem,
+                                'motivo': motivo,
+                                'link_os': link_absoluto,  # Passa a URL completa
+                            }
+                            html_message = render_to_string(
+                                'servico_campo/email/notificacao_reprovacao.html', context)
+                            plain_message = strip_tags(html_message)
+
+                            msg = EmailMultiAlternatives(
+                                f'Ação Necessária na OS {ordem.numero_os}: Reprovada',
+                                plain_message,
+                                settings.DEFAULT_FROM_EMAIL,
+                                [tecnico.email],
+                                connection=email_backend
+                            )
+                            msg.attach_alternative(html_message, "text/html")
+                            msg.send()
+                            messages.warning(
+                                request, f"Ordem de Serviço {ordem.numero_os} reprovada. O responsável foi notificado para realizar as correções.")
+                        else:
+                            messages.warning(
+                                request, f"OS reprovada, mas não foi possível notificar (sem config. de e-mail).")
+                    except Exception as e:
+                        messages.error(
+                            request, f"OS reprovada, mas falhou ao enviar e-mail: {e}")
+                else:
+                    messages.warning(
+                        request, f"OS reprovada (responsável sem e-mail).")
+                # --- FIM DA LÓGICA DE E-MAIL ---
             else:
                 messages.error(
                     request, "O motivo da reprovação é obrigatório.")
         else:
             messages.error(
                 request, "Você não tem permissão para reprovar esta Ordem de Serviço ou ela não está no status correto.")
+
     return redirect('servico_campo:detalhe_os', pk=ordem.pk)
 
 

@@ -403,12 +403,13 @@
                                                            data-responsavel="{{ task.tecnico_name|default:'N/A' }}"
                                                            data-status="{{ task.os.get_status_display|default:'N/A' }}"
                                                            data-inicio-planejado="{{ task.os.data_inicio_planejado|date:'d/m/Y'|default:'--' }}"
-                                                           data-inicio-real="{{ task.os.data_inicio_real|date:'d/m/Y'|default:'--' }}"
+                                                           data-inicio-real="{{ task.os.data_inicio_real|date:'d/m/Y H:i'|default:'--' }}"
                                                            data-prazo-conclusao="{{ task.os.data_previsao_conclusao|date:'d/m/Y'|default:'--' }}"
-                                                           data-conclusao-real="{{ task.os.data_fechamento|date:'d/m/Y'|default:'--' }}"
+                                                           data-conclusao-real="{{ task.os.data_fechamento|date:'d/m/Y H:i'|default:'--' }}"
                                                            data-os-titulo="OS {{ task.os.numero_os }}: {{ task.os.titulo_servico }}"
                                                            data-tipo-servico="{{ task.os.tipo_manutencao.nome|default:'N/A' }}"
                                                            data-gestor="{{ task.os.gestor_responsavel.get_full_name|default:'N/A' }}"
+                                                           data-aprovacao-gestor="{{ task.os.data_aprovacao_gestor|date:'d/m/Y H:i'|default:'--' }}"
                                                            >
                                                             {{ task.os.titulo_servico|truncatechars:30 }}
                                                         </a>
@@ -492,7 +493,8 @@
                     <p><strong>Início Planejado:</strong> <span>${data.inicioPlanejado}</span></p>
                     <p><strong>Início Real:</strong> <span>${data.inicioReal}</span></p>
                     <p><strong>Prazo Conclusão:</strong> <span>${data.prazoConclusao}</span></p>
-                    <p><strong>Conclusão Real:</strong> <span>${data.conclusaoReal}</span></p>
+                    <p><strong>Finalização (Responsável):</strong> <span>${data.conclusaoReal}</span></p>
+                    <p><strong>Aprovação (Gestor):</strong> <span>${data.aprovacaoGestor}</span></p>
                 `;
 
                 // Mostra o tooltip

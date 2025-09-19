@@ -247,15 +247,16 @@
                     <strong>{% trans "Início Real" %}:</strong>
                     <p class="mb-0">{% if os.data_inicio_real %}{{ os.data_inicio_real|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
                 </div>
-                {# Coluna para Previsão de Conclusão #}
+                {# Coluna para Conclusão (Responsável) #}
                 <div class="col-md-3 d-flex flex-column">
-                    <strong>{% trans "Previsão de Conclusão" %}:</strong>
-                    <p class="mb-0">{% if os.data_previsao_conclusao %}{{ os.data_previsao_conclusao|date:"d/m/Y" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
-                </div>
-                {# Coluna para Conclusão Real #}
-                <div class="col-md-3 d-flex flex-column">
-                    <strong>{% trans "Conclusão Real" %}:</strong>
+                    <strong>{% trans "Finalização (Responsável)" %}:</strong> {# Label atualizado para clareza #}
                     <p class="mb-0">{% if os.data_fechamento %}{{ os.data_fechamento|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
+                </div>
+                
+                {# --- NOVA COLUNA ADICIONADA --- #}
+                <div class="col-md-3 d-flex flex-column">
+                    <strong>{% trans "Conclusão (Aprovação do Gestor)" %}:</strong>
+                    <p class="mb-0">{% if os.data_aprovacao_gestor %}{{ os.data_aprovacao_gestor|date:"d/m/Y H:i" }}{% else %}<span class="text-muted">N/A</span>{% endif %}</p>
                 </div>
             </div>
 
@@ -286,6 +287,64 @@
                 </div>
             {% endif %}
         </div>
+
+        {# --- NOVO BLOCO DE HISTÓRICO DE APROVAÇÃO --- #}
+        {% if os.historico_aprovacoes.all %}
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Histórico de Aprovações</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for historico in os.historico_aprovacoes.all %}
+                        <li class="list-group-item">
+                            <div class="row">
+                                {# Coluna da Conclusão do Responsável #}
+                                <div class="col-md-6 border-end">
+                                    <p class="mb-1"><strong>Conclusão (Responsável)</strong></p>
+                                    <small class="d-block text-muted">
+                                        <i class="bi bi-person-fill me-1"></i>
+                                        {% if historico.tecnico_finalizou %}
+                                            {{ historico.tecnico_finalizou.get_full_name|default:historico.tecnico_finalizou.username }}
+                                        {% else %}
+                                            <span class="text-danger">N/A</span>
+                                        {% endif %}
+                                    </small>
+                                    <small class="d-block text-muted">
+                                        <i class="bi bi-calendar-check-fill me-1"></i>
+                                        {# Adiciona a verificação para a data também #}
+                                        {% if historico.data_finalizacao_tecnico %}
+                                            {{ historico.data_finalizacao_tecnico|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </small>
+                                </div>
+
+                                {# Coluna da Resposta do Gestor #}
+                                <div class="col-md-6">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <p class="mb-1"><strong>Resposta (Gestor)</strong></p>
+                                        <small class="text-muted">{{ historico.data_acao|date:"d/m/Y H:i" }}</small>
+                                    </div>
+                                    <div>
+                                        {% if historico.acao == 'APROVADA' %}
+                                            <span class="badge bg-success">Aprovada</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Reprovada</span>
+                                        {% endif %}
+                                        <span class="fst-italic ms-2">"{{ historico.comentario }}"</span>
+                                    </div>
+                                    <small class="text-muted">Por: {{ historico.usuario.get_full_name|default:historico.usuario.username }}</small>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+        {# --- FIM DO NOVO BLOCO --- #}
 
     {# Seção para Documentos #}
     <div class="card mb-4">

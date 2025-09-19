@@ -706,8 +706,11 @@ class ContaPagarForm(forms.ModelForm):
         model = ContaPagar
         # Excluímos 'despesa' e 'responsavel_pagamento' porque serão preenchidos na view.
         # 'data_criacao' e 'data_atualizacao' são automáticas.
-        fields = ['status_pagamento', 'comentario', 'comprovante_pagamento']
+        fields = ['status_pagamento', 'valor_pago',
+                  'comentario', 'comprovante_pagamento']
         widgets = {
+            # Widget para número
+            'valor_pago': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 150.75'}),
             'comentario': forms.Textarea(attrs={'rows': 4}),
             # 'comprovante_pagamento': forms.ClearableFileInput(), # Já é o padrão, mas para explicitar
         }
