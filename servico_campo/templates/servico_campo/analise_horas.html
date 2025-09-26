@@ -1,0 +1,426 @@
+{% extends 'servico_campo/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Análise de Horas" %}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Horas - Sistema de Ordens de Serviço</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 2px;
+        }
+
+        /* --- HEADER MODERNIZADO --- */
+        .dashboard-header {
+            background: linear-gradient(135deg, #009AD1 0%, #00628A 100%);
+            padding: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .dashboard-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .dashboard-subtitle {
+            font-size: 1.0rem;
+            opacity: 0.9;
+            margin: 10px 0 0 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* --- CARDS DE MÉTRICAS MODERNIZADOS --- */
+        .metrics-section {
+            padding: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--card-accent, #6c757d);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .metric-card.warning { --card-accent: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .metric-card.info { --card-accent: linear-gradient(135deg, #009AD1, #00628A); }
+        .metric-card.success { --card-accent: linear-gradient(135deg, #28a745, #20c997); }
+        .metric-card.danger { --card-accent: linear-gradient(135deg, #dc3545, #e83e8c); }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 20px;
+            background: var(--card-accent, #6c757d);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6c757d;
+            margin: 10px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- FILTROS MODERNIZADOS --- */
+        .filters-section {
+            padding: 30px; /* AJUSTE 1: Adicionado padding superior para criar espaço */
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .filters-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 25px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .filters-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filters-body {
+            padding: 25px;
+        }
+        
+        /* --- ESTILOS DOS BOTÕES (ADAPTADO DE ordem_servico_list.html) --- */
+        .filter-btn {
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .filter-btn.icon-only {
+            padding: 12px;
+            width: 45.5px;
+            height: 45.5px;
+        }
+
+        .filter-btn.btn-primary {
+            background: linear-gradient(135deg, #009AD1, #00628A);
+        }
+
+        .filter-btn.btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            color: white;
+        }
+        /* --- FIM DOS ESTILOS DOS BOTÕES --- */
+
+        /* --- TABELA MODERNIZADA --- */
+        .table-section {
+            padding: 0 30px 30px;
+        }
+
+        .modern-table-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #212529;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-table {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .custom-table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            color: #495057;
+            padding: 20px 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+        }
+
+        .custom-table tbody td {
+            padding: 20px 25px;
+            border: none;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+        }
+
+        .custom-table tbody tr:hover {
+            background: rgba(0, 154, 209, 0.05);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .custom-table a {
+            color: #009AD1;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .custom-table a:hover {
+            color: #00628A;
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin: 0px -14px;
+                border-radius: 15px;
+                box-shadow: none;
+            }
+
+            .dashboard-header {
+                padding: 20px 15px;
+                border-radius: 0;
+            }
+
+            .dashboard-title {
+                font-size: 1.8rem;
+            }
+
+            .metrics-section,
+            .filters-section,
+            .table-section {
+                padding: 15px;
+            }
+
+            .metric-card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="bi bi-clock-history me-3"></i>
+                    {% trans "Análise de Horas" %}
+                </h1>
+                <p class="dashboard-subtitle">
+                    Controle e monitoramento de horas trabalhadas
+                </p>
+            </div>
+
+            <div class="filters-section">
+                <div class="filters-card">
+                    <div class="filters-header">
+                        <h5 class="filters-title">
+                            <i class="bi bi-funnel-fill"></i>
+                            {% trans "Filtros de Análise" %}
+                        </h5>
+                    </div>
+                    <div class="filters-body">
+                        <form method="get" class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label for="start_date" class="form-label">{% trans "Data de Início" %}</label>
+                                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ filters.start_date }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="end_date" class="form-label">{% trans "Data de Fim" %}</label>
+                                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ filters.end_date }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="tecnico" class="form-label">{% trans "Responsável" %}</label>
+                                <select name="tecnico" id="tecnico" class="form-select">
+                                    <option value="">{% trans "Todos os Responsáveis" %}</option>
+                                    {% for tecnico in tecnicos_disponiveis %}
+                                        <option value="{{ tecnico.pk }}" {% if filters.tecnico_id|add:"0" == tecnico.pk %}selected{% endif %}>
+                                            {{ tecnico.get_full_name|default:tecnico.username }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex justify-content-end gap-2">
+                                <button type="submit" class="filter-btn btn-primary">
+                                    <i class="bi bi-search"></i> {% trans "Aplicar" %}
+                                </button>
+                                <a href="?{% if filters.start_date %}start_date={{ filters.start_date }}&{% endif %}{% if filters.end_date %}end_date={{ filters.end_date }}&{% endif %}{% if filters.tecnico_id %}tecnico={{ filters.tecnico_id }}&{% endif %}export=true" class="filter-btn btn-success icon-only" title="{% trans 'Exportar para Excel' %}">
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-section">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="metric-card info">
+                            <div class="metric-icon">
+                                <i class="bi bi-clock-fill"></i>
+                            </div>
+                            <h2 class="metric-value">{{ totais_gerais.total_normais_fmt }}</h2>
+                            <p class="metric-title">{% trans "Total de Horas Normais" %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="metric-card warning">
+                            <div class="metric-icon">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h2 class="metric-value">{{ totais_gerais.total_extras_60_fmt }}</h2>
+                            <p class="metric-title">{% trans "Total de Horas Extras (50%)" %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="metric-card danger">
+                            <div class="metric-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <h2 class="metric-value">{{ totais_gerais.total_extras_100_fmt }}</h2>
+                            <p class="metric-title">{% trans "Total de Horas Extras (100%)" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="modern-table-card">
+                    <div class="table-header">
+                        <h5 class="table-title">
+                            <i class="bi bi-table"></i>
+                            {% trans "Resumo por Responsável" %}
+                        </h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table custom-table">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Responsável" %}</th>
+                                    <th class="text-center">{% trans "Horas Normais" %}</th>
+                                    <th class="text-center">{% trans "Horas Extras (50%)" %}</th>
+                                    <th class="text-center">{% trans "Horas Extras (100%)" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in analise_por_tecnico %}
+                                    <tr>
+                                        <td>{{ item.tecnico_nome }}</td>
+                                        <td class="text-center">{{ item.soma_normais_fmt }}</td>
+                                        <td class="text-center">{{ item.soma_extras_60_fmt }}</td>
+                                        <td class="text-center">{{ item.soma_extras_100_fmt }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center p-4">
+                                            <p class="mb-0 text-muted">{% trans "Nenhum registro de horas encontrado para os filtros selecionados." %}</p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

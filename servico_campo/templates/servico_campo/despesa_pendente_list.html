@@ -523,9 +523,6 @@
         const deleteButtons = document.querySelectorAll('[href*="rejeitar"]');
         deleteButtons.forEach(button => {
             button.addEventListener('click', function(e) {
-                if (!confirm('Tem certeza que deseja rejeitar esta despesa?')) {
-                    e.preventDefault();
-                }
             });
         });
     });

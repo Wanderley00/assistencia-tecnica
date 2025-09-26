@@ -13,38 +13,50 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label">Permissões do Grupo</label>
-                <div class="form-check"> {# NOVO: Checkbox para selecionar/desselecionar todos #}
+                <label class="form-label fw-bold">Permissões do Grupo</label>
+                <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="select-all-permissions">
                     <label class="form-check-label" for="select-all-permissions">
-                        Selecionar Todas
+                        <strong>Selecionar Todas as Permissões</strong>
                     </label>
                 </div>
                 
-                <div class="accordion" id="accordionPermissions">
-                    {% for nome_modelo, dados in permissoes_organizadas.items %}
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading-{{ dados.modelo }}">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ dados.modelo }}" aria-expanded="false" aria-controls="collapse-{{ dados.modelo }}">
-                                    <strong>{{ nome_modelo }}</strong>
-                                </button>
-                            </h2>
-                            <div id="collapse-{{ dados.modelo }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ dados.modelo }}" data-bs-parent="#accordionPermissions">
-                                <div class="accordion-body">
-                                    <ul class="list-unstyled">
-                                        {% for perm_checkbox in form.permissions %}
-                                            {% if perm_checkbox.data.value in dados.permissoes_ids %}
-                                                <li class="form-check">
-                                                    {{ perm_checkbox }}
-                                                </li>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
+                {# --- ESTRUTURA DE RENDERIZAÇÃO CORRIGIDA --- #}
+                {% for nome_app, modelos in permissoes_organizadas.items %}
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">{{ nome_app }}</h5>
                         </div>
-                    {% endfor %}
-                </div>
+                        <div class="accordion accordion-flush" id="accordion-{{ nome_app|slugify }}">
+                            {% for modelo_info in modelos %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-{{ modelo_info.nome_modelo|slugify }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ modelo_info.nome_modelo|slugify }}" aria-expanded="false">
+                                            {{ modelo_info.nome_modelo }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-{{ modelo_info.nome_modelo|slugify }}" class="accordion-collapse collapse" data-bs-parent="#accordion-{{ nome_app|slugify }}">
+                                        <div class="accordion-body">
+                                            <div class="row">
+                                                {% for perm in modelo_info.permissoes %}
+                                                    <div class="col-md-4 col-sm-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input permission-checkbox" type="checkbox" name="permissions" value="{{ perm.id }}" id="perm_{{ perm.id }}" {% if perm.id in form.permissions.value %}checked{% endif %}>
+                                                            <label class="form-check-label" for="perm_{{ perm.id }}">
+                                                                {{ perm.name }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                {# --- FIM DA ESTRUTURA CORRIGIDA --- #}
             </div>
 
             <button type="submit" class="btn btn-success">Salvar</button>
@@ -55,114 +67,38 @@
 {% endblock %}
 
 {% block extra_js %}
+{# O seu JavaScript original pode ser mantido, mas esta versão é um pouco mais robusta #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('select-all-permissions');
-    // Melhorar a seleção: pegar todos os inputs de permissão dentro do formulário
-    const permissionCheckboxes = document.querySelectorAll('form input[name="permissions"][type="checkbox"]');
-    const accordionHeaders = document.querySelectorAll('#accordionPermissions .accordion-header button');
+    const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
 
-    // Função auxiliar para obter a instância Bootstrap Collapse
-    function getBsCollapseInstance(elementId) {
-        const collapseElement = document.getElementById(elementId);
-        if (!collapseElement) {
-            console.error('Elemento de colapso não encontrado:', elementId);
-            return null;
-        }
-        // Retorna a instância ou cria uma nova se não existir
-        return bootstrap.Collapse.getOrCreateInstance(collapseElement, { toggle: false });
-    }
-
-    // Função para expandir/colapsar todos os painéis do accordion
-    function toggleAllAccordions(expand) {
-        accordionHeaders.forEach(button => {
-            const targetId = button.dataset.bsTarget.substring(1);
-            const bsCollapse = getBsCollapseInstance(targetId);
-            if (bsCollapse) {
-                if (expand) {
-                    bsCollapse.show();
-                } else {
-                    bsCollapse.hide();
-                }
-            }
-        });
-    }
-
-    // Listener para o checkbox "Selecionar/Desselecionar Todas"
-    selectAllCheckbox.addEventListener('change', function() {
-        const isChecked = this.checked;
-        permissionCheckboxes.forEach(checkbox => {
-            checkbox.checked = isChecked;
-        });
-        // NOVO: Expandir ou colapsar todos os accordions com base no estado do "Selecionar Todas"
-        toggleAllAccordions(isChecked);
-    });
-
-    // Opcional: Se todas as permissões forem marcadas manualmente, o "Selecionar Todas" também deve ser marcado
-    // E vice-versa: se uma for desmarcada, ele deve ser desmarcado
-    permissionCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            let allChecked = true;
+    function updateSelectAllState() {
+        let allChecked = true;
+        if (permissionCheckboxes.length === 0) {
+            allChecked = false;
+        } else {
             permissionCheckboxes.forEach(cb => {
                 if (!cb.checked) {
                     allChecked = false;
                 }
             });
-            selectAllCheckbox.checked = allChecked;
+        }
+        selectAllCheckbox.checked = allChecked;
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        permissionCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
         });
     });
 
-    // NOVO: Lógica para inicializar o estado ao carregar a página
-    function initializePermissionsState() {
-        let initialAllChecked = true;
-        let anyChecked = false;
+    permissionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectAllState);
+    });
 
-        if (permissionCheckboxes.length === 0) {
-            initialAllChecked = false;
-        } else {
-            permissionCheckboxes.forEach(cb => {
-                if (!cb.checked) {
-                    initialAllChecked = false;
-                } else {
-                    anyChecked = true;
-                }
-            });
-        }
-        
-        selectAllCheckbox.checked = initialAllChecked;
-
-        // Atrasar a inicialização do accordion para garantir que o Bootstrap esteja pronto
-        setTimeout(() => {
-            accordionHeaders.forEach(button => {
-                const targetId = button.dataset.bsTarget.substring(1);
-                const collapseElement = document.getElementById(targetId);
-                
-                if (collapseElement) {
-                    const bsCollapse = getBsCollapseInstance(targetId);
-                    
-                    // Condição para expandir: se o "Selecionar Todas" está marcado
-                    // OU se a seção do accordion tem alguma permissão selecionada
-                    const associatedCheckboxes = collapseElement.querySelectorAll('.form-check-input[type="checkbox"]');
-                    let sectionHasCheckedPerm = false;
-                    associatedCheckboxes.forEach(cb => {
-                        if (cb.checked) {
-                            sectionHasCheckedPerm = true;
-                        }
-                    });
-
-                    if (selectAllCheckbox.checked || sectionHasCheckedPerm) {
-                        if (bsCollapse) bsCollapse.show();
-                    } else {
-                        if (bsCollapse) bsCollapse.hide(); // Garante que esteja colapsado se não houver seleção
-                    }
-                }
-            });
-        }, 100); // Pequeno delay
-    }
-
-    // Chame a função de inicialização ao carregar a página
-    // Adicionar um pequeno atraso adicional para a inicialização total do DOM e Bootstrap
-    setTimeout(initializePermissionsState, 150); // Atraso ligeiramente maior
+    // Inicializa o estado do checkbox "Selecionar Todas" ao carregar a página
+    updateSelectAllState();
 });
 </script>
 {% endblock %}

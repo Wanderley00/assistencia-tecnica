@@ -2,10 +2,14 @@
 
 # Python / Django Imports
 from io import BytesIO
+from .models import Notificacao
 import csv
 import calendar
+from itertools import groupby
+from operator import attrgetter
 from django.db import IntegrityError
 from django.db import transaction
+from smtplib import SMTPAuthenticationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
@@ -23,6 +27,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
+from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, FormView
@@ -47,12 +52,12 @@ from django.http import HttpResponse
 import io
 from django.core.mail import get_connection
 from .utils import get_email_backend
+from .utils import get_email_backend, criar_notificacao
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy, reverse
-from configuracoes.models import ConfiguracaoEmail
 from django.dispatch import receiver
 from django_rest_passwordreset.signals import reset_password_token_created
 from datetime import datetime
@@ -65,12 +70,16 @@ from django.views import View
 import requests
 from io import BytesIO
 import tempfile
+from django.views.generic import TemplateView
+
+from django.db.models import Sum, F, DecimalField
+from django.db.models.functions import Coalesce
 
 # Imports Locais (do seu app)
 from .models import (
     OrdemServico, Cliente, Equipamento, DocumentoOS, RegistroPonto,
     RelatorioCampo, FotoRelatorio, Despesa, MembroEquipe, RegraJornadaTrabalho,
-    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar, ConfiguracaoEmail,
+    CategoriaProblema, SubcategoriaProblema, ProblemaRelatorio, ContaPagar,
     PerfilUsuario, RegraJornadaTrabalho, RegistroPonto, RelatorioCampo, HorasRelatorioTecnico, HistoricoAprovacaoOS
 )
 # NOVO IMPORT
@@ -143,79 +152,90 @@ def decimal_to_hhmm(decimal_hours):
         return "00:00"
 
 
+def format_decimal_hours(decimal_hours):
+    """Converte horas decimais para o formato 'Xh Ymin' ou 'Ymin'."""
+    if decimal_hours is None:
+        return "0min"
+    try:
+        decimal_hours = Decimal(decimal_hours)
+        if decimal_hours < 0:
+            return "0min"
+
+        total_minutes = int(decimal_hours * 60)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+
+        if hours > 0:
+            return f"{hours}h {minutes}min"
+        else:
+            return f"{minutes}min"
+    except (ValueError, TypeError):
+        return "0min"
+
+
 User = get_user_model()
 
 
 def organizar_permissoes():
     """
     Busca todas as permissões e as organiza em um dicionário
-    agrupado por modelo para exibição amigável no template.
+    agrupado por app e, em seguida, por modelo, para exibição amigável no template.
     """
     permissoes_organizadas = {}
-    # Remova 'permission' e 'group' da lista de modelos ignorados
-    # <--- MUDANÇA AQUI: Removido 'permission', 'group'
-    modelos_ignorados = ['logentry', 'contenttype', 'session']
+    modelos_ignorados = ['logentry', 'contenttype', 'session',
+                         'permission', 'gestor', 'tecnico', 'horasrelatoriotecnico']
 
+    # Mapeamento de nomes de apps para nomes mais amigáveis
+    app_labels_amigaveis = {
+        'servico_campo': 'Serviço de Campo',
+        'configuracoes': 'Configurações Gerais',
+        'auth': 'Autenticação e Autorização',
+        'admin': 'Administração',
+    }
+
+    # Busca todos os ContentTypes, ordenando pelo nome do app e do modelo
     content_types = ContentType.objects.all().order_by('app_label', 'model')
 
     for ct in content_types:
+        # Pula modelos que não queremos exibir
         if ct.model in modelos_ignorados:
             continue
 
-        permissions = ct.permission_set.all()
+        # Pega o nome amigável do app ou usa o nome original
+        app_label_amigavel = app_labels_amigaveis.get(
+            ct.app_label, ct.app_label.title())
 
-        if permissions:
-            permission_ids = set(p.id for p in permissions)
+        # Se o app ainda não está no nosso dicionário, cria a entrada
+        if app_label_amigavel not in permissoes_organizadas:
+            permissoes_organizadas[app_label_amigavel] = []
 
-            # Usar ct.app_label para diferenciar 'auth' de 'servico_campo'
-            app_label = ct.app_label
-            # Para modelos de usuários e grupos, use um nome amigável para a seção
-            if app_label == 'auth':
-                if ct.model == 'user':
-                    modelo_nome_amigavel = "Usuários (Autenticação)"
-                elif ct.model == 'group':
-                    modelo_nome_amigavel = "Grupos (Autenticação)"
-                else:
-                    modelo_nome_amigavel = ct.model_class()._meta.verbose_name_plural.title(
-                    ) if ct.model_class() else ct.model.title()
-            else:
-                modelo_nome_amigavel = ct.model_class()._meta.verbose_name_plural.title(
-                ) if ct.model_class() else ct.model.title()
+        # Pega o nome amigável do modelo (ex: "Ordens de Serviço" em vez de "ordemservico")
+        if ct.model_class():  # Verifica se o modelo pode ser carregado
+            modelo_nome_amigavel = ct.model_class()._meta.verbose_name_plural.title()
+        else:
+            modelo_nome_amigavel = ct.model.replace('_', ' ').title()
 
-            # A chave do dicionário pode ser o nome amigável do modelo
-            if modelo_nome_amigavel not in permissoes_organizadas:
-                permissoes_organizadas[modelo_nome_amigavel] = {
-                    'modelo': ct.model,
-                    'permissoes': [],
-                    'permissoes_ids': set()
-                }
+        # Pega todas as permissões para este modelo
+        permissoes = ct.permission_set.all()
 
-            # Adicionar permissões à lista existente para o modelo
-            permissoes_organizadas[modelo_nome_amigavel]['permissoes'].extend(
-                list(permissions))
-            permissoes_organizadas[modelo_nome_amigavel]['permissoes_ids'].update(
-                permission_ids)
-
-    # Opcional: Para garantir uma ordem específica, você pode ordenar as chaves
-    # por exemplo, colocando "Usuários" e "Grupos" no topo
-    ordered_permissoes = {}
-    if "Usuários (Autenticação)" in permissoes_organizadas:
-        ordered_permissoes["Usuários (Autenticação)"] = permissoes_organizadas.pop(
-            "Usuários (Autenticação)")
-    if "Grupos (Autenticação)" in permissoes_organizadas:
-        ordered_permissoes["Grupos (Autenticação)"] = permissoes_organizadas.pop(
-            "Grupos (Autenticação)")
-
-    # Adicionar o restante em ordem alfabética
-    for key in sorted(permissoes_organizadas.keys()):
-        ordered_permissoes[key] = permissoes_organizadas[key]
-
-    return ordered_permissoes
-
+        if permissoes:
+            permissoes_com_traducao = []
+            for perm in permissoes:
+                permissoes_com_traducao.append({
+                    'id': perm.id,
+                    'codename': perm.codename,
+                    'name': gettext(perm.name)  # <-- ESTA É A LINHA MÁGICA
+                })
+            permissoes_organizadas[app_label_amigavel].append({
+                'nome_modelo': gettext(ct.model_class()._meta.verbose_name_plural.title()),
+                'permissoes': permissoes_com_traducao
+            })
+    return permissoes_organizadas
 
 # -------------------------------------------------------------
 # Mixins e Funções Auxiliares de Permissão
 # -------------------------------------------------------------
+
 
 class GestorRequiredMixin(LoginRequiredMixin):
     permission_required = None
@@ -389,6 +409,9 @@ class DespesaAprovarRejeitarView(GestorRequiredMixin, UpdateView):
     model = Despesa
     template_name = 'servico_campo/despesa_confirm_acao.html'
     form_class = ComentarioAprovacaoForm
+
+    def get_despesa_queryset(self):
+        return Despesa.objects.for_user(self.request.user)
 
     # Remova completamente o método get_form (ou qualquer super().get_form_class() se tiver)
     # ou sobrescreva-o para não passar 'instance'.
@@ -689,8 +712,24 @@ class ContaPagarUpdateView(LoginRequiredMixin, UpdateView):
 
         # Verifica se o status foi alterado para 'Paga'
         if original_status != 'PAGO' and self.object.status_pagamento == 'PAGO':
-            self.enviar_email_despesa_paga(
-                self.object)  # Chama a função de envio
+            # --- INÍCIO DA LÓGICA DE NOTIFICAÇÃO ---
+            conta_paga = self.object
+            tecnico = conta_paga.despesa.tecnico
+
+            # 1. Cria a notificação no site
+            mensagem_notificacao = f"Sua despesa de R$ {conta_paga.valor_pago or conta_paga.despesa.valor} (OS {conta_paga.despesa.ordem_servico.numero_os}) foi paga."
+            link_para_despesa = reverse('servico_campo:detalhe_despesa', kwargs={
+                                        'pk': conta_paga.despesa.pk})
+
+            criar_notificacao(
+                destinatario=tecnico,
+                mensagem=mensagem_notificacao,
+                link=link_para_despesa
+            )
+
+            # 2. Envia o e-mail (lógica que você já tem)
+            self.enviar_email_despesa_paga(conta_paga)
+            # --- FIM DA LÓGICA DE NOTIFICAÇÃO ---
 
         messages.success(self.request, _(
             'Conta a Pagar atualizada com sucesso!'))
@@ -792,27 +831,15 @@ class OrdemServicoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
     template_name = 'servico_campo/ordem_servico_list.html'
     context_object_name = 'ordens_servico'
     paginate_by = 10
-    # <-- Permissão necessária para visualizar a lista de OS
     permission_required = 'servico_campo.view_ordemservico'
 
-    def get_template_names(self):
-        return [self.template_name]
-
     def get_queryset(self):
-        user = self.request.user
-        empresas_do_usuario = user.empresas_associadas.all()
+        # 1. A MÁGICA ACONTECE AQUI!
+        # Pega o queryset base já filtrado para o usuário logado.
+        # Se for superuser, vê tudo. Se não, vê apenas OS das suas empresas.
+        base_qs = OrdemServico.objects.for_user(self.request.user)
 
-        if not empresas_do_usuario.exists():
-            # Opcional: Você pode adicionar uma mensagem aqui se quiser avisar o usuário.
-            messages.info(
-                self.request, "Seu perfil não está associado a nenhuma empresa. Nenhuma Ordem de Serviço será exibida.")
-            return OrdemServico.objects.none()
-
-        base_qs = OrdemServico.objects.filter(
-            cliente__in=empresas_do_usuario
-        )
-
-        # Coleta os parâmetros de filtro
+        # 2. A lógica de filtros de busca continua exatamente a mesma.
         filters = {
             'numero_os': self.request.GET.get('numero_os'),
             'cliente': self.request.GET.get('cliente'),
@@ -823,7 +850,6 @@ class OrdemServicoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
             'status': self.request.GET.get('status'),
         }
 
-        # Aplica os filtros
         if filters['numero_os']:
             base_qs = base_qs.filter(numero_os__icontains=filters['numero_os'])
         if filters['cliente']:
@@ -837,7 +863,6 @@ class OrdemServicoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
         if filters['titulo_servico']:
             base_qs = base_qs.filter(
                 titulo_servico__icontains=filters['titulo_servico'])
-
         if filters['tecnico_nome']:
             base_qs = base_qs.filter(
                 Q(tecnico_responsavel__first_name__icontains=filters['tecnico_nome']) |
@@ -846,16 +871,15 @@ class OrdemServicoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
             )
         if filters['data_abertura']:
             try:
-                from datetime import datetime  # Já deve estar importado no início do arquivo
                 data_abertura_obj = datetime.strptime(
                     filters['data_abertura'], '%Y-%m-%d').date()
                 base_qs = base_qs.filter(data_abertura__date=data_abertura_obj)
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
-
         if filters['status']:
             base_qs = base_qs.filter(status=filters['status'])
 
+        # 3. Retorna o queryset final, otimizado e ordenado.
         return base_qs.select_related('cliente', 'equipamento', 'tecnico_responsavel').order_by('-data_abertura')
 
     def get_context_data(self, **kwargs):
@@ -881,6 +905,26 @@ class OrdemServicoDetailView(LoginRequiredMixin, DetailView):
     model = OrdemServico
     template_name = 'servico_campo/ordem_servico_detail.html'
     context_object_name = 'os'
+
+    # --- MÉTODO ADICIONADO AQUI ---
+    def get_queryset(self):
+        """
+        Este método é a chave da segurança para DetailViews.
+        Ele garante que a busca pelo objeto (ex: pelo PK da URL) será feita
+        APENAS dentro do conjunto de dados que o usuário tem permissão para ver.
+        """
+        # Primeiro, otimizamos a consulta como você já fazia, pré-carregando dados relacionados.
+        queryset = super().get_queryset().select_related(
+            'cliente', 'equipamento', 'tipo_manutencao',
+            'tecnico_responsavel', 'gestor_responsavel'
+        ).prefetch_related(
+            'despesas', 'equipe__usuario', 'documentos',
+            'relatorios_campo', 'registros_ponto', 'historico_aprovacoes'
+        )
+
+        # Em seguida, aplicamos nosso filtro de segurança.
+        return queryset.for_user(self.request.user)
+    # --- FIM DO MÉTODO ADICIONADO ---
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -977,6 +1021,10 @@ class OrdemServicoDeleteView(GestorRequiredMixin, DeleteView):
     template_name = 'servico_campo/ordem_servico_confirm_delete.html'
     success_url = reverse_lazy('servico_campo:lista_os')
 
+    # Versão simplificada para Update/Delete views
+    def get_queryset(self):
+        return super().get_queryset().for_user(self.request.user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['os'] = self.get_object()
@@ -1009,7 +1057,8 @@ class RegistroPontoCreateView(LoginRequiredMixin, CreateView):
     form_class = RegistroPontoEntradaForm  # AGORA USA O NOVO FORMULÁRIO
 
     def post(self, request, *args, **kwargs):
-        os = get_object_or_404(OrdemServico, pk=self.kwargs.get('os_pk'))
+        os = get_object_or_404(OrdemServico.objects.for_user(
+            request.user), pk=self.kwargs.get('os_pk'))
 
         if RegistroPonto.objects.filter(tecnico=request.user, ordem_servico=os, hora_saida__isnull=True).exists():
             messages.error(request, _(
@@ -1106,12 +1155,20 @@ class RegistroPontoEncerramentoView(LoginRequiredMixin, UpdateView):
 
         return redirect('servico_campo:detalhe_os', pk=current_ponto.ordem_servico.pk)
 
+    def get_queryset(self):
+        # A view já filtra por 'tecnico=self.request.user', o que é bom.
+        # Vamos adicionar nosso filtro de empresa para uma segurança em camadas.
+        return RegistroPonto.objects.for_user(self.request.user)
+
 
 class RegistroPontoEditView(LoginRequiredMixin, UpdateView):
     model = RegistroPonto
     form_class = RegistroPontoForm  # Este continua usando o form completo para edição
     template_name = 'servico_campo/registro_ponto_form_edit.html'
     context_object_name = 'registro_ponto'
+
+    def get_queryset(self):
+        return RegistroPonto.objects.for_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1137,6 +1194,9 @@ class RegistroPontoDeleteView(GestorRequiredMixin, DeleteView):
     # Template a ser criado/verificado
     template_name = 'servico_campo/registro_ponto_confirm_delete.html'
     context_object_name = 'registro_ponto'
+
+    def get_queryset(self):
+        return RegistroPonto.objects.for_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1164,6 +1224,9 @@ class RegistroPontoDetailView(LoginRequiredMixin, DetailView):
     template_name = 'servico_campo/registro_ponto_detail.html'  # Criaremos este template
     context_object_name = 'registro_ponto'
 
+    def get_queryset(self):
+        return RegistroPonto.objects.for_user(self.request.user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Passa a OS para o breadcrumb
@@ -1180,7 +1243,8 @@ class RelatorioCampoCreateView(LoginRequiredMixin, View):
 
     # MÉTODO GET CORRIGIDO E FINAL
     def get(self, request, *args, **kwargs):
-        os = get_object_or_404(OrdemServico, pk=self.kwargs.get('os_pk'))
+        os = get_object_or_404(OrdemServico.objects.for_user(
+            request.user), pk=self.kwargs.get('os_pk'))
         form = self.form_class()
 
         data_str = request.GET.get('data')
@@ -1248,7 +1312,8 @@ class RelatorioCampoCreateView(LoginRequiredMixin, View):
 
     # MÉTODO POST CORRIGIDO E FINAL
     def post(self, request, *args, **kwargs):
-        os = get_object_or_404(OrdemServico, pk=self.kwargs.get('os_pk'))
+        os = get_object_or_404(OrdemServico.objects.for_user(
+            request.user), pk=self.kwargs.get('os_pk'))
 
         # --- CAMINHO 1: LÓGICA DA API PARA O APP (NÃO MEXER) ---
         if 'application/json' in request.content_type:
@@ -1330,6 +1395,9 @@ class RelatorioCampoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Upda
     form_class = RelatorioCampoForm
     template_name = 'servico_campo/relatorio_campo_form.html'
     permission_required = 'servico_campo.change_relatoriocampo'
+
+    def get_queryset(self):
+        return RelatorioCampo.objects.for_user(self.request.user)
 
     def get_success_url(self):
         return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.ordem_servico.pk})
@@ -1479,6 +1547,9 @@ class DespesaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
     template_name = 'servico_campo/despesa_form.html'
     permission_required = 'servico_campo.change_despesa'
 
+    def get_despesa_queryset(self):
+        return Despesa.objects.for_user(self.request.user)
+
     def get_success_url(self):
         return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.ordem_servico.pk})
 
@@ -1526,6 +1597,9 @@ class DespesaDetailView(LoginRequiredMixin, DetailView):
     template_name = 'servico_campo/despesa_detail.html'  # Novo template a ser criado
     context_object_name = 'despesa'
 
+    def get_despesa_queryset(self):
+        return Despesa.objects.for_user(self.request.user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Passa a OS para o breadcrumb e para o template
@@ -1548,6 +1622,9 @@ class DespesaDeleteView(GestorRequiredMixin, DeleteView):
     # Template a ser criado/verificado
     template_name = 'servico_campo/despesa_confirm_delete.html'
     context_object_name = 'despesa'
+
+    def get_despesa_queryset(self):
+        return Despesa.objects.for_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1577,7 +1654,11 @@ class DespesaPendenteListView(GestorRequiredMixin, ListView):
     context_object_name = 'despesas_pendentes'
 
     def get_queryset(self):
-        return Despesa.objects.filter(status_aprovacao='PENDENTE').order_by('-data_despesa')
+        # 1. Filtra por status 'PENDENTE'
+        base_qs = Despesa.objects.filter(status_aprovacao='PENDENTE')
+
+        # 2. Aplica o filtro de segurança por empresa
+        return base_qs.for_user(self.request.user).order_by('-data_despesa')
 
 
 class OrdemServicoCreateView(GestorRequiredMixin, CreateView):
@@ -1594,40 +1675,103 @@ class OrdemServicoCreateView(GestorRequiredMixin, CreateView):
         context['form_title'] = 'Abrir Nova Ordem de Serviço'
         return context
 
+    # --- MÉTODO ADICIONADO AQUI ---
+    def get_form(self, form_class=None):
+        """
+        Sobrescreve o método get_form para filtrar o campo 'cliente'
+        com base nas empresas associadas ao usuário logado.
+        """
+        form = super().get_form(form_class)
+
+        # Se o usuário não for superusuário, aplicamos o filtro.
+        if not self.request.user.is_superuser:
+            # Pega os IDs das empresas permitidas para o usuário.
+            empresas_permitidas_pks = self.request.user.empresas_associadas.values_list(
+                'pk', flat=True)
+
+            # Filtra o queryset do campo 'cliente' no formulário.
+            form.fields['cliente'].queryset = Cliente.objects.filter(
+                pk__in=empresas_permitidas_pks)
+
+        return form
+    # --- FIM DO MÉTODO ADICIONADO ---
+
     def form_valid(self, form):
         """
         Salva a OS e envia um e-mail de notificação APENAS para o gestor.
         """
         response = super().form_valid(form)
-        os_nova = self.object
+        os_nova_inicial = self.object
 
+        os_nova = OrdemServico.objects.get(pk=os_nova_inicial.pk)
         # Lógica de e-mail para o Gestor
         gestor = os_nova.gestor_responsavel
-        if gestor and gestor.email:
-            try:
-                email_backend = get_email_backend()
-                if email_backend:
-                    subject = f"Nova Ordem de Serviço Atribuída: OS {os_nova.numero_os}"
-                    email_context = {
-                        'os': os_nova, 'gestor': gestor,
-                        'domain': self.request.get_host(),
-                        'protocol': 'https' if self.request.is_secure() else 'http',
-                    }
-                    html_content = render_to_string(
-                        'servico_campo/email/nova_os_gestor.html', email_context)
-                    text_content = f"Nova OS {os_nova.numero_os} atribuída a você."
+        if gestor:
+            # --- INÍCIO DA LÓGICA DE NOTIFICAÇÃO ---
+            # 1. Cria a notificação no site
+            mensagem_notificacao = f"Nova OS criada sob sua gestão: {os_nova.numero_os} - {os_nova.cliente.razao_social}."
+            criar_notificacao(
+                destinatario=gestor,
+                mensagem=mensagem_notificacao,
+                link=os_nova.get_absolute_url()
+            )
 
-                    email = EmailMultiAlternatives(subject, text_content, email_backend.username, [
-                                                   gestor.email], connection=email_backend)
-                    email.attach_alternative(html_content, "text/html")
-                    email.send()
-                    messages.success(
-                        self.request, f"OS {os_nova.numero_os} aberta e notificação enviada para o gestor.")
-            except Exception as e:
-                messages.error(
-                    self.request, f"A OS foi criada, mas ocorreu um erro ao notificar o gestor: {e}")
+            # 2. Envia o e-mail (lógica que você já tem)
+            if gestor.email:
+                try:
+                    email_backend = get_email_backend()
+                    if email_backend:
+                        subject = f"Nova Ordem de Serviço Atribuída: OS {os_nova.numero_os}"
+                        email_context = {
+                            'os': os_nova,
+                            'gestor': gestor,
+                            'domain': self.request.get_host(),
+                            'protocol': 'https' if self.request.is_secure() else 'http',
+                        }
+                        html_content = render_to_string(
+                            'servico_campo/email/nova_os_gestor.html', email_context)
+                        # Use strip_tags para a versão em texto
+                        text_content = strip_tags(html_content)
 
-        # A lógica de e-mail para técnicos foi removida daqui.
+                        email = EmailMultiAlternatives(
+                            subject,
+                            text_content,
+                            settings.DEFAULT_FROM_EMAIL,  # Remetente
+                            [gestor.email],  # Destinatário
+                            connection=email_backend
+                        )
+                        email.attach_alternative(html_content, "text/html")
+                        email.send()
+                        messages.success(
+                            self.request, f"OS {os_nova.numero_os} aberta e notificação enviada para o gestor.")
+                    else:
+                        messages.warning(
+                            self.request, "A OS foi criada, mas o e-mail não foi enviado (nenhuma configuração de e-mail ativa).")
+
+                # --- BLOCO DE ERRO CORRIGIDO ---
+                except SMTPAuthenticationError:
+                    messages.error(
+                        self.request,
+                        "A OS foi criada, mas o e-mail de notificação falhou por um erro de autenticação. "
+                        "Verifique se o e-mail e a senha (ou Senha de App) nas 'Configurações de Email' estão corretos."
+                    )
+                except Exception as e:
+                    messages.error(
+                        self.request,
+                        f"A OS foi criada, mas ocorreu um erro inesperado ao notificar o gestor: {e}"
+                    )
+                # --- FIM DO BLOCO CORRIGIDO ---
+
+        elif gestor and not gestor.email:
+            messages.warning(
+                self.request,
+                f"A OS {os_nova.numero_os} foi criada com sucesso, mas o gestor '{gestor.get_full_name()}' não pôde ser notificado por e-mail, pois não possui um endereço cadastrado."
+            )
+        # --- FIM DO NOVO BLOCO ---
+        else:
+            # Caso nenhum gestor tenha sido selecionado
+            messages.success(
+                self.request, f"OS {os_nova.numero_os} criada com sucesso.")
 
         return response
 
@@ -1637,6 +1781,13 @@ class OrdemServicoUpdateView(GestorRequiredMixin, UpdateView):
     form_class = OrdemServicoCreateForm  # Pode usar o mesmo form da criação
     template_name = 'servico_campo/ordem_servico_form.html'
     permission_required = 'servico_campo.change_ordemservico'
+
+    # --- COLE O MESMO MÉTODO AQUI ---
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Não precisamos de tantos 'select_related' aqui, pois é um formulário,
+        # mas aplicar o filtro de segurança é crucial.
+        return queryset.for_user(self.request.user)
 
     def get_success_url(self):
         return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.pk})
@@ -1698,6 +1849,12 @@ class OrdemServicoEncerramentoView(LoginRequiredMixin, UpdateView):
     form_class = EncerramentoOSForm
     template_name = 'servico_campo/ordem_servico_encerramento.html'
     context_object_name = 'os'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Não precisamos de tantos 'select_related' aqui, pois é um formulário,
+        # mas aplicar o filtro de segurança é crucial.
+        return queryset.for_user(self.request.user)
 
     def get_success_url(self):
         return reverse_lazy('servico_campo:detalhe_os', kwargs={'pk': self.object.pk})
@@ -1788,6 +1945,11 @@ class EquipamentoListView(GestorRequiredMixin, ListView):
     context_object_name = 'equipamentos'
     paginate_by = 10
 
+    # --- MÉTODO ADICIONADO/SUBSTITUÍDO ---
+    def get_queryset(self):
+        # Aplica o filtro de segurança e otimiza a consulta
+        return Equipamento.objects.for_user(self.request.user).select_related('cliente').order_by('cliente__razao_social', 'nome')
+
 
 class EquipamentoCreateView(GestorRequiredMixin, CreateView):
     permission_required = 'servico_campo.add_equipamento'
@@ -1801,6 +1963,16 @@ class EquipamentoCreateView(GestorRequiredMixin, CreateView):
         context['form_title'] = 'Adicionar Novo Equipamento'
         return context
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Filtra o campo 'cliente' para mostrar apenas as empresas
+        # às quais o usuário logado tem acesso.
+        form.fields['cliente'].queryset = Cliente.objects.filter(
+            pk__in=self.request.user.empresas_associadas.values_list(
+                'pk', flat=True)
+        )
+        return form
+
 
 class EquipamentoUpdateView(GestorRequiredMixin, UpdateView):
     permission_required = 'servico_campo.change_equipamento'
@@ -1808,6 +1980,9 @@ class EquipamentoUpdateView(GestorRequiredMixin, UpdateView):
     form_class = EquipamentoForm
     template_name = 'servico_campo/gestao/equipamento_form.html'
     success_url = reverse_lazy('servico_campo:lista_equipamentos')
+
+    def get_queryset(self):
+        return Equipamento.objects.for_user(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1821,7 +1996,11 @@ class EquipamentoDeleteView(GestorRequiredMixin, DeleteView):
     template_name = 'servico_campo/gestao/equipamento_confirm_delete.html'
     success_url = reverse_lazy('servico_campo:lista_equipamentos')
 
+    def get_queryset(self):
+        return Equipamento.objects.for_user(self.request.user)
+
     # NOVO: Adicione este método post para tratar o erro
+
     def post(self, request, *args, **kwargs):
         try:
             response = super().post(request, *args, **kwargs)
@@ -1986,6 +2165,12 @@ class OrdemServicoPlanejamentoUpdateView(LoginRequiredMixin, PermissionRequiredM
     form_class = OrdemServicoPlanejamentoForm
     template_name = 'servico_campo/ordem_servico_planejamento.html'
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Não precisamos de tantos 'select_related' aqui, pois é um formulário,
+        # mas aplicar o filtro de segurança é crucial.
+        return queryset.for_user(self.request.user)
+
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
         return obj
@@ -2035,8 +2220,18 @@ class OrdemServicoPlanejamentoUpdateView(LoginRequiredMixin, PermissionRequiredM
 
         # Houve uma mudança real no técnico responsável feita pelo usuário
         if tecnico_antigo_pk_final != novo_tecnico_pk_final:
-            # Cenário: Houve um técnico designado (seja novo ou alterado)
             if novo_tecnico:
+
+                # --- INÍCIO DA LÓGICA DE NOTIFICAÇÃO ---
+                # 1. Cria a notificação no site
+                mensagem_notificacao = f"Você foi designado como responsável pela OS {os_atualizada.numero_os}."
+                criar_notificacao(
+                    destinatario=novo_tecnico,
+                    mensagem=mensagem_notificacao,
+                    link=os_atualizada.get_absolute_url()
+                )
+
+                # 2. Envia o e-mail (lógica que você já tem)
                 if novo_tecnico.email:
                     try:
                         email_backend = get_email_backend()
@@ -2076,7 +2271,9 @@ class OrdemServicoPlanejamentoUpdateView(LoginRequiredMixin, PermissionRequiredM
                             self.request, f"O planejamento foi salvo, mas ocorreu um erro ao notificar o responsável: {e}")
                 else:
                     messages.warning(
-                        self.request, f"O responsável {novo_tecnico.get_full_name()} foi atribuído, mas não possui um e-mail cadastrado para notificação.")
+                        self.request,
+                        f"O responsável foi alterado para '{novo_tecnico.get_full_name()}', mas ele(a) não pôde ser notificado por e-mail, pois não possui um endereço cadastrado."
+                    )
             elif tecnico_antigo_obj and novo_tecnico is None:
                 # Cenário: Responsável foi REMOVIDO
                 messages.info(
@@ -3373,43 +3570,54 @@ def aprovar_ordem_servico(request, pk):
         )
 
         tecnico = ordem.tecnico_responsavel
-        if tecnico and tecnico.email:
-            try:
-                email_backend = get_email_backend()
-                if email_backend:
-                    aprovador_nome = request.user.get_full_name() or request.user.username
+        if tecnico:  # Apenas verifique se o técnico existe
 
-                    # Constrói a URL completa e absoluta usando o request
-                    link_absoluto = request.build_absolute_uri(
-                        ordem.get_absolute_url())
+            # --- LÓGICA DE NOTIFICAÇÃO NO SITE (SEMPRE EXECUTA) ---
+            aprovador_nome = request.user.get_full_name() or request.user.username
+            mensagem_notificacao = f"A OS {ordem.numero_os} foi aprovada por {aprovador_nome}."
+            criar_notificacao(
+                destinatario=tecnico,
+                mensagem=mensagem_notificacao,
+                link=ordem.get_absolute_url()
+            )
+            # --- FIM DA LÓGICA DE NOTIFICAÇÃO NO SITE ---
+            if tecnico.email:
+                try:
+                    email_backend = get_email_backend()
+                    if email_backend:
+                        aprovador_nome = request.user.get_full_name() or request.user.username
 
-                    context = {
-                        'ordem': ordem,
-                        'aprovador_nome': aprovador_nome,
-                        'link_aprovacao': link_absoluto,  # Passa a URL completa
-                    }
+                        # Constrói a URL completa e absoluta usando o request
+                        link_absoluto = request.build_absolute_uri(
+                            ordem.get_absolute_url())
 
-                    html_message = render_to_string(
-                        'servico_campo/email/notificacao_aprovacao.html', context)
-                    plain_message = strip_tags(html_message)
+                        context = {
+                            'ordem': ordem,
+                            'aprovador_nome': aprovador_nome,
+                            'link_aprovacao': link_absoluto,  # Passa a URL completa
+                        }
 
-                    msg = EmailMultiAlternatives(
-                        f"Ordem de Serviço Aprovada: OS {ordem.numero_os}",
-                        plain_message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [tecnico.email],
-                        connection=email_backend
-                    )
-                    msg.attach_alternative(html_message, "text/html")
-                    msg.send()
-                    messages.success(
-                        request, f"Ordem de Serviço {ordem.numero_os} aprovada e responsável notificado com sucesso.")
-                else:
-                    messages.success(
-                        request, f"Ordem de Serviço {ordem.numero_os} aprovada, mas não foi possível notificar (sem config. de e-mail).")
-            except Exception as e:
-                messages.error(
-                    request, f"OS aprovada, mas falhou ao enviar e-mail: {e}")
+                        html_message = render_to_string(
+                            'servico_campo/email/notificacao_aprovacao.html', context)
+                        plain_message = strip_tags(html_message)
+
+                        msg = EmailMultiAlternatives(
+                            f"Ordem de Serviço Aprovada: OS {ordem.numero_os}",
+                            plain_message,
+                            settings.DEFAULT_FROM_EMAIL,
+                            [tecnico.email],
+                            connection=email_backend
+                        )
+                        msg.attach_alternative(html_message, "text/html")
+                        msg.send()
+                        messages.success(
+                            request, f"Ordem de Serviço {ordem.numero_os} aprovada e responsável notificado com sucesso.")
+                    else:
+                        messages.success(
+                            request, f"Ordem de Serviço {ordem.numero_os} aprovada, mas não foi possível notificar (sem config. de e-mail).")
+                except Exception as e:
+                    messages.error(
+                        request, f"OS aprovada, mas falhou ao enviar e-mail: {e}")
         else:
             messages.success(
                 request, f"Ordem de Serviço {ordem.numero_os} aprovada (responsável sem e-mail).")
@@ -3444,40 +3652,52 @@ def reprovar_ordem_servico(request, pk):
 
                 # --- LÓGICA DE ENVIO DE E-MAIL ADICIONADA AQUI ---
                 tecnico = ordem.tecnico_responsavel
-                if tecnico and tecnico.email:
-                    try:
-                        email_backend = get_email_backend()
-                        if email_backend:
-                            # Constrói a URL completa e absoluta
-                            link_absoluto = request.build_absolute_uri(
-                                ordem.get_absolute_url())
+                if tecnico:
+                    # --- INÍCIO DA LÓGICA DE NOTIFICAÇÃO ---
+                    # 1. Cria a notificação no site
+                    mensagem_notificacao = f"A OS {ordem.numero_os} foi reprovada. Motivo: {motivo[:50]}..."
+                    criar_notificacao(
+                        destinatario=tecnico,
+                        mensagem=mensagem_notificacao,
+                        link=ordem.get_absolute_url()
+                    )
 
-                            context = {
-                                'ordem': ordem,
-                                'motivo': motivo,
-                                'link_os': link_absoluto,  # Passa a URL completa
-                            }
-                            html_message = render_to_string(
-                                'servico_campo/email/notificacao_reprovacao.html', context)
-                            plain_message = strip_tags(html_message)
+                    # 2. Envia o e-mail (lógica que você já tem)
+                    if tecnico.email:
+                        try:
+                            email_backend = get_email_backend()
+                            if email_backend:
+                                # Constrói a URL completa e absoluta
+                                link_absoluto = request.build_absolute_uri(
+                                    ordem.get_absolute_url())
 
-                            msg = EmailMultiAlternatives(
-                                f'Ação Necessária na OS {ordem.numero_os}: Reprovada',
-                                plain_message,
-                                settings.DEFAULT_FROM_EMAIL,
-                                [tecnico.email],
-                                connection=email_backend
-                            )
-                            msg.attach_alternative(html_message, "text/html")
-                            msg.send()
-                            messages.warning(
-                                request, f"Ordem de Serviço {ordem.numero_os} reprovada. O responsável foi notificado para realizar as correções.")
-                        else:
-                            messages.warning(
-                                request, f"OS reprovada, mas não foi possível notificar (sem config. de e-mail).")
-                    except Exception as e:
-                        messages.error(
-                            request, f"OS reprovada, mas falhou ao enviar e-mail: {e}")
+                                context = {
+                                    'ordem': ordem,
+                                    'motivo': motivo,
+                                    'link_os': link_absoluto,  # Passa a URL completa
+                                }
+                                html_message = render_to_string(
+                                    'servico_campo/email/notificacao_reprovacao.html', context)
+                                plain_message = strip_tags(html_message)
+
+                                msg = EmailMultiAlternatives(
+                                    f'Ação Necessária na OS {ordem.numero_os}: Reprovada',
+                                    plain_message,
+                                    settings.DEFAULT_FROM_EMAIL,
+                                    [tecnico.email],
+                                    connection=email_backend
+                                )
+                                msg.attach_alternative(
+                                    html_message, "text/html")
+                                msg.send()
+                                messages.warning(
+                                    request, f"Ordem de Serviço {ordem.numero_os} reprovada. O responsável foi notificado para realizar as correções.")
+                            else:
+                                messages.warning(
+                                    request, f"OS reprovada, mas não foi possível notificar (sem config. de e-mail).")
+                        except Exception as e:
+                            messages.error(
+                                request, f"OS reprovada, mas falhou ao enviar e-mail: {e}")
                 else:
                     messages.warning(
                         request, f"OS reprovada (responsável sem e-mail).")
@@ -3511,3 +3731,249 @@ class AprovacaoOrdensConcluidasListView(LoginRequiredMixin, ListView):
         context['form_reprovacao'] = forms.CharField(widget=forms.Textarea(
             attrs={'rows': 3, 'class': 'form-control'}), required=False, label=_("Motivo da Reprovação"))
         return context
+
+
+@login_required
+@require_POST
+def marcar_notificacoes_como_lidas(request):
+    """
+    View da API que marca todas as notificações não lidas de um usuário como lidas.
+    """
+    try:
+        # Encontra todas as notificações não lidas do usuário logado e atualiza o campo 'lida' para True.
+        Notificacao.objects.filter(
+            destinatario=request.user, lida=False).update(lida=True)
+        return JsonResponse({'status': 'success', 'message': 'Notificações marcadas como lidas.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+class NotificacaoListView(LoginRequiredMixin, ListView):
+    model = Notificacao
+    # Novo template que vamos criar
+    template_name = 'servico_campo/notificacao_list.html'
+    context_object_name = 'notificacoes'
+    paginate_by = 20  # Paginação para não sobrecarregar a página
+
+    def get_queryset(self):
+        # Retorna todas as notificações para o usuário logado, das mais recentes para as mais antigas
+        return Notificacao.objects.filter(destinatario=self.request.user).order_by('-data_criacao')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = "Minhas Notificações"
+        return context
+
+
+class AnaliseHorasView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    permission_required = 'servico_campo.view_registroponto'
+    template_name = 'servico_campo/analise_horas.html'
+    # Removido: context_object_name = 'analise_data' (não é mais necessário com TemplateView)
+
+    # Removido: get_queryset (não é mais necessário)
+
+    def get(self, request, *args, **kwargs):
+        if 'export' in request.GET:
+            return self.export_to_excel(request, *args, **kwargs)
+
+        # A lógica de renderização agora é tratada pelo get_context_data,
+        # então o get() só precisa chamar o método pai.
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        # O super().get_context_data() agora funciona corretamente com TemplateView
+        context = super().get_context_data(**kwargs)
+        request = self.request
+        user = request.user
+
+        today = timezone.localdate()
+        first_day_of_month = today.replace(day=1)
+        start_date_str = request.GET.get(
+            'start_date', first_day_of_month.strftime('%Y-%m-%d'))
+        end_date_str = request.GET.get('end_date', today.strftime('%Y-%m-%d'))
+        tecnico_id = request.GET.get('tecnico')
+
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            start_date, end_date = first_day_of_month, today
+
+        base_qs = RegistroPonto.objects.for_user(user).filter(
+            data__range=[start_date, end_date],
+            hora_saida__isnull=False
+        )
+
+        if tecnico_id:
+            base_qs = base_qs.filter(tecnico_id=tecnico_id)
+
+        regra_jornada = RegraJornadaTrabalho.objects.filter(
+            is_default=True).first()
+        analise_por_tecnico = {}
+        pontos_agrupados = base_qs.order_by('tecnico', 'data')
+
+        for ponto in pontos_agrupados:
+            tecnico = ponto.tecnico
+            data_ponto = ponto.data
+            if tecnico.id not in analise_por_tecnico:
+                analise_por_tecnico[tecnico.id] = {
+                    'tecnico_nome': tecnico.get_full_name() or tecnico.username,
+                    'soma_normais': Decimal('0.0'),
+                    'soma_extras_60': Decimal('0.0'),
+                    'soma_extras_100': Decimal('0.0'),
+                    'dias_trabalhados': set()
+                }
+            analise_por_tecnico[tecnico.id]['dias_trabalhados'].add(data_ponto)
+
+        if regra_jornada:
+            for tecnico_id_loop, dados in analise_por_tecnico.items():
+                for dia in dados['dias_trabalhados']:
+                    pontos_do_dia = base_qs.filter(
+                        tecnico_id=tecnico_id_loop, data=dia)
+                    horas_calculadas = regra_jornada.calcular_horas(
+                        list(pontos_do_dia))
+                    dados['soma_normais'] += horas_calculadas['horas_normais']
+                    dados['soma_extras_60'] += horas_calculadas['horas_extras_60']
+                    dados['soma_extras_100'] += horas_calculadas['horas_extras_100']
+
+        lista_analise = sorted(analise_por_tecnico.values(),
+                               key=lambda x: x['tecnico_nome'])
+
+        for item in lista_analise:
+            item['soma_normais_fmt'] = format_decimal_hours(
+                item['soma_normais'])
+            item['soma_extras_60_fmt'] = format_decimal_hours(
+                item['soma_extras_60'])
+            item['soma_extras_100_fmt'] = format_decimal_hours(
+                item['soma_extras_100'])
+
+        totais_gerais = {
+            'total_normais': sum(item['soma_normais'] for item in lista_analise),
+            'total_extras_60': sum(item['soma_extras_60'] for item in lista_analise),
+            'total_extras_100': sum(item['soma_extras_100'] for item in lista_analise),
+        }
+
+        totais_gerais['total_normais_fmt'] = format_decimal_hours(
+            totais_gerais['total_normais'])
+        totais_gerais['total_extras_60_fmt'] = format_decimal_hours(
+            totais_gerais['total_extras_60'])
+        totais_gerais['total_extras_100_fmt'] = format_decimal_hours(
+            totais_gerais['total_extras_100'])
+
+        context['totais_gerais'] = totais_gerais
+        context['analise_por_tecnico'] = lista_analise
+        context['tecnicos_disponiveis'] = User.objects.filter(
+            is_active=True).order_by('first_name')
+        context['filters'] = {
+            'start_date': start_date_str,
+            'end_date': end_date_str,
+            'tecnico_id': tecnico_id,
+        }
+        return context
+
+    def export_to_excel(self, request, *args, **kwargs):
+        # Para obter os dados, chamamos get_context_data() que já faz todo o cálculo
+        context = self.get_context_data(**kwargs)
+        analise_por_tecnico = context['analise_por_tecnico']
+
+        # Pega os filtros para o nome do arquivo e para a query detalhada
+        start_date_str = context['filters']['start_date']
+        end_date_str = context['filters']['end_date']
+        tecnico_id = context['filters']['tecnico_id']
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        summary_data = []
+        for item in analise_por_tecnico:
+            summary_data.append({
+                'Técnico': item['tecnico_nome'],
+                'Total Horas Normais (Decimal)': item['soma_normais'],
+                'Total Horas Extras 50% (Decimal)': item['soma_extras_60'],
+                'Total Horas Extras 100% (Decimal)': item['soma_extras_100'],
+                'Total Horas Normais': format_decimal_hours(item['soma_normais']),
+                'Total Horas Extras 50%': format_decimal_hours(item['soma_extras_60']),
+                'Total Horas Extras 100%': format_decimal_hours(item['soma_extras_100']),
+            })
+
+        detailed_data_per_day = []
+        regra_jornada = RegraJornadaTrabalho.objects.filter(
+            is_default=True).first()
+
+        base_qs = RegistroPonto.objects.for_user(request.user).filter(
+            data__range=[start_date, end_date], hora_saida__isnull=False
+        ).select_related(
+            'tecnico', 'ordem_servico', 'ordem_servico__cliente'
+        ).order_by('tecnico__first_name', 'data', 'hora_entrada')
+
+        if tecnico_id:
+            base_qs = base_qs.filter(tecnico_id=tecnico_id)
+
+        group_by_tecnico = groupby(base_qs, key=attrgetter('tecnico'))
+
+        for tecnico, pontos_tecnico_iter in group_by_tecnico:
+            pontos_tecnico = list(pontos_tecnico_iter)
+            group_by_data = groupby(pontos_tecnico, key=attrgetter('data'))
+
+            for data, pontos_do_dia_iter in group_by_data:
+                pontos_do_dia_list = list(pontos_do_dia_iter)
+
+                horas_calculadas_dia = {}
+                if regra_jornada:
+                    horas_calculadas_dia = regra_jornada.calcular_horas(
+                        pontos_do_dia_list)
+                else:
+                    horas_calculadas_dia = {'horas_normais': Decimal(
+                        '0.00'), 'horas_extras_60': Decimal('0.00'), 'horas_extras_100': Decimal('0.00')}
+
+                ossos_do_dia = ", ".join(
+                    sorted(list(set(p.ordem_servico.numero_os for p in pontos_do_dia_list))))
+                clientes_do_dia = ", ".join(sorted(
+                    list(set(p.ordem_servico.cliente.razao_social for p in pontos_do_dia_list))))
+
+                total_duration_seconds = sum(
+                    (datetime.combine(p.data, p.hora_saida) -
+                     datetime.combine(p.data, p.hora_entrada)).total_seconds()
+                    for p in pontos_do_dia_list if p.hora_saida
+                )
+                duracao_total_dia = format_decimal_hours(
+                    Decimal(total_duration_seconds / 3600))
+
+                detailed_data_per_day.append({
+                    'Data': data.strftime('%d/%m/%Y'),
+                    'Técnico': tecnico.get_full_name() or tecnico.username,
+                    'Ordens de Serviço': ossos_do_dia,
+                    'Clientes': clientes_do_dia,
+                    'Duração Total do Dia': duracao_total_dia,
+                    'Horas Normais (Decimal)': horas_calculadas_dia.get('horas_normais', 0),
+                    'Horas Extras 50% (Decimal)': horas_calculadas_dia.get('horas_extras_60', 0),
+                    'Horas Extras 100% (Decimal)': horas_calculadas_dia.get('horas_extras_100', 0),
+                    'Horas Normais': format_decimal_hours(horas_calculadas_dia.get('horas_normais')),
+                    'Horas Extras 50%': format_decimal_hours(horas_calculadas_dia.get('horas_extras_60')),
+                    'Horas Extras 100%': format_decimal_hours(horas_calculadas_dia.get('horas_extras_100')),
+                })
+
+        df_summary = pd.DataFrame(summary_data)
+        df_detailed = pd.DataFrame(detailed_data_per_day)
+
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df_summary.to_excel(writer, index=False, sheet_name='Resumo_Geral')
+            df_detailed.to_excel(writer, index=False,
+                                 sheet_name='Detalhado_por_Dia')
+
+            for sheet_name in ['Resumo_Geral', 'Detalhado_por_Dia']:
+                worksheet = writer.sheets[sheet_name]
+                df_to_use = df_summary if sheet_name == 'Resumo_Geral' else df_detailed
+                for i, col in enumerate(df_to_use.columns):
+                    column_len = max(df_to_use[col].astype(
+                        str).map(len).max(), len(col)) + 2
+                    worksheet.set_column(i, i, column_len)
+
+        output.seek(0)
+
+        response = HttpResponse(
+            output,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="relatorio_horas_{start_date_str}_a_{end_date_str}.xlsx"'
+        return response

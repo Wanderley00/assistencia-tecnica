@@ -1,6 +1,6 @@
 # servico_campo/context_processors.py
 
-from .models import Despesa, OrdemServico, ContaPagar
+from .models import Despesa, OrdemServico, ContaPagar, Notificacao
 
 
 def pending_counts_processor(request):
@@ -12,6 +12,12 @@ def pending_counts_processor(request):
         'aprovar_despesas': 0,
         'aprovar_ordens': 0,
         'contas_a_pagar': 0,
+    }
+
+    # Dicionário para as notificações (NOVO)
+    notifications_data = {
+        'nao_lidas_count': 0,
+        'lista_recente': [],
     }
 
     # Só executa as queries se o usuário estiver logado
@@ -35,4 +41,22 @@ def pending_counts_processor(request):
                 status_pagamento__in=['PENDENTE', 'EM_ANALISE']
             ).count()
 
-    return {'pending_counts': counts}
+        # --- LÓGICA DE NOTIFICAÇÕES ADICIONADA AQUI ---
+        # 2. Busca todas as notificações do usuário logado
+        todas_notificacoes = Notificacao.objects.filter(
+            destinatario=request.user)
+
+        # 3. Conta quantas delas ainda não foram lidas
+        notifications_data['nao_lidas_count'] = todas_notificacoes.filter(
+            lida=False).count()
+
+        # 4. Pega as 5 mais recentes para exibir no dropdown
+        notifications_data['lista_recente'] = todas_notificacoes.order_by(
+            '-data_criacao')[:5]
+        # --- FIM DA LÓGICA DE NOTIFICAÇÕES ---
+
+    # 5. Retorna ambos os dicionários para o contexto
+    return {
+        'pending_counts': counts,
+        'user_notifications': notifications_data,  # NOVO
+    }

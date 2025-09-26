@@ -29,7 +29,7 @@
                 <strong>{% trans "Data de Cadastro:" %}</strong> {{ user.date_joined|date:"d/m/Y H:i" }}
             </li>
         </ul>
-        <a href="{% url 'admin:auth_user_change' user.pk %}" class="btn btn-primary mt-3" target="_blank">{% trans "Editar Perfil (Admin)" %}</a>
+        <a href="{% url 'servico_campo:editar_usuario' user.pk %}" class="btn btn-primary mt-3">{% trans "Editar Meu Perfil" %}</a>
     </div>
 </div>
 {% endblock %}

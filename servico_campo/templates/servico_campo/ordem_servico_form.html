@@ -20,14 +20,31 @@
                     <div class="alert alert-danger">
                         <strong>Por favor, corrija os erros abaixo:</strong>
                         <ul class="mb-0">
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <li>{{ field.label|default:field.name|escape }}: {{ error|escape }}</li>
+                            {# 1. Trata os erros que não são de um campo específico (__all__) #}
+                            {% if form.non_field_errors %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error|escape }}</li>
+                                {% endfor %}
+                            {% endif %}
+
+                            {# 2. Trata os erros de campos específicos #}
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <li>
+                                        {# Acessa o label do campo corretamente #}
+                                        <strong>{{ field.label|escape }}:</strong>
+                                        <ul class="list-unstyled ps-3">
+                                            {% for error in field.errors %}
+                                                <li>{{ error|escape }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endif %}
                             {% endfor %}
-                        {% endfor %}
                         </ul>
                     </div>
                 {% endif %}
+
 
                 <div class="row g-3">
                     <div class="col-md-6">

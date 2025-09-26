@@ -17,6 +17,7 @@
     <link rel="icon" href="{% static 'servico_campo/images/icon.png' %}" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'servico_campo/css/sidebar.css' %}">
     <link rel="stylesheet" href="{% static 'servico_campo/css/style.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -52,6 +53,14 @@
                     <a href="{% url 'servico_campo:dashboard' %}" class="menu-link">
                         <i class="bi bi-house-door menu-icon"></i>
                         <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+
+                {# --- NOVO ITEM DE MENU ADICIONADO AQUI --- #}
+                <li class="menu-item">
+                    <a href="{% url 'servico_campo:analise_horas' %}" class="menu-link">
+                        <i class="bi bi-clock-history menu-icon"></i>
+                        <span class="menu-text">Análise de Horas</span>
                     </a>
                 </li>
 
@@ -269,7 +278,44 @@
         <div class="topbar">
             <div class="topbar-content">
                 {% if user.is_authenticated %}
-                <div class="user-menu">
+                    <div class="dropdown me-3"> {# 'me-3' adiciona um espaço à direita #}
+                        <button class="btn btn-outline-secondary" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="position: relative;">
+                            <i class="bi bi-bell"></i>
+                            {% if user_notifications.nao_lidas_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ user_notifications.nao_lidas_count }}
+                                    <span class="visually-hidden">notificações não lidas</span>
+                                </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 350px;">
+                            <li class="px-3 py-2">
+                                <h6 class="mb-0">Notificações</h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            {% for notificacao in user_notifications.lista_recente %}
+                                <li>
+                                    <a class="dropdown-item text-wrap {% if not notificacao.lida %}fw-bold{% endif %}" href="{{ notificacao.link|default:'#' }}">
+                                        <small class="d-block text-muted">{{ notificacao.data_criacao|timesince }} atrás</small>
+                                        {{ notificacao.mensagem }}
+                                    </a>
+                                </li>
+                            {% empty %}
+                                <li class="px-3 py-2 text-center text-muted">
+                                    <small>Nenhuma notificação recente.</small>
+                                </li>
+                            {% endfor %}
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="{% url 'servico_campo:lista_notificacoes' %}">Ver todas as notificações</a></li>
+                        </ul>
+                    </div>
+                    <!-- ================================================== -->
+                    <!-- FIM DO NOVO BLOCO DE NOTIFICAÇÕES -->
+                    <!-- ================================================== -->
+
+                    <div class="user-menu">
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-fill"></i>
@@ -311,7 +357,63 @@
 
     <div id="extra-js-container">
         {% block extra_js %}{% endblock %}
+        <!-- ================================================== -->
+    <!-- INÍCIO DO NOVO SCRIPT DE NOTIFICAÇÕES -->
+    <!-- ================================================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationBadge = document.querySelector('#notificationDropdown .badge');
+
+        if (notificationDropdown) {
+            // Adiciona um listener para quando o dropdown de notificações é aberto
+            notificationDropdown.addEventListener('show.bs.dropdown', function () {
+                
+                // Se não houver badge (nenhuma notificação não lida), não faz nada
+                if (!notificationBadge) {
+                    return;
+                }
+
+                // URL da nossa nova API
+                const url = "{% url 'servico_campo:marcar_notificacoes_como_lidas' %}";
+                
+                // Pega o token CSRF do cookie para a requisição POST
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Faz uma requisição POST para a nossa API em segundo plano
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Se a API confirmar o sucesso, remove o contador vermelho da tela
+                        if (notificationBadge) {
+                            notificationBadge.remove();
+                        }
+                        // Também remove o negrito dos itens da lista
+                        const unreadItems = document.querySelectorAll('.dropdown-item.fw-bold');
+                        unreadItems.forEach(item => {
+                            item.classList.remove('fw-bold');
+                        });
+                    }
+                })
+                .catch(error => console.error('Erro ao marcar notificações como lidas:', error));
+            });
+        }
+    });
+    </script>
+    <!-- ================================================== -->
+    <!-- FIM DO NOVO SCRIPT DE NOTIFICAÇÕES -->
+    <!-- ================================================== -->
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'servico_campo/js/sidebar.js' %}"></script>

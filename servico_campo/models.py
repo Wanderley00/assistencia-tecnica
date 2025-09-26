@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .managers import EmpresaScopedManager
 from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from datetime import datetime
@@ -90,6 +91,8 @@ class Equipamento(models.Model):
         verbose_name="Descrição Detalhada do Equipamento", null=True, blank=True)
     localizacao = models.CharField(
         max_length=255, verbose_name="Localização do Equipamento no Cliente", null=True, blank=True)
+
+    objects = EmpresaScopedManager()
 
     class Meta:
         verbose_name = "Equipamento"
@@ -181,6 +184,8 @@ class OrdemServico(models.Model):
         help_text="Detalhes sobre o porquê da ordem de serviço ter sido reprovada."
     )
 
+    objects = EmpresaScopedManager()
+
     def get_absolute_url(self):
         """
         Retorna a URL canônica para uma instância desta Ordem de Serviço.
@@ -259,6 +264,8 @@ class RegistroPonto(models.Model):
         verbose_name="Observações de Entrada", null=True, blank=True)
     observacoes = models.TextField(
         verbose_name="Observações do Ponto", null=True, blank=True)
+
+    objects = EmpresaScopedManager()
 
     class Meta:
         verbose_name = "Registro de Ponto"
@@ -353,6 +360,8 @@ class RelatorioCampo(models.Model):
         auto_now_add=True, verbose_name="Data de Criação do Relatório")
     data_atualizacao = models.DateTimeField(
         auto_now=True, verbose_name="Última Atualização")
+
+    objects = EmpresaScopedManager()
 
     class Meta:
         verbose_name = "Relatório de Campo"
@@ -452,6 +461,8 @@ class Despesa(models.Model):
     paga = models.BooleanField(default=False, verbose_name=_("Paga?"))
     data_pagamento = models.DateTimeField(
         null=True, blank=True, verbose_name=_("Data do Pagamento"))
+
+    objects = EmpresaScopedManager()
 
     class Meta:
         verbose_name = _("Despesa")
@@ -608,7 +619,7 @@ class RegraJornadaTrabalho(models.Model):
 
     # Campo para indicar se esta é a regra padrão (default)
     is_default = models.BooleanField(
-        default=False, verbose_name=_("Regra Padrão (Default)")
+        default=False, verbose_name=_("Tornar essa regra padrão")
     )
 
     class Meta:
@@ -764,41 +775,6 @@ class ProblemaRelatorio(models.Model):
         return f"{self.categoria.nome}{sub}: {self.observacao or 'Sem observação'}"
 
 
-class ConfiguracaoEmail(models.Model):
-    # --- Campos Editáveis pelo Usuário ---
-    email_host = models.CharField(
-        max_length=255, verbose_name="Servidor SMTP (Host)")
-    email_port = models.PositiveIntegerField(verbose_name="Porta", default=587)
-    email_host_user = models.EmailField(
-        verbose_name="E-mail de Envio (Usuário)")
-    email_host_password = models.CharField(
-        max_length=255, verbose_name="Senha do E-mail")
-
-    # --- Campos Fixos (Não Editáveis) ---
-    email_backend = models.CharField(
-        max_length=255,
-        default='django.core.mail.backends.smtp.EmailBackend',
-        editable=False
-    )
-    email_use_tls = models.BooleanField(
-        verbose_name="Usar TLS",
-        default=True,
-        editable=False
-    )
-    email_use_ssl = models.BooleanField(
-        verbose_name="Usar SSL",
-        default=False,
-        editable=False
-    )
-
-    def __str__(self):
-        return f"Configuração de E-mail para {self.email_host}"
-
-    class Meta:
-        verbose_name = "Configuração de E-mail"
-        verbose_name_plural = "Configurações de E-mail"
-
-
 class PerfilUsuario(models.Model):
     """
     Armazena informações adicionais do usuário, como dados bancários para reembolso.
@@ -890,6 +866,8 @@ class HorasRelatorioTecnico(models.Model):
     km_rodado = models.DecimalField(
         max_digits=7, decimal_places=2, default=0.00, verbose_name=_("KM Rodado"))
 
+    objects = EmpresaScopedManager()
+
     class Meta:
         verbose_name = _("Horas por Técnico no Relatório")
         verbose_name_plural = _("Horas por Técnico nos Relatórios")
@@ -958,3 +936,35 @@ class HistoricoAprovacaoOS(models.Model):
 
     def __str__(self):
         return f"{self.get_acao_display()} na OS {self.ordem_servico.numero_os} por {self.usuario.username}"
+
+
+class Notificacao(models.Model):
+    """
+    Modelo para armazenar notificações para os usuários dentro do sistema.
+    """
+    # Para quem é a notificação. Se o usuário for deletado, suas notificações também serão.
+    destinatario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notificacoes', verbose_name=_("Destinatário"))
+
+    # A mensagem que será exibida.
+    mensagem = models.CharField(max_length=255, verbose_name=_("Mensagem"))
+
+    # O link para onde o usuário será redirecionado ao clicar.
+    link = models.URLField(max_length=400, verbose_name=_(
+        "Link de Destino"), null=True, blank=True)
+
+    # Controla se a notificação já foi visualizada.
+    lida = models.BooleanField(default=False, verbose_name=_("Lida"))
+
+    # Data de criação para ordenação.
+    data_criacao = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Data de Criação"))
+
+    class Meta:
+        verbose_name = _("Notificação")
+        verbose_name_plural = _("Notificações")
+        # Sempre mostrar as mais recentes primeiro.
+        ordering = ['-data_criacao']
+
+    def __str__(self):
+        return f"Notificação para {self.destinatario.username}: {self.mensagem[:30]}..."

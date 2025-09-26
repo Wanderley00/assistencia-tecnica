@@ -1,5 +1,35 @@
 {% extends 'servico_campo/base.html' %}
+{% load i18n %} {# Carrega a tag de tradução, se estiver usando #}
 {% block title %}{{ form_title }}{% endblock %}
+
+{% block extra_head %}
+{# Adicionamos um pouco de CSS para o nosso novo componente #}
+<style>
+    .user-selection-widget {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #fff;
+    }
+    .user-list-container {
+        max-height: 250px; /* Altura máxima antes de mostrar a barra de rolagem */
+        overflow-y: auto;
+        padding: 1rem;
+    }
+    .user-list-container .form-check {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+    .user-list-container .form-check:not(:last-child) {
+        border-bottom: 1px solid #f1f3f4;
+    }
+    .user-search-bar {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
     <div class="card">
@@ -11,18 +41,104 @@
                 {% csrf_token %}
                 <div class="row">
                     {% for field in form %}
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="text-danger">{{ field.errors|first }}</div>
-                            {% endif %}
-                        </div>
+                        {# Se o campo for 'usuarios_associados', renderiza nosso componente customizado #}
+                        {% if field.name == 'usuarios_associados' %}
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold">{{ field.label }}</label>
+                                
+                                <div class="user-selection-widget">
+                                    {# Barra de Busca e Botão #}
+                                    <div class="user-search-bar">
+                                        <input type="text" id="user-search-input" class="form-control" placeholder="Pesquisar usuários...">
+                                        <button type="button" id="select-all-users-btn" class="btn btn-outline-secondary flex-shrink-0">{% trans "Selecionar Todos" %}</button>
+                                    </div>
+                                    
+                                    {# Container para a lista de checkboxes #}
+                                    <div class="user-list-container" id="user-list-container">
+                                        {# --- INÍCIO DA CORREÇÃO --- #}
+                                        {# Em vez de '{{ field }}', iteramos sobre cada checkbox individualmente #}
+                                        {# para envolvê-lo na estrutura HTML que o JavaScript espera. #}
+                                        {% for checkbox in field %}
+                                            <div class="form-check">
+                                                {{ checkbox.tag }}
+                                                <label for="{{ checkbox.id_for_label }}" class="form-check-label">{{ checkbox.choice_label }}</label>
+                                            </div>
+                                        {% endfor %}
+                                        {# --- FIM DA CORREÇÃO --- #}
+                                    </div>
+                                </div>
+
+                                {% if field.errors %}
+                                    <div class="text-danger mt-1">{{ field.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        
+                        {# Para todos os outros campos, mantém o layout de duas colunas #}
+                        {% else %}
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger mt-1">{{ field.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-success">Salvar</button>
-                <a href="{% url 'servico_campo:lista_clientes' %}" class="btn btn-secondary">Cancelar</a>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">{% trans "Salvar" %}</button>
+                    <a href="{% url 'servico_campo:lista_clientes' %}" class="btn btn-secondary">{% trans "Cancelar" %}</a>
+                </div>
             </form>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('user-search-input');
+    const selectAllBtn = document.getElementById('select-all-users-btn');
+    const userListContainer = document.getElementById('user-list-container');
+    
+    // Agora este seletor vai funcionar, pois criamos as divs '.form-check' no HTML
+    const checkDivs = userListContainer.querySelectorAll('.form-check');
+
+    // 1. Lógica da Barra de Busca (O código original já estava correto e funcionará agora)
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase().trim();
+        
+        checkDivs.forEach(function(div) {
+            const label = div.querySelector('label');
+            const labelText = label.textContent || label.innerText;
+
+            if (labelText.toLowerCase().includes(filter)) {
+                div.style.display = ''; // Mostra o item
+            } else {
+                div.style.display = 'none'; // Esconde o item
+            }
+        });
+    });
+
+    // 2. Lógica do Botão "Selecionar Todos" (O código original já estava correto e funcionará agora)
+    selectAllBtn.addEventListener('click', function() {
+        const visibleCheckboxes = Array.from(checkDivs)
+            .filter(div => div.style.display !== 'none')
+            .map(div => div.querySelector('input[type="checkbox"]'));
+        
+        const allVisibleChecked = visibleCheckboxes.every(checkbox => checkbox.checked);
+        const shouldCheck = !allVisibleChecked;
+
+        visibleCheckboxes.forEach(function(checkbox) {
+            checkbox.checked = shouldCheck;
+        });
+
+        if (shouldCheck) {
+            selectAllBtn.textContent = '{% trans "Desmarcar Visíveis" %}';
+        } else {
+            selectAllBtn.textContent = '{% trans "Selecionar Todos" %}';
+        }
+    });
+});
+</script>
 {% endblock %}

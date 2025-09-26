@@ -337,14 +337,34 @@ class EncerramentoOSForm(forms.ModelForm):
 
 
 class ClienteForm(forms.ModelForm):
+    # --- CAMPO PERSONALIZADO CORRIGIDO ---
+    usuarios_associados = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all().order_by('first_name', 'last_name', 'username'),
+
+        # 1. Usaremos checkboxes para uma melhor UX.
+        widget=forms.CheckboxSelectMultiple,
+
+        required=False,
+        label="Usuários com Acesso"
+    )
+    # --- FIM DO CAMPO PERSONALIZADO ---
+
     class Meta:
         model = Cliente
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Aplica a classe 'form-control' a todos os campos, exceto o nosso.
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({'class': 'form-control'})
+            # Exclui o campo de múltipla escolha do estilo padrão 'form-control'
+            if not isinstance(field.widget, forms.CheckboxSelectMultiple):
+                field.widget.attrs.update({'class': 'form-control'})
+
+        # --- NOVO: Sobrescreve o label de cada checkbox ---
+        # Esta é a forma correta de customizar o que é exibido para cada usuário.
+        self.fields['usuarios_associados'].label_from_instance = lambda obj: obj.get_full_name(
+        ) or obj.username
 
 
 class EquipamentoForm(forms.ModelForm):

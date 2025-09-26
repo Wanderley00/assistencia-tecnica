@@ -1,6 +1,36 @@
 # Em servico_campo/utils.py
 from django.core.mail import get_connection
 from configuracoes.models import ConfiguracaoEmail
+from django.contrib.auth import get_user_model
+from .models import Notificacao
+
+User = get_user_model()
+
+
+def criar_notificacao(destinatario: User, mensagem: str, link: str = None):
+    """
+    Cria e salva uma notificação no banco de dados para um usuário específico.
+
+    Args:
+        destinatario (User): O objeto de usuário que receberá a notificação.
+        mensagem (str): O texto da notificação.
+        link (str, optional): A URL para a qual o usuário será redirecionado. Defaults to None.
+    """
+    if not isinstance(destinatario, User):
+        # Medida de segurança para garantir que estamos recebendo o tipo de objeto correto
+        print(
+            f"AVISO: Tentativa de criar notificação para um objeto que não é um usuário: {destinatario}")
+        return
+
+    try:
+        Notificacao.objects.create(
+            destinatario=destinatario,
+            mensagem=mensagem,
+            link=link
+        )
+    except Exception as e:
+        # Imprime um erro no console se a criação da notificação falhar por algum motivo
+        print(f"ERRO ao criar notificação para {destinatario.username}: {e}")
 
 
 def get_email_backend():

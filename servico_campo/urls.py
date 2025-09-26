@@ -205,6 +205,14 @@ urlpatterns = [
          views.reprovar_ordem_servico, name="reprovar_os"),
     path("aprovacao-ordens-concluidas/", views.AprovacaoOrdensConcluidasListView.as_view(),
          name="aprovacao_ordens_concluidas"),
+
+    path('notificacoes/marcar-como-lidas/', views.marcar_notificacoes_como_lidas,
+         name='marcar_notificacoes_como_lidas'),
+
+    path('notificacoes/', views.NotificacaoListView.as_view(),
+         name='lista_notificacoes'),
+
+    path('analise/horas/', views.AnaliseHorasView.as_view(), name='analise_horas'),
 ]
 
 if settings.DEBUG:

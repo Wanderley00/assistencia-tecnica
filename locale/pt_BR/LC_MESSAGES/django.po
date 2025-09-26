@@ -1,0 +1,3141 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-24 10:24-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+#: .\configuracoes\models.py:52
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:19
+#: .\servico_campo\models.py:711
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:18
+msgid "Nome da Categoria"
+msgstr ""
+
+#: .\configuracoes\models.py:53 .\configuracoes\models.py:163
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:20
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:20
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:20
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:20
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:20
+#: .\servico_campo\models.py:712 .\servico_campo\models.py:731
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:19
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:21
+msgid "Ativo"
+msgstr ""
+
+#: .\configuracoes\models.py:56
+msgid "Categoria de Despesa"
+msgstr ""
+
+#: .\configuracoes\models.py:57
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:8
+#: .\servico_campo\templates\servico_campo\base.html:199
+msgid "Categorias de Despesas"
+msgstr ""
+
+#: .\configuracoes\models.py:70
+msgid "Nome da Política"
+msgstr ""
+
+#: .\configuracoes\models.py:70
+msgid "Ex: Política de Reembolso de Despesas V1.0"
+msgstr ""
+
+#: .\configuracoes\models.py:72
+msgid "Arquivo da Política (PDF)"
+msgstr ""
+
+#: .\configuracoes\models.py:74
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:22
+msgid "Data de Upload"
+msgstr ""
+
+#: .\configuracoes\models.py:75
+msgid "Ativa"
+msgstr ""
+
+#: .\configuracoes\models.py:78
+msgid "Política de Despesa"
+msgstr ""
+
+#: .\configuracoes\models.py:79
+#: .\servico_campo\templates\servico_campo\base.html:207
+msgid "Políticas de Despesas"
+msgstr ""
+
+#: .\configuracoes\models.py:101
+msgid "Backend de Email"
+msgstr ""
+
+#: .\configuracoes\models.py:103
+msgid ""
+"Ex: django.core.mail.backends.smtp.EmailBackend (para SMTP) ou "
+"django.core.mail.backends.console.EmailBackend (para testes)."
+msgstr ""
+
+#: .\configuracoes\models.py:106
+msgid "Host SMTP"
+msgstr ""
+
+#: .\configuracoes\models.py:107
+msgid "Endereço do servidor SMTP (ex: smtp.gmail.com)."
+msgstr ""
+
+#: .\configuracoes\models.py:110
+msgid "Porta SMTP"
+msgstr ""
+
+#: .\configuracoes\models.py:111
+msgid "Porta do servidor SMTP (ex: 587 para TLS, 465 para SSL)."
+msgstr ""
+
+#: .\configuracoes\models.py:114
+msgid "Usar TLS?"
+msgstr ""
+
+#: .\configuracoes\models.py:116
+msgid "Marque para usar TLS (Transport Layer Security) para conexão segura."
+msgstr ""
+
+#: .\configuracoes\models.py:119
+msgid "Usar SSL?"
+msgstr ""
+
+#: .\configuracoes\models.py:121
+msgid ""
+"Marque para usar SSL (Secure Sockets Layer). Se TLS for True, SSL deve ser "
+"False."
+msgstr ""
+
+#: .\configuracoes\models.py:124
+msgid "Usuário SMTP"
+msgstr ""
+
+#: .\configuracoes\models.py:126
+msgid ""
+"Nome de usuário para autenticação SMTP (geralmente seu e-mail completo)."
+msgstr ""
+
+#: .\configuracoes\models.py:129
+msgid "Senha SMTP / Chave API"
+msgstr ""
+
+#: .\configuracoes\models.py:131
+msgid ""
+"Senha ou chave de API para autenticação SMTP. Nunca coloque sua senha "
+"principal aqui."
+msgstr ""
+
+#: .\configuracoes\models.py:134
+msgid "Remetente Padrão"
+msgstr ""
+
+#: .\configuracoes\models.py:136
+msgid ""
+"Endereço de e-mail que aparecerá como remetente padrão (ex: "
+"noreply@seusistema.com)."
+msgstr ""
+
+#: .\configuracoes\models.py:140
+msgid "Configuração de Email"
+msgstr ""
+
+#: .\configuracoes\models.py:141
+#: .\servico_campo\templates\servico_campo\base.html:215
+msgid "Configurações de Email"
+msgstr ""
+
+#: .\configuracoes\models.py:144
+msgid "Configurações de E-mail do Sistema"
+msgstr ""
+
+#: .\configuracoes\models.py:150
+msgid "Só pode haver uma instância de Configuração de Email."
+msgstr ""
+
+#: .\configuracoes\models.py:162
+msgid "Nome do Tipo de Relatório"
+msgstr ""
+
+#: .\configuracoes\models.py:166 .\servico_campo\models.py:317
+msgid "Tipo de Relatório"
+msgstr ""
+
+#: .\configuracoes\models.py:167
+msgid "Tipos de Relatórios"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:8
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:8
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:8
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:8
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:8
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:4
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:8
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:15
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:4
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:8
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:4
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:8
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:4
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:8
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:8
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:15
+msgid "Confirmar Exclusão"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:15
+msgid "Você tem certeza que deseja excluir a categoria de despesa"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:16
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"despesas associadas a ela."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:20
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:15
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:20
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:15
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:15
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:15
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:27
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:20
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:20
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:20
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:16
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:27
+msgid "Sim, excluir"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_confirm_delete.html:21
+#: .\configuracoes\templates\configuracoes\categoria_despesa_form.html:38
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:16
+#: .\configuracoes\templates\configuracoes\forma_pagamento_form.html:38
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:21
+#: .\configuracoes\templates\configuracoes\politica_despesa_form.html:45
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:16
+#: .\configuracoes\templates\configuracoes\tipo_documento_form.html:38
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:16
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_form.html:38
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:16
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_form.html:38
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:101
+#: .\servico_campo\templates\servico_campo\despesa_confirm_acao.html:40
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:28
+#: .\servico_campo\templates\servico_campo\despesa_form.html:89
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:57
+#: .\servico_campo\templates\servico_campo\foto_relatorio_form.html:45
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:49
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:49
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:21
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_form.html:38
+#: .\servico_campo\templates\servico_campo\gestao\cliente_form.html:90
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:21
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_form.html:104
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:21
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_form.html:44
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:17
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:679
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:712
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:39
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:28
+#: .\servico_campo\templates\servico_campo\registro_ponto_form_edit.html:77
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:240
+msgid "Cancelar"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_form.html:37
+#: .\configuracoes\templates\configuracoes\forma_pagamento_form.html:37
+#: .\configuracoes\templates\configuracoes\politica_despesa_form.html:44
+#: .\configuracoes\templates\configuracoes\tipo_documento_form.html:37
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_form.html:37
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_form.html:37
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_form.html:37
+#: .\servico_campo\templates\servico_campo\gestao\cliente_form.html:89
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_form.html:103
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_form.html:43
+msgid "Salvar"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:4
+msgid "Gestão de Categorias de Despesas"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:10
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:10
+msgid "Adicionar Categoria"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:21
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:21
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:23
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:21
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:21
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:21
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:464
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:407
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:20
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:28
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:22
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:498
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:413
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:489
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:567
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:619
+msgid "Ações"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:30
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:30
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:39
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:30
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:30
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:30
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:500
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:48
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:29
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:42
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:49
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:56
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:32
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:519
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:582
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:605
+msgid "Sim"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:32
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:32
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:41
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:32
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:32
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:32
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:502
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:50
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:31
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:44
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:51
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:58
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:34
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:522
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:584
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:610
+msgid "Não"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:36
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:36
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:46
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:36
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:36
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:36
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:459
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:35
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:62
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:38
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:583
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:671
+msgid "Editar"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:37
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:37
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:47
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:37
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:37
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:37
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:36
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:63
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:39
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:589
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:676
+msgid "Excluir"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\categoria_despesa_list.html:42
+msgid "Nenhuma categoria de despesa cadastrada."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:10
+msgid "Você tem certeza que deseja excluir a forma de pagamento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_confirm_delete.html:11
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"despesas associadas."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:4
+msgid "Gestão de Formas de Pagamento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:8
+msgid "Formas de Pagamento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:10
+msgid "Adicionar Forma"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:19
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:19
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:19
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:19
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:19
+msgid "Nome"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\forma_pagamento_list.html:42
+msgid "Nenhuma forma de pagamento cadastrada."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:15
+msgid "Você tem certeza que deseja excluir a política de despesa"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_confirm_delete.html:16
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:23
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:23
+msgid "Atenção: Esta ação não pode ser desfeita."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_form.html:33
+msgid "Arquivo atual:"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_form.html:33
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:95
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:445
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:589
+msgid "Ver"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:4
+msgid "Gestão de Políticas de Despesa"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:8
+msgid "Políticas de Despesa"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:10
+msgid "Anexar Nova Política"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:20
+msgid "Arquivo"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:21
+msgid "Ativa?"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:32
+msgid "Visualizar Arquivo"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\politica_despesa_list.html:52
+msgid "Nenhuma política de despesa cadastrada."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:10
+msgid "Você tem certeza que deseja excluir o tipo de documento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_confirm_delete.html:11
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"documentos associados."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:4
+msgid "Gestão de Tipos de Documento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:8
+msgid "Tipos de Documento"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:10
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:10
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:10
+msgid "Adicionar Tipo"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_documento_list.html:42
+msgid "Nenhum tipo de documento cadastrado."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:10
+msgid "Você tem certeza que deseja excluir o tipo de serviço"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_confirm_delete.html:11
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"Ordens de Serviço associadas."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:4
+msgid "Gestão de Tipos de Manutenção"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:8
+msgid "Tipos de Serviço"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_manutencao_list.html:42
+msgid "Nenhum tipo de manutenção cadastrado."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:10
+msgid "Você tem certeza que deseja excluir o tipo de relatório"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_confirm_delete.html:11
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"relatórios associados."
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:4
+msgid "Gestão de Tipos de Relatório"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:8
+msgid "Tipos de Relatório"
+msgstr ""
+
+#: .\configuracoes\templates\configuracoes\tipo_relatorio_list.html:42
+msgid "Nenhum tipo de relatório cadastrado."
+msgstr ""
+
+#: .\configuracoes\views.py:30
+msgid "Você não tem permissão para acessar esta área de configurações."
+msgstr ""
+
+#: .\configuracoes\views.py:52
+msgid "Adicionar Novo Tipo de Serviço"
+msgstr ""
+
+#: .\configuracoes\views.py:65
+msgid "Editar Tipo de Serviço"
+msgstr ""
+
+#: .\configuracoes\views.py:80
+msgid ""
+"Não foi possível excluir este tipo de Serviço pois ele está associado a "
+"Ordens de Serviço existentes."
+msgstr ""
+
+#: .\configuracoes\views.py:101
+msgid "Adicionar Novo Tipo de Documento"
+msgstr ""
+
+#: .\configuracoes\views.py:114
+msgid "Editar Tipo de Documento"
+msgstr ""
+
+#: .\configuracoes\views.py:129
+msgid ""
+"Não foi possível excluir este tipo de documento pois ele está associado a "
+"Ordens de Serviço existentes."
+msgstr ""
+
+#: .\configuracoes\views.py:150
+msgid "Adicionar Nova Forma de Pagamento"
+msgstr ""
+
+#: .\configuracoes\views.py:163
+msgid "Editar Forma de Pagamento"
+msgstr ""
+
+#: .\configuracoes\views.py:178
+msgid ""
+"Não foi possível excluir esta forma de pagamento pois ele está associado a "
+"Ordens de Serviço existentes."
+msgstr ""
+
+#: .\configuracoes\views.py:201
+msgid "Adicionar Nova Categoria de Despesa"
+msgstr ""
+
+#: .\configuracoes\views.py:206
+msgid "Categoria de despesa adicionada com sucesso!"
+msgstr ""
+
+#: .\configuracoes\views.py:219
+msgid "Editar Categoria de Despesa"
+msgstr ""
+
+#: .\configuracoes\views.py:224
+msgid "Categoria de despesa atualizada com sucesso!"
+msgstr ""
+
+#: .\configuracoes\views.py:239
+msgid ""
+"Não foi possível excluir esta categoria de despesa pois ela está associada a "
+"despesas existentes."
+msgstr ""
+
+#: .\configuracoes\views.py:261
+msgid "Anexar Nova Política de Despesa"
+msgstr ""
+
+#: .\configuracoes\views.py:266
+msgid "Política de despesa adicionada com sucesso!"
+msgstr ""
+
+#: .\configuracoes\views.py:279
+msgid "Editar Política de Despesa"
+msgstr ""
+
+#: .\configuracoes\views.py:284
+msgid "Política de despesa atualizada com sucesso!"
+msgstr ""
+
+#: .\configuracoes\views.py:300
+msgid "Não foi possível excluir esta política de despesa."
+msgstr ""
+
+#: .\configuracoes\views.py:318
+msgid "Configurações de Envio de E-mail"
+msgstr ""
+
+#: .\configuracoes\views.py:323
+msgid "Configurações de e-mail salvas com sucesso!"
+msgstr ""
+
+#: .\configuracoes\views.py:404
+msgid "Adicionar Novo Tipo de Relatório"
+msgstr ""
+
+#: .\configuracoes\views.py:418
+msgid "Editar Tipo de Relatório"
+msgstr ""
+
+#: .\configuracoes\views.py:434
+msgid ""
+"Não foi possível excluir este tipo de relatório pois ele está associado a "
+"relatórios existentes."
+msgstr ""
+
+#: .\servico_campo\forms.py:46
+msgid "Seu endereço de e-mail"
+msgstr ""
+
+#: .\servico_campo\forms.py:205
+msgid "Localização de Entrada"
+msgstr ""
+
+#: .\servico_campo\forms.py:206
+msgid "Localização de Saída"
+msgstr ""
+
+#: .\servico_campo\forms.py:207
+msgid "Observações de Saída"
+msgstr ""
+
+#: .\servico_campo\forms.py:213 .\servico_campo\forms.py:240
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:673
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:705
+msgid "Observações (Opcional)"
+msgstr ""
+
+#: .\servico_campo\forms.py:215
+msgid "Localização (Opcional)"
+msgstr ""
+
+#: .\servico_campo\forms.py:229
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:665
+msgid "Ex: Cliente A, Centro"
+msgstr ""
+
+#: .\servico_campo\forms.py:231
+msgid "Observações iniciais (opcional)"
+msgstr ""
+
+#: .\servico_campo\forms.py:238
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:698
+msgid "Localização de Saída (Opcional)"
+msgstr ""
+
+#: .\servico_campo\forms.py:253
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:699
+msgid "Ex: Saída do Cliente"
+msgstr ""
+
+#: .\servico_campo\forms.py:255
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:707
+msgid "Ex: Término do dia"
+msgstr ""
+
+#: .\servico_campo\forms.py:576
+msgid "O fim da jornada normal deve ser depois do início."
+msgstr ""
+
+#: .\servico_campo\forms.py:579
+msgid "O fim da hora extra 50% deve ser depois do início."
+msgstr ""
+
+#: .\servico_campo\forms.py:582
+msgid ""
+"O início da hora extra 100% deve ser depois do início da hora extra 50%."
+msgstr ""
+
+#: .\servico_campo\forms.py:587
+msgid "O início da hora extra 50% deve ser após o fim da jornada normal."
+msgstr ""
+
+#: .\servico_campo\forms.py:590
+msgid "O início da hora extra 100% deve ser após o fim da hora extra 50%."
+msgstr ""
+
+#: .\servico_campo\forms.py:600
+msgid "Ex: Elétrica, Mecânica"
+msgstr ""
+
+#: .\servico_campo\forms.py:614
+msgid "Ex: Curto-circuito, Falha de Software"
+msgstr ""
+
+#: .\servico_campo\forms.py:637
+msgid "Detalhes específicos do problema..."
+msgstr ""
+
+#: .\servico_campo\forms.py:643
+msgid "Descreva a solução aplicada a este problema..."
+msgstr ""
+
+#: .\servico_campo\forms.py:703
+msgid "A subcategoria selecionada não pertence à categoria principal."
+msgstr ""
+
+#: .\servico_campo\forms.py:750
+msgid "Arquivo CSV de Clientes"
+msgstr ""
+
+#: .\servico_campo\forms.py:751
+msgid ""
+"Faça o upload de um arquivo CSV com os dados dos clientes. O arquivo deve "
+"ter as colunas: razao_social, cnpj_cpf, endereco, cidade, estado, cep, "
+"telefone, email, contato_principal, telefone_contato, email_contato."
+msgstr ""
+
+#: .\servico_campo\forms.py:765
+msgid "Arquivo CSV de Equipamentos"
+msgstr ""
+
+#: .\servico_campo\forms.py:766
+msgid ""
+"Faça o upload de um arquivo CSV com os dados dos equipamentos. O arquivo "
+"deve ter as colunas: cliente_cnpj_cpf, nome, modelo, numero_serie, "
+"descricao, localizacao."
+msgstr ""
+
+#: .\servico_campo\forms.py:841 .\servico_campo\models.py:800
+msgid "CPF do Titular da Conta"
+msgstr ""
+
+#: .\servico_campo\forms.py:842 .\servico_campo\models.py:802
+msgid "Nome Completo do Titular"
+msgstr ""
+
+#: .\servico_campo\forms.py:843 .\servico_campo\models.py:806
+msgid "Código do Banco"
+msgstr ""
+
+#: .\servico_campo\forms.py:844 .\servico_campo\models.py:809
+msgid "Nome do Banco"
+msgstr ""
+
+#: .\servico_campo\forms.py:845 .\servico_campo\models.py:811
+msgid "Tipo de Conta"
+msgstr ""
+
+#: .\servico_campo\forms.py:846 .\servico_campo\models.py:813
+msgid "Número da Agência"
+msgstr ""
+
+#: .\servico_campo\forms.py:847 .\servico_campo\models.py:815
+msgid "Número da Conta"
+msgstr ""
+
+#: .\servico_campo\forms.py:848 .\servico_campo\models.py:817
+msgid "Dígito Verificador (Conta)"
+msgstr ""
+
+#: .\servico_campo\forms.py:849 .\servico_campo\models.py:821
+msgid "Tipo de Chave PIX"
+msgstr ""
+
+#: .\servico_campo\forms.py:850 .\servico_campo\models.py:823
+msgid "Valor da Chave PIX"
+msgstr ""
+
+#: .\servico_campo\forms.py:853
+msgid "Ex: 123.456.789-00"
+msgstr ""
+
+#: .\servico_campo\forms.py:854
+msgid "Ex: 237"
+msgstr ""
+
+#: .\servico_campo\forms.py:855
+msgid "Ex: 0001 ou 0001-0"
+msgstr ""
+
+#: .\servico_campo\forms.py:856
+msgid "Ex: 12345678"
+msgstr ""
+
+#: .\servico_campo\forms.py:857
+msgid "Ex: 9"
+msgstr ""
+
+#: .\servico_campo\forms.py:858
+msgid "Sua chave PIX"
+msgstr ""
+
+#: .\servico_campo\models.py:107 .\servico_campo\views.py:949
+msgid "Planejada"
+msgstr ""
+
+#: .\servico_campo\models.py:107 .\servico_campo\views.py:950
+msgid "Aguardando Planejamento"
+msgstr ""
+
+#: .\servico_campo\models.py:108 .\servico_campo\views.py:951
+msgid "Em Execução"
+msgstr ""
+
+#: .\servico_campo\models.py:108 .\servico_campo\views.py:952
+msgid "Concluída"
+msgstr ""
+
+#: .\servico_campo\models.py:108 .\servico_campo\views.py:953
+msgid "Cancelada"
+msgstr ""
+
+#: .\servico_campo\models.py:108 .\servico_campo\views.py:954
+msgid "Pendente de Aprovação"
+msgstr ""
+
+#: .\servico_campo\models.py:109 .\servico_campo\models.py:885
+msgid "Reprovada"
+msgstr ""
+
+#: .\servico_campo\models.py:408
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:563
+msgid "Adiantamento?"
+msgstr ""
+
+#: .\servico_campo\models.py:410 .\servico_campo\models.py:428
+msgid ""
+"Marque se esta despesa for um adiantamento para o serviço, exigindo "
+"pagamento antes do início."
+msgstr ""
+
+#: .\servico_campo\models.py:414 .\servico_campo\models.py:892
+msgid "Ordem de Serviço"
+msgstr ""
+
+#: .\servico_campo\models.py:416 .\servico_campo\models.py:859
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:402
+msgid "Técnico"
+msgstr ""
+
+#: .\servico_campo\models.py:417
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:458
+msgid "Data da Despesa"
+msgstr ""
+
+#: .\servico_campo\models.py:418
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:404
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:493
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:559
+msgid "Descrição"
+msgstr ""
+
+#: .\servico_campo\models.py:420
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:458
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:494
+msgid "Valor"
+msgstr ""
+
+#: .\servico_campo\models.py:422
+msgid "Forma de Pagamento"
+msgstr ""
+
+#: .\servico_campo\models.py:424
+msgid "Categoria da Despesa"
+msgstr ""
+
+#: .\servico_campo\models.py:426
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:46
+msgid "É Adiantamento?"
+msgstr ""
+
+#: .\servico_campo\models.py:431
+msgid "Comprovante (Imagem/PDF)"
+msgstr ""
+
+#: .\servico_campo\models.py:433
+msgid "Local da Despesa (Estabelecimento)"
+msgstr ""
+
+#: .\servico_campo\models.py:436 .\servico_campo\models.py:488
+msgid "Pendente"
+msgstr ""
+
+#: .\servico_campo\models.py:437 .\servico_campo\models.py:884
+msgid "Aprovada"
+msgstr ""
+
+#: .\servico_campo\models.py:438
+msgid "Rejeitada"
+msgstr ""
+
+#: .\servico_campo\models.py:441
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:68
+msgid "Status de Aprovação"
+msgstr ""
+
+#: .\servico_campo\models.py:449
+msgid "Responsável pela Despesa"
+msgstr ""
+
+#: .\servico_campo\models.py:453
+msgid "Aprovado por"
+msgstr ""
+
+#: .\servico_campo\models.py:455
+msgid "Data de Aprovação"
+msgstr ""
+
+#: .\servico_campo\models.py:457
+msgid "Comentário de Aprovação/Rejeição"
+msgstr ""
+
+#: .\servico_campo\models.py:461
+msgid "Paga?"
+msgstr ""
+
+#: .\servico_campo\models.py:463
+msgid "Data do Pagamento"
+msgstr ""
+
+#: .\servico_campo\models.py:468
+msgid "Despesa"
+msgstr ""
+
+#: .\servico_campo\models.py:469
+msgid "Despesas"
+msgstr ""
+
+#: .\servico_campo\models.py:478
+msgid "Despesa Associada"
+msgstr ""
+
+#: .\servico_campo\models.py:481
+msgid "Valor Pago"
+msgstr ""
+
+#: .\servico_campo\models.py:484
+msgid ""
+"Valor efetivamente pago/reembolsado. Se deixado em branco, será usado o "
+"valor original da despesa."
+msgstr ""
+
+#: .\servico_campo\models.py:489
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:558
+msgid "Em Análise"
+msgstr ""
+
+#: .\servico_campo\models.py:490
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:547
+msgid "Pago"
+msgstr ""
+
+#: .\servico_campo\models.py:492
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:563
+msgid "Cancelado"
+msgstr ""
+
+#: .\servico_campo\models.py:495
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:422
+msgid "Status do Pagamento"
+msgstr ""
+
+#: .\servico_campo\models.py:499
+msgid "Comentário do Pagamento"
+msgstr ""
+
+#: .\servico_campo\models.py:500
+msgid "Adicione detalhes sobre o pagamento ou análise."
+msgstr ""
+
+#: .\servico_campo\models.py:503
+msgid "Comprovante de Pagamento (Imagem/PDF)"
+msgstr ""
+
+#: .\servico_campo\models.py:507 .\servico_campo\models.py:959
+msgid "Data de Criação"
+msgstr ""
+
+#: .\servico_campo\models.py:509
+msgid "Última Atualização"
+msgstr ""
+
+#: .\servico_campo\models.py:513
+msgid "Responsável pelo Pagamento"
+msgstr ""
+
+#: .\servico_campo\models.py:516
+msgid "Conta a Pagar"
+msgstr ""
+
+#: .\servico_campo\models.py:517
+#: .\servico_campo\templates\servico_campo\base.html:119
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:11
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:392
+msgid "Contas a Pagar"
+msgstr ""
+
+#: .\servico_campo\models.py:571
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:19
+msgid "Nome da Regra"
+msgstr ""
+
+#: .\servico_campo\models.py:576
+msgid "Horas Normais Diárias (Ex: 8.00)"
+msgstr ""
+
+#: .\servico_campo\models.py:582
+msgid "Início da Jornada Normal (HH:MM)"
+msgstr ""
+
+#: .\servico_campo\models.py:585
+msgid "Fim da Jornada Normal (HH:MM)"
+msgstr ""
+
+#: .\servico_campo\models.py:592
+msgid "Início da Hora Extra 50% (HH:MM)"
+msgstr ""
+
+#: .\servico_campo\models.py:595
+msgid "Fim da Hora Extra 50% (HH:MM)"
+msgstr ""
+
+#: .\servico_campo\models.py:600
+msgid "Início da Hora Extra 100% (HH:MM)"
+msgstr ""
+
+#: .\servico_campo\models.py:609
+msgid "Considerar Sábado 100% Extra"
+msgstr ""
+
+#: .\servico_campo\models.py:612
+msgid "Considerar Domingo 100% Extra"
+msgstr ""
+
+#: .\servico_campo\models.py:622
+msgid "Tornar essa regra padrão"
+msgstr ""
+
+#: .\servico_campo\models.py:626
+msgid "Regra de Jornada de Trabalho"
+msgstr ""
+
+#: .\servico_campo\models.py:627
+msgid "Regras de Jornada de Trabalho"
+msgstr ""
+
+#: .\servico_campo\models.py:715
+msgid "Categoria de Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:716
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:8
+msgid "Categorias de Problemas"
+msgstr ""
+
+#: .\servico_campo\models.py:727
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:20
+msgid "Categoria Principal"
+msgstr ""
+
+#: .\servico_campo\models.py:730
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:19
+msgid "Nome da Subcategoria"
+msgstr ""
+
+#: .\servico_campo\models.py:734
+msgid "Subcategoria de Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:735
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:8
+msgid "Subcategorias de Problemas"
+msgstr ""
+
+#: .\servico_campo\models.py:751
+msgid "Relatório de Campo"
+msgstr ""
+
+#: .\servico_campo\models.py:755
+msgid "Categoria do Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:758
+msgid "Subcategoria do Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:761
+msgid "Comentário / Observação do Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:764
+msgid "Solução Aplicada para este Problema"
+msgstr ""
+
+#: .\servico_campo\models.py:768
+msgid "Problema Identificado"
+msgstr ""
+
+#: .\servico_campo\models.py:769
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:51
+msgid "Problemas Identificados"
+msgstr ""
+
+#: .\servico_campo\models.py:783
+msgid "Conta Corrente"
+msgstr ""
+
+#: .\servico_campo\models.py:784
+msgid "Conta Poupança"
+msgstr ""
+
+#: .\servico_campo\models.py:788
+msgid "CPF"
+msgstr ""
+
+#: .\servico_campo\models.py:789
+msgid "E-mail"
+msgstr ""
+
+#: .\servico_campo\models.py:790
+msgid "Celular"
+msgstr ""
+
+#: .\servico_campo\models.py:791
+msgid "Chave Aleatória"
+msgstr ""
+
+#: .\servico_campo\models.py:792
+msgid "Nenhuma"
+msgstr ""
+
+#: .\servico_campo\models.py:796
+msgid "Usuário"
+msgstr ""
+
+#: .\servico_campo\models.py:800
+msgid "Formato: XXX.XXX.XXX-XX"
+msgstr ""
+
+#: .\servico_campo\models.py:806
+msgid "Ex: 237 para Bradesco, 341 para Itaú"
+msgstr ""
+
+#: .\servico_campo\models.py:813
+msgid "Com dígito, se houver"
+msgstr ""
+
+#: .\servico_campo\models.py:817
+msgid "Se aplicável"
+msgstr ""
+
+#: .\servico_campo\models.py:826
+msgid "Perfil de Usuário"
+msgstr ""
+
+#: .\servico_campo\models.py:827
+msgid "Perfis de Usuários"
+msgstr ""
+
+#: .\servico_campo\models.py:861
+msgid "Horas Normais"
+msgstr ""
+
+#: .\servico_campo\models.py:863
+msgid "Horas Extras (50%)"
+msgstr ""
+
+#: .\servico_campo\models.py:865
+msgid "Horas Extras (100%)"
+msgstr ""
+
+#: .\servico_campo\models.py:867
+msgid "KM Rodado"
+msgstr ""
+
+#: .\servico_campo\models.py:870
+msgid "Horas por Técnico no Relatório"
+msgstr ""
+
+#: .\servico_campo\models.py:871
+msgid "Horas por Técnico nos Relatórios"
+msgstr ""
+
+#: .\servico_campo\models.py:897
+msgid "Ação Realizada"
+msgstr ""
+
+#: .\servico_campo\models.py:900
+msgid "Comentário/Motivo"
+msgstr ""
+
+#: .\servico_campo\models.py:908
+msgid "Usuário da Ação (Gestor)"
+msgstr ""
+
+#: .\servico_campo\models.py:912
+msgid "Data da Ação (Gestor)"
+msgstr ""
+
+#: .\servico_campo\models.py:921
+msgid "Responsável que Finalizou"
+msgstr ""
+
+#: .\servico_campo\models.py:924
+msgid "Data da Finalização (Responsável)"
+msgstr ""
+
+#: .\servico_campo\models.py:931
+msgid "Histórico de Aprovação da OS"
+msgstr ""
+
+#: .\servico_campo\models.py:932
+msgid "Históricos de Aprovação da OS"
+msgstr ""
+
+#: .\servico_campo\models.py:945
+msgid "Destinatário"
+msgstr ""
+
+#: .\servico_campo\models.py:948
+msgid "Mensagem"
+msgstr ""
+
+#: .\servico_campo\models.py:952
+msgid "Link de Destino"
+msgstr ""
+
+#: .\servico_campo\models.py:955
+msgid "Lida"
+msgstr ""
+
+#: .\servico_campo\models.py:962
+msgid "Notificação"
+msgstr ""
+
+#: .\servico_campo\models.py:963
+msgid "Notificações"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\aprovacao_ordens_concluidas.html:5
+msgid "Aprovação de Ordens Concluídas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\base.html:317
+msgid "Perfil"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\base.html:322
+msgid "Sair"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\base.html:329
+msgid "Entrar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:21
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:6
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:13
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:19
+msgid "Detalhes da Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:22
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:25
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:21
+msgid "OS:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:23
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:54
+msgid "Descrição:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:24
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:34
+msgid "Valor:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:25
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:28
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:22
+msgid "Responsável:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:26
+msgid "Status Aprovação:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:28
+msgid "Comprovante Despesa:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:28
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:489
+msgid "Ver Comprovante"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:32
+msgid "Dados Bancários do Responsável pela Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:36
+msgid "Nome do Titular:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:37
+msgid "CPF do Titular:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:38
+msgid "Banco:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:39
+msgid "Tipo de Conta:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:40
+msgid "Agência:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:41
+msgid "Número da Conta:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:43
+msgid "Chave PIX"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:48
+msgid "Dados bancários não cadastrados para este responsável."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:49
+msgid "Solicite que o técnico cadastre seus dados bancários."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:95
+msgid "Comprovante atual:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\conta_a_pagar_form.html:100
+#: .\servico_campo\templates\servico_campo\registro_ponto_form_edit.html:76
+msgid "Salvar Alterações"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:6
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:14
+#: .\servico_campo\views.py:648
+msgid "Gestão de Contas a Pagar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:402
+msgid "Ver Política de Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:414
+msgid "Filtros de Pesquisa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:426
+msgid "Todos os Status"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:438
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:466
+msgid "Filtrar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:442
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:470
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:570
+msgid "Limpar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:455
+msgid "Despesa (OS)"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:456
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:411
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:483
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:554
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:616
+msgid "Responsável"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:457
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:401
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:491
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:410
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:484
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:558
+msgid "Data"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:459
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:406
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:564
+msgid "Comprovante"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:460
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:495
+msgid "Adiantamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:461
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:111
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:565
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:617
+msgid "Status"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:462
+msgid "Dt. Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:463
+msgid "Pagador"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:544
+msgid "Editar Status de Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:554
+msgid "Comentário:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:564
+msgid "Nenhuma conta encontrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\contas_a_pagar_list.html:565
+msgid "Não há contas a pagar para exibir com os filtros selecionados."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_acao.html:38
+msgid "Confirmar Aprovação"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_acao.html:38
+msgid "Confirmar Rejeição"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:4
+msgid "Confirmar Exclusão de Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:9
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:11
+#: .\servico_campo\templates\servico_campo\despesa_form.html:9
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:9
+#: .\servico_campo\templates\servico_campo\foto_relatorio_form.html:10
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:59
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:485
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:9
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:9
+#: .\servico_campo\templates\servico_campo\registro_ponto_form_edit.html:11
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:9
+msgid "Ordens de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:10
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:12
+#: .\servico_campo\templates\servico_campo\despesa_form.html:10
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:10
+#: .\servico_campo\templates\servico_campo\foto_relatorio_form.html:11
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:60
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:10
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:10
+#: .\servico_campo\templates\servico_campo\registro_ponto_form_edit.html:12
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:10
+msgid "Detalhes da OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:11
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:618
+msgid "Excluir Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_confirm_delete.html:22
+msgid "Você tem certeza que deseja excluir a despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:22
+msgid "Informações da Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:31
+msgid "Data da Despesa:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:37
+msgid "Categoria:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:40
+msgid "Local (Estabelecimento):"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:43
+msgid "Forma de Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:59
+msgid "Comprovante Anexo:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:60
+msgid "Visualizar Comprovante da Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:61
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:141
+msgid "Visualizar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:71
+msgid "Status:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:81
+msgid "Aprovado Por:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:89
+msgid "Data da Aprovação:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:97
+msgid "Comentário da Aprovação/Rejeição:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:104
+msgid "Informações de Pagamento (Contas a Pagar)"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:107
+msgid "Status do Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:117
+msgid "Responsável pelo Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:125
+msgid "Data do Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:134
+msgid "Comentário do Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:139
+msgid "Comprovante de Pagamento:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:140
+msgid "Visualizar Comprovante de Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:148
+msgid "Nenhuma informação de pagamento disponível para esta despesa."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:152
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:57
+msgid "Voltar para OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_detail.html:153
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:457
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:616
+#: .\servico_campo\views.py:1524
+msgid "Editar Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_form.html:88
+msgid "Salvar Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:5
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:13
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:371
+msgid "Despesas Pendentes de Aprovação"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:394
+msgid "Lista de Despesas Pendentes"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:403
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:492
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:65
+msgid "OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:405
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:562
+msgid "Valor (R$)"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:450
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:591
+msgid "Nenhum"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:462
+#: .\servico_campo\views.py:461
+msgid "Aprovar Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:464
+msgid "Aprovar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:466
+#: .\servico_campo\views.py:463
+msgid "Rejeitar Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\despesa_pendente_list.html:468
+msgid "Rejeitar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:4
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:56
+msgid "Anexar Documento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\documento_os_form.html:11
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:354
+msgid "Novo Documento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\foto_relatorio_form.html:44
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:442
+msgid "Anexar Foto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gantt_chart.html:4
+msgid "Gráfico de Linha do Tempo de Ordens de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:11
+msgid "Clientes"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:21
+msgid ""
+"Utilize esta ferramenta para importar ou atualizar clientes em massa a "
+"partir de um arquivo CSV."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:23
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:23
+msgid ""
+"O arquivo CSV deve conter os seguintes cabeçalhos (primeira linha), "
+"exatamente nesta ordem e grafia:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:27
+msgid ""
+"Observação: O CNPJ/CPF é usado como identificador único. Se um CNPJ/CPF já "
+"existir, o cliente será atualizado; caso contrário, um novo será criado."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:48
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:48
+msgid "Realizar Upload e Importar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:55
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:55
+msgid "Falhas na Importação:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:56
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:56
+msgid "As seguintes linhas falharam na importação:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:60
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:60
+msgid "Linha"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:62
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:62
+msgid "Dados:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_client_upload.html:64
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:64
+msgid "Erro"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:11
+msgid "Equipamentos"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:21
+msgid ""
+"Utilize esta ferramenta para importar ou atualizar equipamentos em massa a "
+"partir de um arquivo CSV."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\bulk_equipment_upload.html:27
+msgid ""
+"Observação: O campo 'cliente_cnpj_cpf' é obrigatório e deve corresponder a "
+"um cliente já existente no sistema. O 'numero_serie' é usado para "
+"identificar e atualizar equipamentos existentes para um dado cliente."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:15
+msgid "Você tem certeza que deseja excluir a categoria de problema"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_confirm_delete.html:16
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"subcategorias ou problemas associados."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:4
+msgid "Gestão de Categorias de Problemas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\categoria_problema_list.html:41
+msgid "Nenhuma categoria de problema cadastrada."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\cliente_form.html:53
+#: .\servico_campo\templates\servico_campo\gestao\cliente_form.html:139
+msgid "Selecionar Todos"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\cliente_form.html:137
+msgid "Desmarcar Visíveis"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\equipamento_list.html:11
+msgid "Cadastro em Massa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\equipamento_list.html:14
+msgid "Adicionar Equipamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:15
+msgid "Você tem certeza que deseja excluir a regra de jornada de trabalho"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_confirm_delete.html:16
+msgid ""
+"Atenção: Esta ação não pode ser desfeita. Se esta regra estiver associada a "
+"usuários ou outros objetos, a exclusão pode ser bloqueada."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_form.html:49
+msgid "Configuração de Horas Extras"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_form.html:71
+msgid "Fins de Semana"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:10
+msgid "Adicionar Regra"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:20
+msgid "Horas Normais Diárias"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:21
+msgid "Jornada Normal"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:22
+#, python-format
+msgid "Início Extra 50%%"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:23
+#, python-format
+msgid "Fim Extra 50%%"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:24
+#, python-format
+msgid "Início Extra 100%%"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:25
+#, python-format
+msgid "Sábado 100%%?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:26
+#, python-format
+msgid "Domingo 100%%?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:27
+msgid "Padrão?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\regra_jornada_trabalho_list.html:68
+msgid "Nenhuma regra de jornada de trabalho cadastrada."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:15
+msgid "Você tem certeza que deseja excluir a subcategoria de problema"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_confirm_delete.html:16
+msgid ""
+"Atenção: Esta ação não pode ser desfeita e pode ser bloqueada se houver "
+"problemas associados."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:4
+msgid "Gestão de Subcategorias de Problemas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:10
+msgid "Adicionar Subcategoria"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\gestao\subcategoria_problema_list.html:44
+msgid "Nenhuma subcategoria de problema cadastrada."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:6
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:14
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:404
+#: .\servico_campo\views.py:2841
+msgid "Minhas Despesas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:414
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:549
+msgid "Registrar Nova Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:426
+msgid "Filtros de Busca"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:434
+msgid "Status Aprovação"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:437
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:449
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:512
+msgid "Todos"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:446
+msgid "Status Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:484
+msgid "Lista de Despesas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:496
+msgid "Aprovação"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:497
+msgid "Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:553
+msgid "Aguardando"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:569
+msgid "Processando"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:572
+msgid "N/A"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:578
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:517
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:667
+msgid "Ver Detalhes"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:601
+msgid "Comentário Aprovação"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:603
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:617
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:630
+msgid "por"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:604
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:618
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:631
+msgid "em"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:615
+msgid "Comentário Pagamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:629
+msgid "Nenhuma despesa encontrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\minhas_despesas_list.html:630
+msgid "Não há despesas que correspondam aos filtros selecionados."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:4
+msgid "Confirmar Exclusão de Ordem de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:11
+msgid "Você tem certeza que deseja excluir a Ordem de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_confirm_delete.html:12
+msgid ""
+"Atenção: Esta ação não pode ser desfeita. A exclusão será bloqueada se "
+"houver Registros de Ponto, Relatórios de Campo ou Despesas associados a esta "
+"Ordem de Serviço."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:4
+msgid "Detalhes da Ordem de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:76
+msgid "Editar Planejamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:80
+msgid "Editar OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:81
+msgid "Imprimir OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:81
+msgid "Imprimir"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:102
+msgid "Informações da Ordem de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:107
+msgid "Número da OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:138
+msgid "Data de Abertura"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:152
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:533
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:613
+msgid "Cliente"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:156
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:540
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:614
+msgid "Equipamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:183
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:615
+msgid "Título do Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:190
+msgid "Descrição do Problema (Original da OS):"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:200
+msgid "Problemas Identificados e Soluções (Relatórios):"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:230
+msgid "Problemas Identificados (Detalhes de Relatórios):"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:238
+msgid "Planejamento e Execução"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:242
+msgid "Início Planejado"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:247
+msgid "Início Real"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:252
+msgid "Finalização (Responsável)"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:258
+msgid "Conclusão (Aprovação do Gestor)"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:266
+msgid "Observações Gerais"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:352
+msgid "Documentos Anexados"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:392
+msgid "Relatórios de Campo"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:397
+msgid "Novo Relatório"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:409
+msgid "Tipo"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:412
+msgid "Atividades Principais"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:427
+msgid "Fotos"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:441
+msgid "Editar Relatório"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:443
+msgid "Baixar PDF"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:452
+msgid "Nenhum relatório de campo registrado para esta Ordem de Serviço."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:461
+msgid "Registro de Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:465
+msgid "Marcar Ponto de Entrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:469
+msgid "Encerrar Ponto de Saída"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:474
+msgid "Você não faz parte da equipe desta OS para registrar ponto."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:485
+msgid "Entrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:486
+msgid "Saída"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:487
+msgid "Duração"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:488
+msgid "Observações"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:498
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:28
+msgid "Em Aberto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:517
+msgid "Ver Detalhes do Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:520
+#: .\servico_campo\views.py:1142
+msgid "Editar Registro de Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:524
+msgid "Ponto em aberto, detalhes e edição disponíveis após encerramento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:524
+msgid "Ver/Editar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:527
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:11
+msgid "Excluir Registro de Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:538
+msgid "Nenhum registro de ponto para esta Ordem de Serviço."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:547
+msgid "Relatório de Reembolso de Despesas"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:560
+msgid "Categoria"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:561
+msgid "Local"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:566
+msgid "Pago?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:615
+msgid "Ver Detalhes da Despesa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:628
+#: .\servico_campo\views.py:369
+msgid "Comentário"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:643
+msgid "Nenhuma despesa registrada para esta Ordem de Serviço."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:656
+msgid "Confirmar Marcação de Ponto de Entrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:660
+msgid "Deseja marcar seu ponto de entrada agora para esta Ordem de Serviço?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:664
+msgid "Localização"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:669
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:702
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:752
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:794
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:810
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:852
+msgid "Aguardando localização..."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:674
+msgid "Ex: Início do turno"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:680
+msgid "Marcar Entrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:690
+msgid "Confirmar Encerramento de Ponto de Saída"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:694
+msgid "Deseja encerrar seu ponto de saída agora para esta Ordem de Serviço?"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:713
+msgid "Encerrar Saída"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:764
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:822
+msgid "Localização obtida com sucesso."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:769
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:827
+msgid "Erro ao obter localização."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:771
+msgid "Permissão de localização negada. Ponto registrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:772
+msgid "Localização indisponível. Ponto registrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:773
+msgid "Tempo esgotado para obter localização. Ponto registrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:784
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:842
+msgid "Geolocalização não suportada pelo seu navegador."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:787
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:845
+msgid "Geolocalização não suportada."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:829
+msgid "Permissão de localização negada. O ponto será encerrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:830
+msgid "Localização indisponível. O ponto será encerrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_detail.html:831
+msgid "Tempo esgotado para obter localização. O ponto será encerrado sem GPS."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:23
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:199
+msgid "Assinatura do Executante"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:24
+msgid "Confirmando a finalização das atividades."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:28
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:35
+msgid "Limpar Assinatura"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:31
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:220
+msgid "Assinatura do Cliente"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:38
+msgid "Confirmar e Encerrar OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_encerramento.html:85
+msgid "Por favor, forneça a assinatura do executante e do cliente."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_form.html:102
+#: .\servico_campo\templates\servico_campo\ordem_servico_planejamento.html:139
+msgid "Processando..."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_form.html:106
+#: .\servico_campo\templates\servico_campo\ordem_servico_planejamento.html:143
+msgid "Carregando..."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_form.html:108
+#: .\servico_campo\templates\servico_campo\ordem_servico_planejamento.html:145
+msgid "Sua solicitação está sendo processada. Por favor, aguarde."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_form.html:109
+#: .\servico_campo\templates\servico_campo\ordem_servico_planejamento.html:146
+msgid ""
+"Isso pode levar alguns segundos, especialmente se um e-mail estiver sendo "
+"enviado."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:4
+msgid "Lista de Ordens de Serviço"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:495
+msgid "Abrir Nova OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:507
+msgid "Filtrar por Status"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:526
+msgid "Nº da OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:547
+msgid "Título"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:561
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:618
+msgid "Data Abertura"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:574
+msgid "Buscar"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:595
+msgid "Nenhuma Ordem de Serviço encontrada"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:596
+msgid "Nenhuma Ordem de Serviço encontrada com os critérios selecionados."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:598
+msgid "Filtros aplicados"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\ordem_servico_list.html:612
+msgid "Número OS"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:9
+msgid "Meu Perfil"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:15
+msgid "Nome de Usuário:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:18
+msgid "Email:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:21
+msgid "Grupos:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:29
+msgid "Data de Cadastro:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil.html:32
+msgid "Editar Meu Perfil"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil_usuario_form.html:369
+msgid "Dados do Titular da Conta"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil_usuario_form.html:412
+msgid "Dados Bancários"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil_usuario_form.html:518
+msgid "Dados PIX"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\perfil_usuario_form.html:559
+msgid "Salvar Dados Bancários"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:4
+msgid "Confirmar Exclusão de Registro de Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:22
+msgid "Você tem certeza que deseja excluir o registro de ponto do técnico"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_confirm_delete.html:22
+msgid "na data"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:4
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:11
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:17
+msgid "Detalhes do Registro de Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:20
+msgid "Informações do Ponto"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:23
+msgid "Data:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:24
+msgid "Hora de Entrada:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:26
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:30
+msgid "Observação:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:28
+msgid "Hora de Saída:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:32
+msgid "Duração:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:34
+msgid "Localização e Observações"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:37
+msgid ""
+"Nota: A precisão da localização depende do sinal de GPS do dispositivo no "
+"momento do registro e pode não ser exata."
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:41
+msgid "Localização de Entrada:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:44
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:52
+msgid "Ver no mapa"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\registro_ponto_detail.html:49
+msgid "Localização de Saída:"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:135
+msgid "Dados de Horas e Deslocamento"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:216
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:237
+msgid "Limpar Desenho"
+msgstr ""
+
+#: .\servico_campo\templates\servico_campo\relatorio_campo_form.html:241
+msgid "Salvar Relatório"
+msgstr ""
+
+#: .\servico_campo\views.py:437
+msgid "Pagamento cancelado devido à rejeição da despesa."
+msgstr ""
+
+#: .\servico_campo\views.py:449
+msgid "Erro na validação do comentário: "
+msgstr ""
+
+#: .\servico_campo\views.py:669
+msgid "Editar Conta a Pagar"
+msgstr ""
+
+#: .\servico_campo\views.py:701
+msgid "Conta a Pagar atualizada com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:1015
+msgid "Para excluí-la, remova primeiro todos os seus registros dependentes."
+msgstr ""
+
+#: .\servico_campo\views.py:1031
+msgid "Você já possui um ponto em aberto para esta OS."
+msgstr ""
+
+#: .\servico_campo\views.py:1066
+msgid "Localização não informada/disponível"
+msgstr ""
+
+#: .\servico_campo\views.py:1070
+msgid "Ponto de entrada marcado com sucesso."
+msgstr ""
+
+#: .\servico_campo\views.py:1113
+msgid "Localização de saída não informada/disponível"
+msgstr ""
+
+#: .\servico_campo\views.py:1117
+msgid "Ponto de saída encerrado com sucesso."
+msgstr ""
+
+#: .\servico_campo\views.py:1148
+msgid "Registro de ponto atualizado com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:1184
+msgid ""
+"Não foi possível excluir este registro de ponto. Há registros relacionados "
+"que o impedem."
+msgstr ""
+
+#: .\servico_campo\views.py:1340
+msgid "Relatório salvo com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:1345
+msgid "Erro ao salvar. Verifique os dados do formulário."
+msgstr ""
+
+#: .\servico_campo\views.py:1414
+msgid "Ocorreram erros. Verifique os dados inseridos."
+msgstr ""
+
+#: .\servico_campo\views.py:1448
+msgid "Relatório atualizado com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:1551
+msgid ""
+"Despesa editada e status de aprovação resetado para 'Pendente' para nova "
+"avaliação."
+msgstr ""
+
+#: .\servico_campo\views.py:1554
+msgid "Despesa atualizada com sucesso."
+msgstr ""
+
+#: .\servico_campo\views.py:1612
+msgid ""
+"Não foi possível excluir esta despesa. Há registros relacionados que a "
+"impedem."
+msgstr ""
+
+#: .\servico_campo\views.py:2637
+msgid "Gestão de Regras de Jornada de Trabalho"
+msgstr ""
+
+#: .\servico_campo\views.py:2651
+msgid "Adicionar Nova Regra de Jornada"
+msgstr ""
+
+#: .\servico_campo\views.py:2656
+msgid "Regra de jornada adicionada com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:2670
+msgid "Editar Regra de Jornada"
+msgstr ""
+
+#: .\servico_campo\views.py:2675
+msgid "Regra de jornada atualizada com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:2691
+msgid ""
+"Não foi possível excluir esta regra de jornada pois ela está associada a "
+"usuários ou outras entidades."
+msgstr ""
+
+#: .\servico_campo\views.py:2713
+msgid "Adicionar Novo Tipo de Categoria"
+msgstr ""
+
+#: .\servico_campo\views.py:2736
+msgid ""
+"Não foi possível excluir esta categoria pois ela está associada a "
+"subcategorias ou problemas existentes."
+msgstr ""
+
+#: .\servico_campo\views.py:2757
+msgid "Adicionar Novo Tipo de Subcategoria"
+msgstr ""
+
+#: .\servico_campo\views.py:2780
+msgid ""
+"Não foi possível excluir esta subcategoria pois ela está associada a "
+"problemas existentes."
+msgstr ""
+
+#: .\servico_campo\views.py:2849
+msgid "Não Gerado Contas a Pagar"
+msgstr ""
+
+#: .\servico_campo\views.py:2851
+msgid "Não Pago (Conta a Pagar Existente)"
+msgstr ""
+
+#: .\servico_campo\views.py:2874
+msgid "Cadastro em Massa de Clientes"
+msgstr ""
+
+#: .\servico_campo\views.py:2891 .\servico_campo\views.py:3021
+msgid "O arquivo deve ser no formato CSV."
+msgstr ""
+
+#: .\servico_campo\views.py:2908 .\servico_campo\views.py:3036
+msgid ", "
+msgstr ""
+
+#: .\servico_campo\views.py:3005
+msgid "Cadastro em Massa de Equipamentos"
+msgstr ""
+
+#: .\servico_campo\views.py:3445
+msgid "Seus dados bancários foram atualizados com sucesso!"
+msgstr ""
+
+#: .\servico_campo\views.py:3455
+msgid "Meus Dados Bancários"
+msgstr ""
+
+#: .\servico_campo\views.py:3698
+msgid "Motivo da Reprovação"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:5
+msgid "Senha Redefinida"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:241
+msgid "Senha Redefinida com Sucesso!"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:244
+msgid "Tudo pronto!"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:245
+msgid ""
+"Sua senha foi redefinida com sucesso. Você pode fazer login agora com sua "
+"nova senha."
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:250
+msgid "Dicas de Segurança:"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:252
+msgid "Mantenha sua senha segura e não a compartilhe"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:253
+msgid "Use uma senha única para esta conta"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:254
+msgid "Considere usar um gerenciador de senhas"
+msgstr ""
+
+#: .\templates\registration\password_reset_complete.html:261
+msgid "Fazer Login Agora"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:5
+msgid "Confirme Nova Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:225
+msgid "Definir Nova Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:227
+msgid ""
+"Por favor, insira sua nova senha duas vezes para que possamos verificar que "
+"você a digitou corretamente."
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:241
+msgid "Nova Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:261
+msgid "Confirme a Nova Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:280
+msgid "Redefinir Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:284
+msgid ""
+"O link de redefinição de senha é inválido, possivelmente porque já foi usado."
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:285
+msgid "Por favor, solicite uma nova redefinição de senha."
+msgstr ""
+
+#: .\templates\registration\password_reset_confirm.html:288
+msgid "Solicitar nova redefinição"
+msgstr ""
+
+#: .\templates\registration\password_reset_done.html:5
+#: .\templates\registration\password_reset_done.html:170
+msgid "E-mail de Redefinição Enviado"
+msgstr ""
+
+#: .\templates\registration\password_reset_done.html:171
+msgid ""
+"Verifique sua caixa de entrada e siga as instruções para redefinir sua senha."
+msgstr ""
+
+#: .\templates\registration\password_reset_done.html:172
+msgid "Se o e-mail não chegar em alguns minutos, verifique sua pasta de spam."
+msgstr ""
+
+#: .\templates\registration\password_reset_done.html:174
+msgid "Voltar para o Login"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:8
+#: .\templates\registration\password_reset_email.html:23
+msgid "Redefinição de Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:26
+msgid "Olá,"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:27
+msgid ""
+"Você solicitou a redefinição de senha para sua conta em P3 Smart Solutions."
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:28
+msgid "Por favor, clique no link abaixo para redefinir sua senha:"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:30
+msgid "Redefinir Minha Senha"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:32
+msgid "Se você não solicitou esta redefinição, por favor, ignore este e-mail."
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:33
+msgid "Atenciosamente,"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:34
+msgid "A equipe P3 Smart Solutions"
+msgstr ""
+
+#: .\templates\registration\password_reset_email.html:37
+msgid "Este é um e-mail automático. Por favor, não responda."
+msgstr ""
+
+#: .\templates\registration\password_reset_subject.txt:2
+msgid "Redefinição de Senha para P3 Smart Solutions"
+msgstr ""
+
+#: Manually added for Django's auth app
+msgid "Can add group"
+msgstr "Pode adicionar grupo"
+
+msgid "Can change group"
+msgstr "Pode alterar grupo"
+
+msgid "Can delete group"
+msgstr "Pode remover grupo"
+
+msgid "Can view group"
+msgstr "Pode visualizar grupo"
+
+msgid "Can add user"
+msgstr "Pode adicionar usuário"
+
+msgid "Can change user"
+msgstr "Pode alterar usuário"
+
+msgid "Can delete user"
+msgstr "Pode remover usuário"
+
+msgid "Can view user"
+msgstr "Pode visualizar usuário"
+
+msgid"Can add Categoria de Despesa"
+msgstr"Pode adicionar Categoria de Despesa"
+
+msgid"Can change Categoria de Despesa"
+msgstr"Pode alterar Categoria de Despesa"
+
+msgid"Can delete Categoria de Despesa"
+msgstr"Pode remover Categoria de Despesa"
+
+msgid"Can view Categoria de Despesa"
+msgstr"Pode visualizar Categoria de Despesa"
+
+msgid"Can add Configuração de Email"
+msgstr"Pode adicionar Configuração de Email"
+
+msgid"Can view Configuração de Email"
+msgstr"Pode visualizar Configuração de Email"
+
+msgid"Can delete Configuração de Email"
+msgstr"Pode remover Configuração de Email"
+
+msgid"Can change Configuração de Email"
+msgstr"Pode alterar Configuração de Email"
+
+msgid "Can add Forma de Pagamento"
+msgstr "Pode adicionar Forma de Pagamento"
+
+msgid "Can change Forma de Pagamento"
+msgstr "Pode alterar Forma de Pagamento"
+
+msgid "Can delete Forma de Pagamento"
+msgstr "Pode remover Forma de Pagamento"
+
+msgid "Can view Forma de Pagamento"
+msgstr "Pode visualizar Forma de Pagamento"
+
+msgid "Can add Política de Despesa"
+msgstr "Pode adicionar Política de Despesa"
+
+msgid "Can change Política de Despesa"
+msgstr "Pode alterar Política de Despesa"
+
+msgid "Can delete Política de Despesa"
+msgstr "Pode remover Política de Despesa"
+
+msgid "Can view Política de Despesa"
+msgstr "Pode visualizar Política de Despesa"
+
+msgid "Can add Tipo de Documento"
+msgstr "Pode adicionar Tipo de Documento"
+
+msgid "Can change Tipo de Documento"
+msgstr "Pode alterar Tipo de Documento"
+
+msgid "Can delete Tipo de Documento"
+msgstr "Pode remover Tipo de Documento"
+
+msgid "Can view Tipo de Documento"
+msgstr "Pode visualizar Tipo de Documento"
+
+msgid "Can add Tipo de Manutenção"
+msgstr "Pode adicionar Tipo de Manutenção"
+
+msgid "Can change Tipo de Manutenção"
+msgstr "Pode alterar Tipo de Manutenção"
+
+msgid "Can delete Tipo de Manutenção"
+msgstr "Pode remover Tipo de Manutenção"
+
+msgid "Can view Tipo de Manutenção"
+msgstr "Pode visualizar Tipo de Manutenção"
+
+msgid "Can add Tipo de Relatório"
+msgstr "Pode adicionar Tipo de Relatório"
+
+msgid "Can change Tipo de Relatório"
+msgstr "Pode alterar Tipo de Relatório"
+
+msgid "Can delete Tipo de Relatório"
+msgstr "Pode remover Tipo de Relatório"
+
+msgid "Can view Tipo de Relatório"
+msgstr "Pode visualizar Tipo de Relatório"
+
+msgid "Can add Categoria de Problema"
+msgstr "Pode adicionar Categoria de Problema"
+
+msgid "Can change Categoria de Problema"
+msgstr "Pode alterar Categoria de Problema"
+
+msgid "Can delete Categoria de Problema"
+msgstr "Pode remover Categoria de Problema"
+
+msgid "Can view Categoria de Problema"
+msgstr "Pode visualizar Categoria de Problema"
+
+msgid "Can add Cliente"
+msgstr "Pode adicionar Cliente"
+
+msgid "Can change Cliente"
+msgstr "Pode alterar Cliente"
+
+msgid "Can delete Cliente"
+msgstr "Pode remover Cliente"
+
+msgid "Can view Cliente"
+msgstr "Pode visualizar Cliente"
+
+msgid "Can add Conta a Pagar"
+msgstr "Pode adicionar Conta a Pagar"
+
+msgid "Can change Conta a Pagar"
+msgstr "Pode alterar Conta a Pagar"
+
+msgid "Can delete Conta a Pagar"
+msgstr "Pode remover Conta a Pagar"
+
+msgid "Can view Conta a Pagar"
+msgstr "Pode visualizar Conta a Pagar"
+
+msgid "Can add Despesa"
+msgstr "Pode adicionar Despesa"
+
+msgid "Can change Despesa"
+msgstr "Pode alterar Despesa"
+
+msgid "Can delete Despesa"
+msgstr "Pode remover Despesa"
+
+msgid "Can view Despesa"
+msgstr "Pode visualizar Despesa"
+
+msgid "Can add Documento da OS"
+msgstr "Pode adicionar Documento da OS"
+
+msgid "Can change Documento da OS"
+msgstr "Pode alterar Documento da OS"
+
+msgid "Can delete Documento da OS"
+msgstr "Pode remover Documento da OS"
+
+msgid "Can view Documento da OS"
+msgstr "Pode visualizar Documento da OS"
+
+msgid "Can add Equipamento"
+msgstr "Pode adicionar Equipamento"
+
+msgid "Can change Equipamento"
+msgstr "Pode alterar Equipamento"
+
+msgid "Can delete Equipamento"
+msgstr "Pode remover Equipamento"
+
+msgid "Can view Equipamento"
+msgstr "Pode visualizar Equipamento"
+
+msgid "Can add Foto do Relatório"
+msgstr "Pode adicionar Foto do Relatório"
+
+msgid "Can change Foto do Relatório"
+msgstr "Pode alterar Foto do Relatório"
+
+msgid "Can delete Foto do Relatório"
+msgstr "Pode remover Foto do Relatório"
+
+msgid "Can view Foto do Relatório"
+msgstr "Pode visualizar Foto do Relatório"
+
+msgid "Can add Gestor"
+msgstr "Pode adicionar Gestor"
+
+msgid "Can change Gestor"
+msgstr "Pode alterar Gestor"
+
+msgid "Can delete Gestor"
+msgstr "Pode remover Gestor"
+
+msgid "Can view Gestor"
+msgstr "Pode visualizar Gestor"
+
+msgid "Can add Histórico de Aprovação da OS"
+msgstr "Pode adicionar Histórico de Aprovação da OS"
+
+msgid "Can change Histórico de Aprovação da OS"
+msgstr "Pode alterar Histórico de Aprovação da OS"
+
+msgid "Can delete Histórico de Aprovação da OS"
+msgstr "Pode remover Histórico de Aprovação da OS"
+
+msgid "Can view Histórico de Aprovação da OS"
+msgstr "Pode visualizar Histórico de Aprovação da OS"
+
+msgid "Can add Horas Por Técnico No Relatório"
+msgstr "Pode adicionar Horas Por Técnico No Relatório"
+
+msgid "Can change Horas Por Técnico No Relatório"
+msgstr "Pode alterar Horas Por Técnico No Relatório"
+
+msgid "Can delete Horas Por Técnico No Relatório"
+msgstr "Pode remover Horas Por Técnico No Relatório"
+
+msgid "Can view Horas Por Técnico No Relatório"
+msgstr "Pode visualizar Horas Por Técnico No Relatório"
+
+msgid "Can add Membro da Equipe"
+msgstr "Pode adicionar Membro da Equipe"
+
+msgid "Can change Membro da Equipe"
+msgstr "Pode alterar Membro da Equipe"
+
+msgid "Can delete Membro da Equipe"
+msgstr "Pode remover Membro da Equipe"
+
+msgid "Can view Membro da Equipe"
+msgstr "Pode visualizar Membro da Equipe"
+
+msgid "Can add Notificação"
+msgstr "Pode adicionar Notificação"
+
+msgid "Can change Notificação"
+msgstr "Pode alterar Notificação"
+
+msgid "Can delete Notificação"
+msgstr "Pode remover Notificação"
+
+msgid "Can view Notificação"
+msgstr "Pode visualizar Notificação"
+
+msgid "Can add Ordem de Serviço"
+msgstr "Pode adicionar Ordem de Serviço"
+
+msgid "Can change Ordem de Serviço"
+msgstr "Pode alterar Ordem de Serviço"
+
+msgid "Can delete Ordem de Serviço"
+msgstr "Pode remover Ordem de Serviço"
+
+msgid "Can view Ordem de Serviço"
+msgstr "Pode visualizar Ordem de Serviço"
+
+msgid "Can add Perfil de Usuário"
+msgstr "Pode adicionar Perfil de Usuário"
+
+msgid "Can change Perfil de Usuário"
+msgstr "Pode alterar Perfil de Usuário"
+
+msgid "Can delete Perfil de Usuário"
+msgstr "Pode remover Perfil de Usuário"
+
+msgid "Can view Perfil de Usuário"
+msgstr "Pode visualizar Perfil de Usuário"
+
+msgid "Can add Problema Identificado"
+msgstr "Pode adicionar Problema Identificado"
+
+msgid "Can change Problema Identificado"
+msgstr "Pode alterar Problema Identificado"
+
+msgid "Can delete Problema Identificado"
+msgstr "Pode remover Problema Identificado"
+
+msgid "Can view Problema Identificado"
+msgstr "Pode visualizar Problema Identificado"
+
+msgid "Can add Registro de Ponto"
+msgstr "Pode adicionar Registro de Ponto"
+
+msgid "Can change Registro de Ponto"
+msgstr "Pode alterar Registro de Ponto"
+
+msgid "Can delete Registro de Ponto"
+msgstr "Pode remover Registro de Ponto"
+
+msgid "Can view Registro de Ponto"
+msgstr "Pode visualizar Registro de Ponto"
+
+msgid "Can add Regra de Jornada de Trabalho"
+msgstr "Pode adicionar Regra de Jornada de Trabalho"
+
+msgid "Can change Regra de Jornada de Trabalho"
+msgstr "Pode alterar Regra de Jornada de Trabalho"
+
+msgid "Can delete Regra de Jornada de Trabalho"
+msgstr "Pode remover Regra de Jornada de Trabalho"
+
+msgid "Can view Regra de Jornada de Trabalho"
+msgstr "Pode visualizar Regra de Jornada de Trabalho"
+
+msgid "Can add Relatório de Campo"
+msgstr "Pode adicionar Relatório de Campo"
+
+msgid "Can change Relatório de Campo"
+msgstr "Pode alterar Relatório de Campo"
+
+msgid "Can delete Relatório de Campo"
+msgstr "Pode remover Relatório de Campo"
+
+msgid "Can view Relatório de Campo"
+msgstr "Pode visualizar Relatório de Campo"
+
+msgid "Can add Subcategoria de Problema"
+msgstr "Pode adicionar Subcategoria de Problema"
+
+msgid "Can change Subcategoria de Problema"
+msgstr "Pode alterar Subcategoria de Problema"
+
+msgid "Can delete Subcategoria de Problema"
+msgstr "Pode remover Subcategoria de Problema"
+
+msgid "Can view Subcategoria de Problema"
+msgstr "Pode visualizar Subcategoria de Problema"
+
+msgid "Can add Técnico"
+msgstr "Pode adicionar Técnico"
+
+msgid "Can change Técnico"
+msgstr "Pode alterar Técnico"
+
+msgid "Can delete Técnico"
+msgstr "Pode remover Técnico"
+
+msgid "Can view Técnico"
+msgstr "Pode visualizar Técnico"
+
+msgid "Can add Password Reset Token"
+msgstr "Pode adicionar Token de Redefinição de Senha"
+
+msgid "Can change Password Reset Token"
+msgstr "Pode alterar Token de Redefinição de Senha"
+
+msgid "Can delete Password Reset Token"
+msgstr "Pode remover Token de Redefinição de Senha"
+
+msgid "Can view Password Reset Token"
+msgstr "Pode visualizar Token de Redefinição de Senha"
+
+
