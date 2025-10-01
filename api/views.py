@@ -24,6 +24,11 @@ from servico_campo.models import RegraJornadaTrabalho
 from servico_campo.views import enviar_email_pendente_aprovacao
 
 
+from rest_framework.permissions import IsAuthenticated
+
+# 2. A IMPORTAÇÃO CORRETA: Importe a sua view de PDF existente
+from servico_campo.views import relatorio_campo_pdf_view
+
 from servico_campo.models import (
     OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico,
     HorasRelatorioTecnico, RegraJornadaTrabalho, ProblemaRelatorio, CategoriaProblema,
@@ -635,3 +640,16 @@ class ContagemNaoLidasView(APIView):
         count = Notificacao.objects.filter(
             destinatario=request.user, lida=False).count()
         return Response({'nao_lidas_count': count}, status=status.HTTP_200_OK)
+
+
+class RelatorioPDFDownloadAPIView(APIView):
+    """
+    Endpoint seguro da API para baixar o PDF de um relatório,
+    reutilizando a lógica da view web 'relatorio_campo_pdf_view'.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        # Simplesmente chama a sua função já existente, passando os argumentos necessários,
+        # e retorna a resposta que ela gerar.
+        return relatorio_campo_pdf_view(request, pk=pk)

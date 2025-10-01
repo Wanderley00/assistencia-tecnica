@@ -8,7 +8,8 @@ from .views import (
     RegistroPontoListCreateAPIView, RegistroPontoUpdateAPIView,
     calcular_horas_relatorio_api, CategoriaProblemaListAPIView,
     ConcluirOrdemServicoAPIView, MinhasDespesasListView,
-    NotificacaoListView, MarcarNotificacoesComoLidasView, ContagemNaoLidasView
+    NotificacaoListView, MarcarNotificacoesComoLidasView, ContagemNaoLidasView,
+    RelatorioPDFDownloadAPIView
 )
 
 from . import views
@@ -99,5 +100,8 @@ urlpatterns = [
          MarcarNotificacoesComoLidasView.as_view(), name='api_notificacao_marcar_lida'),
     path('notificacoes/nao-lidas/contagem/',
          ContagemNaoLidasView.as_view(), name='api_notificacao_contagem'),
+
+    path('relatorios-campo/<int:pk>/pdf/',
+         RelatorioPDFDownloadAPIView.as_view(), name='api_relatorio_pdf'),
 
 ]
