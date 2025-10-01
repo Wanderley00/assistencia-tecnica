@@ -27,7 +27,7 @@ from servico_campo.views import enviar_email_pendente_aprovacao
 from servico_campo.models import (
     OrdemServico, RelatorioCampo, Despesa, DocumentoOS, RegistroPonto, Tecnico,
     HorasRelatorioTecnico, RegraJornadaTrabalho, ProblemaRelatorio, CategoriaProblema,
-    FotoRelatorio
+    FotoRelatorio, Notificacao
 )
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento, TipoRelatorio
@@ -44,7 +44,7 @@ from .serializers import (
     HorasRelatorioTecnicoSerializer, RelatorioCampoCreateSerializer,
     CategoriaProblemaSerializer, FotoRelatorioSerializer,
     RelatorioCampoDetailSerializer, RelatorioCampoUpdateSerializer,
-    OrdemServicoConclusaoSerializer
+    OrdemServicoConclusaoSerializer, NotificacaoSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated
@@ -156,7 +156,9 @@ class OrdemServicoDetailAPIView(generics.RetrieveAPIView):
             'relatorios_campo__tipo_relatorio',
             'relatorios_campo__problemas_identificados_detalhes',
             'relatorios_campo__horas_por_tecnico',
-            'registros_ponto'
+            'registros_ponto',
+            'historico_aprovacoes__usuario',
+            'historico_aprovacoes__tecnico_finalizou',
         ).all()
 
     def retrieve(self, request, *args, **kwargs):
@@ -383,31 +385,12 @@ class RegistroPontoUpdateAPIView(generics.UpdateAPIView):
 
     def get_object(self):
         obj = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
-        # Garante que o usuário só pode editar o seu próprio ponto
         if obj.tecnico != self.request.user:
             raise PermissionDenied(
                 "Você não tem permissão para editar este ponto.")
-        # Garante que o ponto não foi encerrado ainda
         if obj.hora_saida is not None:
             raise serializers.ValidationError("Este ponto já foi encerrado.")
         return obj
-
-    def perform_update(self, serializer):
-        # Concatena as observações de entrada e saída no campo principal 'observacoes'
-        entry_obs = serializer.instance.observacoes_entrada or ""
-        exit_obs = serializer.validated_data.get('observacoes', "")
-
-        full_observation = f"Entrada: {entry_obs}".strip()
-        if exit_obs:
-            full_observation += f"\nSaída: {exit_obs}".strip()
-
-        serializer.save(
-            observacoes=full_observation.strip(),
-            hora_saida=serializer.validated_data['hora_saida'],
-            localizacao_saida=serializer.validated_data.get(
-                'localizacao_saida')
-        )
-    pass
 
 
 @api_view(['GET'])
@@ -598,3 +581,57 @@ class MinhasDespesasListView(generics.ListAPIView):
         pelo 'tecnico' que é o usuário logado (self.request.user).
         """
         return Despesa.objects.filter(tecnico=self.request.user).order_by('-data_despesa')
+
+
+class NotificacaoListView(generics.ListAPIView):
+    """
+    Retorna a lista de notificações para o usuário autenticado,
+    das mais recentes para as mais antigas.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = NotificacaoSerializer
+
+    def get_queryset(self):
+        # Filtra as notificações pelo usuário que fez a requisição
+        return Notificacao.objects.filter(destinatario=self.request.user).order_by('-data_criacao')
+
+
+class MarcarNotificacoesComoLidasView(APIView):
+    """
+    Endpoint para marcar uma ou todas as notificações do usuário como lidas.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # O corpo do POST pode conter um 'id' para uma notificação específica
+        # ou 'marcar_todas' para marcar todas.
+        notification_id = request.data.get('id')
+        mark_all = request.data.get('marcar_todas')
+
+        if notification_id:
+            # Marca uma única notificação como lida
+            Notificacao.objects.filter(
+                destinatario=request.user, pk=notification_id
+            ).update(lida=True)
+            return Response({"detail": "Notificação marcada como lida."}, status=status.HTTP_200_OK)
+
+        elif mark_all:
+            # Marca todas as notificações não lidas do usuário como lidas
+            Notificacao.objects.filter(
+                destinatario=request.user, lida=False
+            ).update(lida=True)
+            return Response({"detail": "Todas as notificações foram marcadas como lidas."}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Nenhum ID de notificação ou comando 'marcar_todas' foi fornecido."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ContagemNaoLidasView(APIView):
+    """
+    Retorna a contagem de notificações não lidas para o usuário.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        count = Notificacao.objects.filter(
+            destinatario=request.user, lida=False).count()
+        return Response({'nao_lidas_count': count}, status=status.HTTP_200_OK)

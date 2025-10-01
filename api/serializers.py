@@ -6,11 +6,13 @@ import uuid
 from django.contrib.auth.models import User
 from servico_campo.models import FotoRelatorio
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from rest_framework import serializers
 from servico_campo.models import (
     OrdemServico, Cliente, Equipamento, RelatorioCampo, Despesa, MembroEquipe,
     DocumentoOS, RegistroPonto,  ProblemaRelatorio, HorasRelatorioTecnico,
-    CategoriaProblema, SubcategoriaProblema
+    CategoriaProblema, SubcategoriaProblema, HistoricoAprovacaoOS, Notificacao
 )
 from configuracoes.models import (
     TipoDocumento, CategoriaDespesa, FormaPagamento, TipoRelatorio
@@ -261,7 +263,8 @@ class DocumentoOSCreateSerializer(serializers.ModelSerializer):
 
 
 class RegistroPontoSerializer(serializers.ModelSerializer):
-    tecnico = serializers.StringRelatedField()
+    tecnico = serializers.CharField(
+        source='tecnico.get_full_name', read_only=True)
     duracao_formatada = serializers.CharField(read_only=True)
 
     class Meta:
@@ -584,6 +587,26 @@ class RelatorioCampoUpdateSerializer(serializers.ModelSerializer):
         return instance
 
 
+class HistoricoAprovacaoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para os detalhes do histórico de aprovação de uma OS.
+    """
+    usuario = serializers.StringRelatedField(read_only=True)
+    tecnico_finalizou = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = HistoricoAprovacaoOS
+        fields = [
+            'id',
+            'usuario',
+            'acao',
+            'comentario',
+            'data_acao',
+            'tecnico_finalizou',
+            'data_finalizacao_tecnico',
+        ]
+
+
 class OrdemServicoDetailSerializer(serializers.ModelSerializer):
     """
     Serializer completo para a tela de detalhes da Ordem de Serviço.
@@ -597,6 +620,9 @@ class OrdemServicoDetailSerializer(serializers.ModelSerializer):
     documentos = DocumentoOSSerializer(many=True, read_only=True)
     pontos = RegistroPontoSerializer(
         many=True, read_only=True, source='registros_ponto')
+
+    historico_aprovacoes = HistoricoAprovacaoSerializer(
+        many=True, read_only=True)
 
     # Relacionamentos que podem ser apenas texto (String)
     tecnico_responsavel = serializers.StringRelatedField(read_only=True)
@@ -635,3 +661,41 @@ class OrdemServicoConclusaoSerializer(serializers.Serializer):
     assinatura_executante_data = Base64ImageField(
         required=True, allow_null=False)
     assinatura_cliente_data = Base64ImageField(required=True, allow_null=False)
+
+
+class NotificacaoSerializer(serializers.ModelSerializer):
+    """
+    Serializer para o modelo de Notificação.
+    """
+    class Meta:
+        model = Notificacao
+        fields = [
+            'id',
+            'mensagem',
+            'link',
+            'lida',
+            'data_criacao'
+        ]
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Adiciona informações customizadas ao token (opcional, mas bom ter)
+        # token['username'] = user.username
+
+        return token
+
+    def validate(self, attrs):
+        # O método validate é chamado para gerar os tokens
+        data = super().validate(attrs)
+
+        # Adiciona o nome do usuário à RESPOSTA da API
+        # Usamos get_full_name() para pegar "Nome Sobrenome", se não houver, usa o username
+        data['username'] = self.user.get_full_name() or self.user.username
+
+        data['user_id'] = self.user.id  # Envia o ID numérico do usuário
+
+        return data

@@ -7,7 +7,8 @@ from .views import (
     CategoriaDespesaListAPIView, FormaPagamentoListAPIView,
     RegistroPontoListCreateAPIView, RegistroPontoUpdateAPIView,
     calcular_horas_relatorio_api, CategoriaProblemaListAPIView,
-    ConcluirOrdemServicoAPIView, MinhasDespesasListView
+    ConcluirOrdemServicoAPIView, MinhasDespesasListView,
+    NotificacaoListView, MarcarNotificacoesComoLidasView, ContagemNaoLidasView
 )
 
 from . import views
@@ -91,5 +92,12 @@ urlpatterns = [
 
     path('despesas/minhas-despesas/', MinhasDespesasListView.as_view(),
          name='api_minhas_despesas_list'),
+
+    path('notificacoes/', NotificacaoListView.as_view(),
+         name='api_notificacao_list'),
+    path('notificacoes/marcar-como-lida/',
+         MarcarNotificacoesComoLidasView.as_view(), name='api_notificacao_marcar_lida'),
+    path('notificacoes/nao-lidas/contagem/',
+         ContagemNaoLidasView.as_view(), name='api_notificacao_contagem'),
 
 ]

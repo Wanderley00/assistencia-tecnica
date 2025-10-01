@@ -33,9 +33,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['assistencia-tecnica-django.onrender.com', '127.0.0.1']
+ALLOWED_HOSTS = ['assistencia-tecnica-django.onrender.com', '127.0.0.1', '*']
 
 
 # Application definition
@@ -267,6 +267,8 @@ SIMPLE_JWT = {
     # Se um refresh token for usado, ele é colocado numa "lista negra".
     # Isso impede que um refresh token roubado seja usado mais de uma vez.
     "BLACKLIST_AFTER_ROTATION": True,
+
+    "TOKEN_OBTAIN_SERIALIZER": "api.serializers.MyTokenObtainPairSerializer",
 
     # ... outras configurações que você possa ter ...
 }
