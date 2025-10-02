@@ -256,9 +256,9 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
 
     # Define o tempo de vida do Refresh Token.
-    # Para o seu caso de uso, 7 dias é um bom ponto de partida.
-    # O técnico não precisará fazer login por uma semana, a menos que saia do app.
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    # Para o seu caso de uso, 1 dia é um bom ponto de partida.
+    # O técnico não precisará fazer login por um dia, a menos que saia do app.
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 
     # Permite que um novo Refresh Token seja enviado junto quando um Access Token é renovado.
     # Isso aumenta a segurança, pois os refresh tokens podem "rotacionar".
