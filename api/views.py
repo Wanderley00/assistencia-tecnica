@@ -541,6 +541,19 @@ class ConcluirOrdemServicoAPIView(APIView):
     def post(self, request, os_pk, format=None):
         os = get_object_or_404(OrdemServico, pk=os_pk)
 
+        # --- VERIFICAÇÃO ADICIONADA AQUI ---
+        pontos_abertos = RegistroPonto.objects.filter(
+            ordem_servico=os,
+            hora_saida__isnull=True
+        ).exists()
+
+        if pontos_abertos:
+            return Response(
+                {"detail": "Não é possível concluir a OS. Você possui um registro de ponto em aberto que precisa ser encerrado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # --- FIM DA VERIFICAÇÃO ---
+
         # Valida os dados recebidos (as assinaturas)
         serializer = OrdemServicoConclusaoSerializer(data=request.data)
         if serializer.is_valid():

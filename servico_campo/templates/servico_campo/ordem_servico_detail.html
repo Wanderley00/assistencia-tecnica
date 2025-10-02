@@ -390,15 +390,15 @@
     <div class="card mb-4">
         <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">{% trans "Relatórios de Campo" %}</h5>
-            
-            {# --- CORREÇÃO APLICADA AQUI --- #}
-            {% if is_team_member %}
-            <a href="{% url 'servico_campo:novo_relatorio_campo' os.pk %}" class="btn btn-sm btn-light">
-                <i class="bi bi-journal-check"></i> {% trans "Novo Relatório" %}
-            </a>
-            {% endif %}
-            {# --- FIM DA CORREÇÃO --- #}
 
+            {# --- CONDIÇÃO ADICIONADA AQUI --- #}
+            {% if os.status == 'EM_EXECUCAO' or os.status == 'PLANEJADA' %}
+                {% if is_team_member %}
+                <a href="{% url 'servico_campo:novo_relatorio_campo' os.pk %}" class="btn btn-sm btn-light">
+                    <i class="bi bi-journal-check"></i> {% trans "Novo Relatório" %}
+                </a>
+                {% endif %}
+            {% endif %}
         </div>
         <div class="card-body">
             {% if relatorios_campo %}
@@ -459,19 +459,20 @@
     <div class="card mb-4">
         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">{% trans "Registro de Ponto" %}</h5>
-            {% if is_team_member %} {# APENAS MOSTRA OS BOTÕES SE O USUÁRIO FOR MEMBRO DA EQUIPE #}
-                {% if not ponto_aberto %}
-                    <button type="button" class="btn btn-sm btn-light" id="btnMarcarPonto" data-bs-toggle="modal" data-bs-target="#confirmMarcarPontoModal">
-                        <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
-                    </button>
-                {% else %}
-                    <button type="button" class="btn btn-sm btn-warning" id="btnEncerrarPonto" data-bs-toggle="modal" data-bs-target="#confirmEncerrarPontoModal" data-ponto-id="{{ ponto_aberto.pk }}">
-                        <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
-                    </button>
+
+            {# --- CONDIÇÃO ADICIONADA AQUI --- #}
+            {% if os.status == 'EM_EXECUCAO' or os.status == 'PLANEJADA' %}
+                {% if is_team_member %}
+                    {% if not ponto_aberto %}
+                        <button type="button" class="btn btn-sm btn-light" ...>
+                            <i class="bi bi-stopwatch"></i> {% trans "Marcar Ponto de Entrada" %}
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-sm btn-warning" ...>
+                            <i class="bi bi-stopwatch-fill"></i> {% trans "Encerrar Ponto de Saída" %}
+                        </button>
+                    {% endif %}
                 {% endif %}
-            {% else %}
-                {# Opcional: Mensagem para usuários que não são da equipe #}
-                <span class="text-muted small">{% trans "Você não faz parte da equipe desta OS para registrar ponto." %}</span>
             {% endif %}
         </div>
         <div class="card-body">

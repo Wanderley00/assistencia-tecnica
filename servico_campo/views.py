@@ -958,11 +958,24 @@ class OrdemServicoDetailView(LoginRequiredMixin, DetailView):
         context['problemas_detalhados_os'] = problemas_detalhados
         # FIM DO NOVO BLOCO
 
-        tem_responsavel = os.tecnico_responsavel is not None
-        tem_relatorio = os.relatorios_campo.exists()
-        # Esta variável verifica SE EXISTE algum ponto, não a quantidade
-        tem_ponto = os.registros_ponto.exists()
-        context['pode_concluir'] = tem_responsavel and tem_relatorio and tem_ponto
+        pode_concluir = False
+        # Apenas executa a lógica se a OS estiver em um status que permite conclusão
+        if os.status == 'EM_EXECUCAO' or os.status == 'REPROVADA':
+            # Condição 1: Verifica se existe pelo menos um relatório de campo
+            relatorio_existente = os.relatorios_campo.exists()
+
+            # Condição 2: Verifica se existe algum ponto com a hora de saída em branco (null)
+            ponto_em_aberto = os.registros_ponto.filter(
+                hora_saida__isnull=True).exists()
+
+            # A variável 'pode_concluir' só será verdadeira se:
+            # - A OS tiver um técnico responsável
+            # - Existir pelo menos um relatório
+            # - E NÃO existir nenhum ponto em aberto
+            if os.tecnico_responsavel is not None and relatorio_existente and not ponto_em_aberto:
+                pode_concluir = True
+
+        context['pode_concluir'] = pode_concluir
 
         context['os_tipo_manutencao_display'] = os.tipo_manutencao.nome
 
